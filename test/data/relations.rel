@@ -1,0 +1,9 @@
+Person travaille Societe
+Person evaluee Note
+Societe evaluee Note
+Person concerne Affaire
+Affaire concerne Societe
+* subj_wildcard Affaire
+Affaire obj_wildcard *
+Affaire sym_rel Person symetric
+Affaire inline_rel Person inline

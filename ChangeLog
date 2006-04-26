@@ -1,0 +1,47 @@
+ChangeLog for yams 
+------------------
+
+2006-04-10  --  0.4.2
+    * fixed a bug when wildcard are used as subject and object of a
+      relation definition
+    * fixed default permissions for user entities
+	
+	
+2006-03-31  --  0.4.1
+    * finish api changes, ("final") refactoring
+    * cleanup
+	
+2006-03-29  --  0.4.0
+    * major api changes
+
+2006-03-14  --  0.3.3
+    * // in schema definition files may be used to indicate a deprecated
+	  attribute
+    * control which entities are considered by wildcarded relations refinition
+	  using a variable on the relations file reader
+
+2006-02-24  --  0.3.2
+    * let subject_types and object_types rschema methods raise a KeyError if a
+   type is specified but not found for the relation (as it was documented)
+   
+   
+2006-01-25  --  0.3.1
+    * new function in schema2sql to give grants to a user
+
+2005-07-29  --  0.3.0
+    * support for a new 'inline' property on relation
+    * don't check for type differences for same relation names
+
+2005-07-25  --  0.2.0
+    * conditional drop into sql schema
+    * support for schema displaying using dot (graphviz)
+	
+2005-07-07  --  0.1.2
+    * fixed bug with association types of symetric relation
+
+2005-06-24  --  0.1.1
+    * mini-modification for external use
+
+2004-11-01  --  0.1.0
+    * creation of changelog
+

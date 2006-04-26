@@ -1,0 +1,7 @@
+include ChangeLog
+include DEPENDS
+include test/data/*.sql
+include test/data/*.rel
+include test/data/*.esql
+include test/data/toignore
+
