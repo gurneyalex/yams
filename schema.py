@@ -542,14 +542,14 @@ class RelationSchema(ERSchema):
     def rproperties(self, subjecttype, objecttype):
         """return the properties dictionary of a relation"""
         #assert rtype in self._subj_relations
-        return self._rproperties[(subjecttype, objecttype)]
+        try:
+            return self._rproperties[(subjecttype, objecttype)]
+        except KeyError:
+            raise KeyError('%s %s %s' % (subjecttype, self.type, objecttype))
     
     def rproperty(self, subjecttype, objecttype, property):
         """return the properties dictionary of a relation"""
-        try:
-            return self._rproperties[(subjecttype, objecttype)].get(property)
-        except KeyError:
-            raise KeyError('%s %s %s' % (subjecttype, self.type, objecttype))
+        return self.rproperties(subjecttype, objecttype).get(property)
 
     def set_rproperty(self, subjecttype, objecttype, pname, value):
         """set value for a subject relation specific property"""
@@ -742,14 +742,18 @@ class Schema(object):
 
     def del_relation_def(self, subjtype, rtype, objtype):
         subjschema = self.eschema(subjtype)
-        subjschema.del_subject_relation(rtype)
         objschema = self.eschema(objtype)
-        objschema.del_object_relation(rtype)
-        if self[rtype].del_relation_def(subjschema, objschema):
+        rschema = self.rschema(rtype)
+        subjschema.del_subject_relation(rtype)
+        if not rschema.symetric:
+            objschema.del_object_relation(rtype)
+        if rschema.del_relation_def(subjschema, objschema):
             del self._relations[rtype]
             
     def del_relation_type(self, rtype):
-        for subjtype, objtype in self.rschema(rtype)._rproperties:
+        # XXX don't iter directly on the dictionary since it may be changed
+        # by del_relation_def
+        for subjtype, objtype in self.rschema(rtype)._rproperties.keys():
             self.del_relation_def(subjtype, rtype, objtype)
         if not self.rschema(rtype)._rproperties:
             del self._relations[rtype]
