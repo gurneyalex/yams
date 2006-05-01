@@ -5,10 +5,11 @@ __revision__ = "$Id: builder.py,v 1.6 2006-04-10 14:38:59 syt Exp $"
 __docformat__ = "restructuredtext en"
 __metaclass__ = type
 
+from logilab.common.compat import set
 from yams import BadSchemaDefinition
 
-BASE_TYPES = ('String', 'Int', 'Float', 'Boolean', 'Date',
-              'Time', 'Datetime', 'Password', 'Bytes')
+BASE_TYPES = set(('String', 'Int', 'Float', 'Boolean', 'Date',
+                  'Time', 'Datetime', 'Password', 'Bytes'))
 
 
 class Definition(object):
@@ -98,6 +99,7 @@ class RelationBase(Definition):
     cardinality = None
     constraints = ()
     symetric = False
+    
     def __init__(self, *args, **kwargs):
         super(RelationBase, self).__init__(*args, **kwargs)
         self.constraints = list(self.constraints)
