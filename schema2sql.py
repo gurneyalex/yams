@@ -2,7 +2,7 @@
 
 :version: $Revision: 1.15 $  
 :organization: Logilab
-:copyright: 2003-2005 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
+:copyright: 2003-2006 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
 :contact: http://www.logilab.fr/ -- mailto:contact@logilab.fr
 """
 
@@ -28,7 +28,7 @@ TYPE_MAPPING = {
     }
 
 
-def schema2sql(schema, skip_entities=(), skip_relations=(), drop=False):
+def schema2sql(schema, skip_entities=(), skip_relations=()):
     """write to the output stream a SQL schema to store the objects
     corresponding to the given schema
     """
@@ -38,28 +38,54 @@ def schema2sql(schema, skip_entities=(), skip_relations=(), drop=False):
         eschema = schema.eschema(etype)
         if eschema.is_final() or eschema.type in skip_entities:
             continue
-        w(eschema2sql(eschema, skip_relations, drop))
+        w(eschema2sql(eschema, skip_relations))
     for rtype in sorted(schema.relations()):
         rschema = schema.rschema(rtype)
         if rschema.is_final() or rschema.physical_mode() == 'subjectinline':
             continue
-        w(rschema2sql(rschema, drop))
+        w(rschema2sql(rschema))
     return '\n'.join(output)
 
 
-def eschema2sql(eschema, skip_relations=(), drop=False):
-    """write an entity schema as SQL statements to stdout"""
+def dropschema2sql(schema, skip_entities=(), skip_relations=()):
+    """write to the output stream a SQL schema to store the objects
+    corresponding to the given schema
+    """
     output = []
     w = output.append
-    etype = eschema.type
-    if drop:
-        w('DROP TABLE %s;' % etype)
-    w('CREATE TABLE %s(' % etype)
+    for etype in sorted(schema.entities()):
+        eschema = schema.eschema(etype)
+        if eschema.is_final() or eschema.type in skip_entities:
+            continue
+        w(dropeschema2sql(eschema, skip_relations))
+    for rtype in sorted(schema.relations()):
+        rschema = schema.rschema(rtype)
+        if rschema.is_final() or rschema.physical_mode() == 'subjectinline':
+            continue
+        w(droprschema2sql(rschema))
+    return '\n'.join(output)
+
+def eschema_attrs(eschema, skip_relations):
     attrs = [attrdef for attrdef in eschema.attribute_definitions()
              if not attrdef[0].type in skip_relations]
     attrs += [(rschema, None)
               for rschema in eschema.subject_relations()
               if not rschema.final and rschema.physical_mode() == 'subjectinline']
+    return attrs
+
+def dropeschema2sql(eschema, skip_relations=()):
+    """return sql to drop an entity type's table"""
+    # not necessary to drop indexes, that's implictly done when dropping
+    # the table
+    return 'DROP TABLE %s;' % eschema.type
+
+def eschema2sql(eschema, skip_relations=()):
+    """write an entity schema as SQL statements to stdout"""
+    output = []
+    w = output.append
+    etype = eschema.type
+    w('CREATE TABLE %s(' % etype)
+    attrs = eschema_attrs(eschema, skip_relations)
     # XXX handle objectinline physical mode
     for i in xrange(len(attrs)):
         rschema, attrschema = attrs[i]
@@ -127,7 +153,7 @@ def _type_from_constraints(etype, constraints):
     return sqltype
     
 
-_SQL_SCHEMA = """%%s
+_SQL_SCHEMA = """
 CREATE TABLE %(table)s (
   eid_from INTEGER NOT NULL,
   eid_to INTEGER NOT NULL,
@@ -136,22 +162,17 @@ CREATE TABLE %(table)s (
   CONSTRAINT %(table)s_fkey2 FOREIGN KEY (eid_to) REFERENCES entities (eid) ON DELETE CASCADE
 );
 
-%%s
 CREATE INDEX %(table)s_from_idx ON %(table)s (eid_from);
-%%s
 CREATE INDEX %(table)s_to_idx ON %(table)s (eid_to);"""
 
-def rschema2sql(rschema, drop=False):
-    kwargs = {'table': '%s_relation' % rschema.type}
-    result = _SQL_SCHEMA % kwargs
-    if drop:
-        result %= ('DROP TABLE %(table)s;',
-                   'DROP INDEX %(table)s_from_idx;',
-                   'DROP INDEX %(table)s_to_idx;')
-        result %= kwargs
-    else:
-        result %= ('', '', '')
-    return result
+def rschema2sql(rschema):
+    return _SQL_SCHEMA % {'table': '%s_relation' % rschema.type}
+
+def droprschema2sql(rschema):
+    """return sql to drop a relation type's table"""
+    # not necessary to drop indexes, that's implictly done when dropping
+    # the table
+    return 'DROP TABLE %s_relation;' % rschema.type
 
 
 def grant_schema(schema, user, set_owner=True, skip_entities=()):
