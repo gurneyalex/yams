@@ -1,7 +1,7 @@
 ChangeLog for yams 
 ------------------
 
- --
+2006-04-27  --  0.4.3
     * some fixes related to dynamic schema modification
 
 2006-04-10  --  0.4.2
