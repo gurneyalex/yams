@@ -23,7 +23,7 @@ TYPE_MAPPING = {
     'Date' : 'date', 
     'Time' : 'time', 
     'Datetime' : 'timestamp',
-    'Password' : 'varchar(24)',
+    'Password' : 'bytea',
     'Bytes' : 'bytea',         # FIXME: pgsql specific
     }
 
