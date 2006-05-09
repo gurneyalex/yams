@@ -5,7 +5,6 @@ Copyright Logilab 2003-2006, all rights reserved.
 
 __revision__ = "$Id: unittest_schema_readers.py,v 1.11 2006-04-10 14:39:03 syt Exp $"
 
-import unittest, sys
 from os.path import join, isabs, basename
 from logilab.common.testlib import TestCase, unittest_main
 from logilab.common.compat import sorted

@@ -6,7 +6,7 @@ Copyright Logilab 2002-2004, all rights reserved.
 
 __revision__ = "$Id: unittest_schema.py,v 1.15 2006-04-10 14:39:03 syt Exp $"
 
-import unittest, sys
+from logilab.common.testlib import TestCase, unittest_main
 
 from yams.builder import EntityType, RelationType, RelationDefinition
 
@@ -16,7 +16,7 @@ from yams.schema import *
 # build a dummy schema ########################################################
 
 
-class BaseSchemaTC(unittest.TestCase):
+class BaseSchemaTC(TestCase):
     def setUp(self):
         global schema, enote, eaffaire, eperson, esociete, estring, eint
         global rconcerne, rnom
@@ -338,7 +338,7 @@ class SchemaTC(BaseSchemaTC):
 ##                 r = RelationInstance(rschema, e1, e2)
 ##                 self.assertRaises(InvalidRelation, r.check)
 
-class SymetricTC(unittest.TestCase):
+class SymetricTC(TestCase):
     def setUp(self):
         global schema
         schema = Schema('Test Schema')
@@ -378,4 +378,4 @@ class SymetricTC(unittest.TestCase):
                            ('Story', ['Bug', 'Project', 'Story'])])
         
 if __name__ == '__main__':
-    unittest.main()
+    unittest_main()
