@@ -8,8 +8,7 @@ from __future__ import generators
 
 __revision__ = "$Id: unittest_sqlschema.py,v 1.9 2006-03-30 19:50:56 syt Exp $"
 
-import unittest
-import sys
+from logilab.common.testlib import TestCase, unittest_main
 
 from yams.constraints import SizeConstraint
 from yams.reader import EntityType
@@ -29,7 +28,7 @@ class DummyLoader:
         self._defs.append(defobject)
 
         
-class SQLSchemaReaderClassTest(unittest.TestCase):
+class SQLSchemaReaderClassTest(TestCase):
     """test suite for sql schema readers"""
     
     def setUp(self):
@@ -135,4 +134,4 @@ class SQLSchemaReaderClassTest(unittest.TestCase):
         
         
 if __name__ == '__main__':
-    unittest.main()
+    unittest_main()

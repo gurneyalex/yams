@@ -7,10 +7,9 @@ http://www.logilab.fr/ -- mailto:contact@logilab.fr
 
 __revision__ = "$Id: unittest_schema2sql.py,v 1.9 2006-03-20 09:36:41 syt Exp $"
 
-import unittest, sys
 from cStringIO import StringIO
 
-from logilab.common import testlib
+from logilab.common.testlib import TestCase, unittest_main
 
 from yams import SchemaLoader
 from yams.schema2sql import schema2sql
@@ -183,7 +182,7 @@ CREATE TABLE pkginfo(
 );
 """
 
-class SQLSchemaTC(testlib.TestCase):
+class SQLSchemaTC(TestCase):
     
     def test_known_values(self):
         output = StringIO()
@@ -202,4 +201,4 @@ class SQLSchemaTC(testlib.TestCase):
 
         
 if __name__ == '__main__':
-    unittest.main()
+    unittest_main()
