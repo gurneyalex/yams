@@ -119,9 +119,17 @@ class PyFileReader(FileReader):
                '_': str,
                }
     context.update(CONSTRAINTS)
-    
+
+    def __init__(self, *args, **kwargs):
+        super(PyFileReader, self).__init__(*args, **kwargs)
+        self._loaded = {}
+
     def read_file(self, filepath):
-        for name, obj in self.exec_file(filepath).items():
+        try:
+            fdata = self._loaded[filepath]
+        except KeyError:
+            fdata = self.exec_file(filepath)
+        for name, obj in fdata.items():
             if name.startswith('_'):
                 continue
             try:
@@ -131,17 +139,22 @@ class PyFileReader(FileReader):
                 continue
         
     def import_schema(self, schemamod):
-        filepath = self.loader.include_schema_files(schemamod)[0]
-        return attrdict(self.exec_file(filepath))
+        filepath = self.loader.include_schema_files(schemamod)[0]            
+        try:
+            return self._loaded[filepath]
+        except KeyError:
+            return self.exec_file(filepath)
     
     def exec_file(self, filepath):
+        #partname = self._partname(filepath)
         flocals = self.context.copy()
         flocals['import_schema'] = self.import_schema
         execfile(filepath, flocals)
         for key in self.context:
             del flocals[key]
         del flocals['import_schema']
-        return flocals
+        self._loaded[filepath] = attrdict(flocals)
+        return self._loaded[filepath]
 
 class attrdict(dict):
     """a dictionary whose keys are also accessible as attributes"""

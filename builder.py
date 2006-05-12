@@ -68,11 +68,13 @@ class Definition(object):
 
 
 class EntityType(Definition):
-    relations = []
+    #relations = []
     
     def __init__(self, *args, **kwargs):
         super(EntityType, self).__init__(*args, **kwargs)
-        self.relations = self.relations[:]
+        if not hasattr(self, 'relations'):
+            self.relations = []
+        #self.relations = self.relations[:]
     
     def register_relations(self, schema):
         order = 1
@@ -138,7 +140,9 @@ class RelationDefinition(RelationBase):
         assert self.subject and self.object
         self.add_relations(schema)
         
-
+    def __repr__(self):
+        return '%(subject)s %(name)s %(object)s' % self.__dict__
+    
 class ObjectRelation(object):
     cardinality = None
     constraints = ()
@@ -150,6 +154,9 @@ class ObjectRelation(object):
         self.constraints = list(self.constraints)
         self.__dict__.update(kwargs)
 
+    def __repr__(self):
+        return '%(name)s %(etype)s' % self.__dict__
+    
         
 class SubjectRelation(ObjectRelation):
     uid = False
@@ -157,6 +164,9 @@ class SubjectRelation(ObjectRelation):
     fulltextindexed = False
     internationalizable = False
     default = None
+    
+    def __repr__(self):
+        return '%(etype)s %(name)s' % self.__dict__
     
 
 class MetaEntityType(EntityType):
