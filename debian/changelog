@@ -1,3 +1,11 @@
+yams (0.5.1-2) unstable; urgency=low
+
+  * updated standards to 3.7.2
+  * added proper Uploaders field
+  * use debhelper 5
+
+ --
+
 yams (0.5.1-1) unstable; urgency=low
 
   * new upstream release
