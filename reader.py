@@ -80,7 +80,7 @@ class RelationFileReader(FileReader):
         self.loader.add_definition(self, rdef)
 
     def handle_constraint(self, rdef, constraint_text):
-        """handle an arbitrary constraint on a relation, should be overriden for
+        """handle an arbitrary constraint on a relation, should be overridden for
         application specific stuff
         """
         self.error("this reader doesn't handle constraint")
