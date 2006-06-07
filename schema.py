@@ -287,9 +287,6 @@ class EntitySchema(ERSchema):
     
     def defaults(self):
         """return the list of (attribute name, default value)
-        
-        Warning: the default value may be a callable that the caller has
-        the responsability to call to get the effective default value
         """
         assert not self.is_final()
         for rschema in self.ordered_relations():
@@ -305,7 +302,13 @@ class EntitySchema(ERSchema):
         if callable(default):
             default = default()
         if default is not None:
-            default = unicode(default)
+            attrtype = self.destination_type(rtype)
+            if attrtype == 'Boolean':
+                # XXX Int, Float...
+                if not isinstance(default, bool):
+                    default = default == 'True'
+            else:
+                default = unicode(default)
         return default
     
     def constraints(self, rtype):
