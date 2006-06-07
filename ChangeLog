@@ -1,6 +1,9 @@
 ChangeLog for yams 
 ------------------
 
+ --
+    * fix eschema.default method to deal with boolean default values stored as string
+
 2006-04-27  --  0.4.3
     * some fixes related to dynamic schema modification
 
