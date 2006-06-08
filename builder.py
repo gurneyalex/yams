@@ -92,10 +92,10 @@ class EntityType(Definition):
                 rdef = RelationDefinition(subject=relation.etype, name=relation.name,
                                           object=self.name, order=order,
                                           **kwargs)
+                order += 1
             else:
                 raise BadSchemaDefinition('duh?')
             rdef.add_relations(schema)
-            order += 1
     
 class RelationBase(Definition):
     cardinality = None
