@@ -68,13 +68,11 @@ class Definition(object):
 
 
 class EntityType(Definition):
-    #relations = []
     
     def __init__(self, *args, **kwargs):
         super(EntityType, self).__init__(*args, **kwargs)
         if not hasattr(self, 'relations'):
             self.relations = []
-        #self.relations = self.relations[:]
     
     def register_relations(self, schema):
         order = 1
@@ -109,7 +107,7 @@ class RelationBase(Definition):
             return
         cardinality = self.cardinality
         if cardinality is None:
-            if self.object in BASE_TYPES: # XXX 1 instead of ? if not null constraint
+            if self.object in BASE_TYPES:
                 self.cardinality = '?1'
             else:
                 self.cardinality = '**'
