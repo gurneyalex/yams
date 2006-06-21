@@ -170,6 +170,10 @@ def check_string(eschema, value):
     """check value is an unicode string"""
     return isinstance(value, unicode)
     
+def check_password(eschema, value):
+    """check value is an encoded string"""
+    return isinstance(value, str)
+    
 def check_int(eschema, value):
     """check value is an integer"""
     try:
@@ -206,6 +210,6 @@ BASE_CHECKERS = {
     'Int' :      check_int,
     'Float' :    check_float,
     'Boolean' :  check_boolean,
-    'Password' : check_string,
+    'Password' : check_password,
     'Bytes' :    check_file,
     }
