@@ -1,6 +1,9 @@
 ChangeLog for yams 
 ------------------
 
+ --
+    * check password value is an encoded string
+
 2006-06-08  --  0.5.2
     * fix eschema.default method to deal with boolean default values stored as string
 
