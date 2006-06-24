@@ -330,54 +330,46 @@ class EntitySchema(ERSchema):
                                  (rtype, self.type))
         return constraint.vocabulary()
     
-    
-    def check(self, entity):
+    def check(self, entity, creation=False):
         """check the entity and raises an InvalidEntity exception if it
         contains some invalid fields (ie some constraints failed)
         """
         assert not self.is_final()
-        # FIXME: for now, the given entity may not be complete so we should only
-        # check available attributes (except for newly created entity ?), and
-        # optionnaly fetch required data (need a connexion to the repo for that)
-        errors = []
+        errors = {}
+        etype = self.type
         for rschema in self.ordered_relations():
+            if not rschema.is_final():
+                continue
             rtype = rschema.type
-            if rschema.is_final():
-                constraints = rschema.rproperty(self.type,
-                                                self.destination_type(rtype),
-                                                'constraints')
-                # check value according to their type
-                try:
-                    value = entity[rtype]
-                except KeyError:
-                    # FIXME value = None would be more appropriate
-                    # i think we are historicaly doing "continue" to speed
-                    # check of a partial entity (ie don't search for non given
-                    # attributes in the sources
-                    continue
-                # skip other constraint if value is None and None is allowed
-                # (ie no subject cardinality is '?' and not '1' in the list)
-                eschema = rschema.objects(entity.e_type)[0]
-                if value is None:
-                    cardinality = rschema.rproperty(self.type, eschema.type,
-                                                    'cardinality')
-                    if cardinality[0] == '?':
-                        break
-                if not eschema.check_value(value):
-                    msg = 'incorrect value %r for type %s' % (value,
-                                                              eschema.type)
-                    errors.append(msg)
-                    continue
-            else:                
-                value = None
-                constraints = [] # XXX
+            aschema = self.schema[self.destination_type(rtype)]
+            # don't care about rhs cardinality, always '*' (if it make senses)
+            card = rschema.rproperty(etype, aschema.type, 'cardinality')[0]
+            assert card in '?1'
+            required = card == '1'
+            # check value according to their type
+            try:
+                value = entity[rtype]
+            except KeyError:
+                if creation and required:
+                    # missing required attribute with no default on creation
+                    # is not autorized
+                    errors[rtype] = 'missing attribute'
+                # on edition, missing attribute is considered as no changes
+                continue
+            # skip other constraint if value is None and None is allowed
+            if value is None and not required:
+                break
+            if not aschema.check_value(value):
+                errors[rtype] = 'incorrect value %r for type %s' % (value,
+                                                                    aschema.type)
+                continue
             # check arbitrary constraints
-            for constraint in constraints:
+            for constraint in rschema.rproperty(etype, aschema.type,
+                                                'constraints'):
                 if not constraint.check(entity, rtype, value):
-                    errors.append('%s constraint failed for %s' % (constraint,
-                                                                   rtype))
+                    errors[rtype] = '%s constraint failed' % constraint
         if errors:
-            raise InvalidEntity(entity, '\n'.join(errors))
+            raise InvalidEntity(entity, errors)
 
     def check_value(self, value):
         """check the value of a final entity (ie a const value)"""
