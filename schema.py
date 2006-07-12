@@ -8,8 +8,9 @@
 
 from __future__ import generators
 
-__revision__ = "$Id: schema.py,v 1.35 2006-04-10 14:38:59 syt Exp $"
 __docformat__ = "restructuredtext en"
+
+from mx.DateTime import today, now
 
 from logilab.common import cached
 from logilab.common.compat import sorted
@@ -20,6 +21,10 @@ from yams.interfaces import ISchema, IRelationSchema, IEntitySchema, \
      IVocabularyConstraint
 from yams.constraints import BASE_CHECKERS
 from yams.builder import BASE_TYPES, EntityType
+
+KEYWORD_MAP = {'NOW' : now,
+               'TODAY': today,
+               }
 
 
 class ERSchema(object):
@@ -307,6 +312,8 @@ class EntitySchema(ERSchema):
                 # XXX Int, Float...
                 if not isinstance(default, bool):
                     default = default == 'True'
+            elif attrtype in ('Date', 'Datetime'):
+                default = KEYWORD_MAP[default.upper()]()
             else:
                 default = unicode(default)
         return default
