@@ -5,15 +5,58 @@ __revision__ = "$Id: builder.py,v 1.6 2006-04-10 14:38:59 syt Exp $"
 __docformat__ = "restructuredtext en"
 __metaclass__ = type
 
-from logilab.common.compat import set
+from logilab.common.compat import set, sorted
 from yams import BadSchemaDefinition
 
 BASE_TYPES = set(('String', 'Int', 'Float', 'Boolean', 'Date',
                   'Time', 'Datetime', 'Password', 'Bytes'))
 
 
-class Definition(object):
+class ObjectRelation(object):
+    cardinality = None
+    constraints = ()
+    created = 0
+    
+    def __init__(self, etype, **kwargs):
+        self.name = '<undefined>'
+        self.etype = etype
+        ObjectRelation.created += 1
+        self.creation_rank = ObjectRelation.created
+        self.constraints = list(self.constraints)
+        self.__dict__.update(kwargs)
+
+    def __repr__(self):
+        return '%(name)s %(etype)s' % self.__dict__
+    
+        
+class SubjectRelation(ObjectRelation):
+    uid = False
+    indexed = False
+    fulltextindexed = False
+    internationalizable = False
+    default = None
+    
+    def __repr__(self):
+        return '%(etype)s %(name)s' % self.__dict__
+    
+
+
+class metadefinition(type):
+
+    def __new__(mcs, name, bases, classdict):
+        relations = []
+        for attrname, attrvalue in classdict.items():
+            if isinstance(attrvalue, ObjectRelation):
+                relations.append(attrvalue)
+                attrvalue.name = attrname
+        classdict['relations'] = sorted(relations, key=lambda x:x.creation_rank)
+        return type.__new__(mcs, name, bases, classdict)
+
+
+class Definition:
     """abstract class for entity / relation definition classes"""
+
+    __metaclass__ = metadefinition
     
     meta = False
     name = None
@@ -65,6 +108,7 @@ class Definition(object):
             if eschema.is_final():
                 continue
             yield eschema.type
+
 
 
 class EntityType(Definition):
@@ -140,31 +184,6 @@ class RelationDefinition(RelationBase):
         
     def __repr__(self):
         return '%(subject)s %(name)s %(object)s' % self.__dict__
-    
-class ObjectRelation(object):
-    cardinality = None
-    constraints = ()
-    
-    def __init__(self, relations, rname, etype, **kwargs):
-        relations.append(self)
-        self.name = rname
-        self.etype = etype
-        self.constraints = list(self.constraints)
-        self.__dict__.update(kwargs)
-
-    def __repr__(self):
-        return '%(name)s %(etype)s' % self.__dict__
-    
-        
-class SubjectRelation(ObjectRelation):
-    uid = False
-    indexed = False
-    fulltextindexed = False
-    internationalizable = False
-    default = None
-    
-    def __repr__(self):
-        return '%(etype)s %(name)s' % self.__dict__
     
 
 class MetaEntityType(EntityType):

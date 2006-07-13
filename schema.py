@@ -561,8 +561,8 @@ class RelationSchema(ERSchema):
     def init_rproperties(self, subjecttype, objecttype, rdef):
         key = subjecttype, objecttype
         if key in self._rproperties:
-            msg = '%s already defined for %s'
-            raise BadSchemaDefinition(msg % (key, self.type))
+            msg = '%s already defined for %s' % (key, self.type)
+            raise BadSchemaDefinition(msg)
         self._rproperties[key] = {}
         for prop, default in self.rproperty_defs(key[1]):
             self._rproperties[key][prop] = getattr(rdef, prop, default)

@@ -3,18 +3,14 @@ class State(MetaUserEntityType):
     """used to associate simple states to an entity
     type and/or to define workflows
     """
-    relations = []
-
-    SubjectRelation(relations, 'eid', 'Int', cardinality='11', uid=True)
-    SubjectRelation(relations, 'name', 'String', cardinality='11',
-                    indexed=True, internationalizable=True,
-                    constraints=[SizeConstraint(256)])
-    SubjectRelation(relations, 'description', 'String', 
-                    fulltextindexed=True)
-    
-    SubjectRelation(relations, 'state_of', 'Eetype', cardinality='+*')
-    SubjectRelation(relations, 'next_state', 'State', cardinality='**')
-    ObjectRelation(relations, 'initial_state', 'Eetype', cardinality='?*')
+    eid = SubjectRelation('Int', cardinality='11', uid=True)
+    name = SubjectRelation('String', cardinality='11',
+                           indexed=True, internationalizable=True,
+                           constraints=[SizeConstraint(256)])
+    description = SubjectRelation('String',  fulltextindexed=True)
+    state_of = SubjectRelation('Eetype', cardinality='+*')
+    next_state = SubjectRelation('State', cardinality='**')
+    initial_state = ObjectRelation('Eetype', cardinality='?*')
 
 
 class state_of(RelationType):
@@ -35,12 +31,9 @@ class initial_state(MetaUserRelationType):
     
 class Eetype(MetaEntityType):
     """define an entity type, used to build the application schema"""
-    relations = []
-    
-    SubjectRelation(relations, 'name', 'String', cardinality='11',
-                    indexed=True, internationalizable=True,
-                    constraints=[UniqueConstraint(), SizeConstraint(64)])
-    SubjectRelation(relations, 'description', 'String', 
-                    fulltextindexed=True)
-    SubjectRelation(relations, 'meta', 'Boolean')
-    SubjectRelation(relations, 'final', 'Boolean')
+    name = SubjectRelation('String', cardinality='11',
+                           indexed=True, internationalizable=True,
+                           constraints=[UniqueConstraint(), SizeConstraint(64)])
+    description = SubjectRelation('String',  fulltextindexed=True)
+    meta = SubjectRelation('Boolean')
+    final = SubjectRelation('Boolean')
