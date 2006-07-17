@@ -1,7 +1,7 @@
 ChangeLog for yams 
 ------------------
 
- --
+2006-07-13  --  0.5.3
     * enhance schema validation (focus on attributes only)
     * check password value is an encoded string
 

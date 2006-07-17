@@ -1,5 +1,5 @@
-usr/lib/site-python
-usr/lib/site-python/yams
+usr/lib/python2.4/site-packages
+usr/lib/python2.4/site-packages/yams
 usr/share/doc/python-yams
 usr/share/doc/python-yams
 usr/share/doc/python-yams/test
