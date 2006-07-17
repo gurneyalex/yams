@@ -23,7 +23,7 @@ __revision__ = "$Id: __pkginfo__.py,v 1.18 2006-04-10 15:29:18 syt Exp $"
 modname = 'yams'
 
 # release version
-numversion = [0, 5, 2]
+numversion = [0, 5, 3]
 version = '.'.join([str(num) for num in numversion])
 
 # license and copyright
@@ -55,4 +55,4 @@ ftp = "ftp://ftp.logilab.org/pub/%s" % modname
 # is there some directories to include with the source installation
 include_dirs = []
 
-pyversions = ['2.2', '2.3']
+pyversions = ['2.2', '2.3', '2.4']

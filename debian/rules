@@ -36,10 +36,9 @@ install: build
 	dh_testroot
 	dh_clean -k
 	dh_installdirs
-	python setup.py -q install_lib --no-compile --install-dir=debian/python-yams/usr/lib/site-python
-	python setup.py -q install_headers --install-dir=debian/python-yams/usr/include/
+	python setup.py -q install --no-compile --prefix=debian/python-yams/usr/ --install-headers=debian/python-yams/usr/include/
 	# remove test directory (installed in a separated package)
-	rm -rf debian/python-yams/usr/lib/site-python/yams/test
+	rm -rf debian/python-yams/usr/lib/python*/site-packages/yams/test
 	# install tests
 	(cd test && find . -type f -not \( -path '*/CVS/*' -or -name '*.pyc' \) -exec install -D --mode=644 {} ../debian/python-yams/usr/share/doc/python-yams/test/{} \;)
 
@@ -49,6 +48,8 @@ binary-indep: build install
 	dh_testdir 
 	dh_testroot 
 	dh_install -i
+	dh_pycentral -i 
+	dh_python -i
 	gzip -9 -c ChangeLog > changelog.gz
 	dh_installchangelogs -i
 	dh_installexamples -i
@@ -65,5 +66,5 @@ binary-indep: build install
 
 
 binary: binary-indep
-.PHONY: build clean binary binary-indep
+.PHONY: build clean binary binary-indep binary-arch
 
