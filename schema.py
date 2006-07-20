@@ -26,7 +26,6 @@ KEYWORD_MAP = {'NOW' : now,
                'TODAY': today,
                }
 
-
 class ERSchema(object):
     """common base class to entity and relation schema
     """
@@ -54,7 +53,7 @@ class ERSchema(object):
         :type groups: list
         :param groups: the groups with the given permission
         """
-        assert type(groups) is type(())
+        assert type(groups) is tuple
         assert action in self.ACTIONS, action
         self._groups[action] = groups
     
@@ -561,8 +560,8 @@ class RelationSchema(ERSchema):
     def init_rproperties(self, subjecttype, objecttype, rdef):
         key = subjecttype, objecttype
         if key in self._rproperties:
-            msg = '%s already defined for %s'
-            raise BadSchemaDefinition(msg % (key, self.type))
+            msg = '%s already defined for %s' % (key, self.type)
+            raise BadSchemaDefinition(msg)
         self._rproperties[key] = {}
         for prop, default in self.rproperty_defs(key[1]):
             self._rproperties[key][prop] = getattr(rdef, prop, default)

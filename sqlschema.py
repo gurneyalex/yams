@@ -55,7 +55,9 @@ class EsqlFileReader(FileReader):
         typeattrs = match.group('type_attrs')
         ftype, baseconstraints, options = self.sql_to_constraints(name, sqltype,
                                                                   typeattrs)
-        rdef = SubjectRelation(self._edef.relations, name, ftype)
+        rdef = SubjectRelation(ftype)
+        rdef.name = name
+        self._edef.relations.append(rdef)
         rdef.constraints = baseconstraints
         if options & FTI:
             rdef.fulltextindexed = True
