@@ -11,6 +11,14 @@ from yams import BadSchemaDefinition
 BASE_TYPES = set(('String', 'Int', 'Float', 'Boolean', 'Date',
                   'Time', 'Datetime', 'Password', 'Bytes'))
 
+__all__ = ('ObjectRelation', 'SubjectRelation', 'BothWayRelation',
+           'RelationDefinition', 'EntityType', 'MetaEntityType',
+           'UserEntityType', 'MetaUserEntityType', 'RelationType',
+           'MetaRelationType', 'UserRelationType', 'MetaUserRelationType',
+           'AttributeRelationType', 'MetaAttributeRelationType',
+           'SubjectRelation', 'ObjectRelation', 'BothWayRelation',
+           ) + tuple(BASE_TYPES)
+
 
 # \(Object\|Subject\)Relation(relations, '\([a-z_A-Z]+\)',
 # -->
@@ -52,6 +60,27 @@ class BothWayRelation(object):
         assert isinstance(objectrel, ObjectRelation)
         self.subjectrel = subjectrel
         self.objectrel = objectrel
+
+
+class AbstractTypedAttribute(SubjectRelation):
+    """AbstractTypedAttribute is not directly instantiable
+    
+    subclasses must provide a <etype> attribute to be instantiable
+    """
+    def __init__(self, **kwargs):
+        required = kwargs.pop('required', False)
+        if required:
+            cardinality = '11'
+        else:
+            cardinality = '?1'
+        kwargs['cardinality'] = cardinality
+        # use the etype attribute provided by subclasses
+        super(AbstractTypedAttribute, self).__init__(self.etype, **kwargs)
+
+# build a specific class for each base type
+for basetype in BASE_TYPES:
+    globals()[basetype] = type(basetype, (AbstractTypedAttribute,),
+                               {'etype' : basetype})
 
 
 class Definition(object):
@@ -112,26 +141,10 @@ class Definition(object):
 
 
 class metadefinition(type):
-    
-    # This is a property of the metaclass which means it will behave
-    # as a getter for the attribute <relations> of all instances of
-    # metadefinition
-##     def relations(cls):
-##         if hasattr(cls, '_relations'):
-##             return cls._relations
-##         rels = []
-##         for attrname in dir(cls):
-##             attrvalue = getattr(cls, attrname)
-##             if isinstance(attrvalue, ObjectRelation):
-##                 attrvalue.name = attrname
-##                 rels.append(attrvalue)
-##         cls._relations = sorted(rels, key=lambda x: x.creation_rank)
-##         return cls._relations
-##     relations = property(relations)
-
-
+    """this metaclass builds the __relations__ attribute
+    of EntityType's subclasses
+    """
     def __new__(mcs, name, bases, classdict):
-        # XXX: need to handle base classes
         rels = []
         for attrname, attrvalue in classdict.items():
             if isinstance(attrvalue, ObjectRelation):
@@ -141,6 +154,7 @@ class metadefinition(type):
                 # to avoid conflicts with instance's potential attributes
                 del classdict[attrname]
             elif isinstance(attrvalue, BothWayRelation):
+                # BothWayRelation
                 subjectrel = attrvalue.subjectrel
                 objectrel = attrvalue.objectrel
                 subjectrel.name = attrname
@@ -148,6 +162,7 @@ class metadefinition(type):
                 rels.append(subjectrel)
                 rels.append(objectrel)
                 del classdict[attrname]
+        # take baseclases' relation into account
         for base in bases:
             rels.extend(getattr(base, '__relations__', []))
         classdict['__relations__'] = sorted(rels, key=lambda r:r.creation_rank)

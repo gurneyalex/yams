@@ -21,7 +21,7 @@ from logilab.common.textutils import get_csv
 
 from yams import UnknownType, BadSchemaDefinition
 from yams import constraints, schema as schemamod
-from yams.builder import *
+from yams import builder
 
                 
 def read_perms_def(schema, filepath):
@@ -43,9 +43,9 @@ def read_perms_def(schema, filepath):
 
 # .rel and .py formats file readers ###########################################
         
-class RelationFileReader(FileReader):
+class RelationFileReader(builder.FileReader):
     """read simple relation definitions files"""
-    rdefcls = RelationDefinition
+    rdefcls = builder.RelationDefinition
     
     def read_line(self, line):
         """read a relation definition:
@@ -99,26 +99,18 @@ for objname in dir(constraints):
     except TypeError:
         continue
 
-class PyFileReader(FileReader):
+
+def _builder_context():
+    """builds the context in which the schema files
+    will be executed
+    """
+    return dict([(attr, getattr(builder, attr))
+                 for attr in builder.__all__])
+
+class PyFileReader(builder.FileReader):
     """read schema definition objects from a python file"""
-    context = {'EntityType':           EntityType,
-               'MetaEntityType':       MetaEntityType,
-               'UserEntityType':       UserEntityType,
-               'MetaUserEntityType':   MetaUserEntityType,
-               
-               'RelationType':              RelationType,
-               'MetaRelationType':          MetaRelationType,
-               'UserRelationType':          UserRelationType,
-               'MetaUserRelationType':      MetaUserRelationType,
-               'AttributeRelationType':     AttributeRelationType,
-               'MetaAttributeRelationType': MetaAttributeRelationType,
-               
-               'SubjectRelation':      SubjectRelation,
-               'ObjectRelation':       ObjectRelation,
-               'BothWayRelation':      BothWayRelation,
-               'RelationDefinition':   RelationDefinition,
-               '_': str,
-               }
+    context = {'_' : str}
+    context.update(_builder_context())
     context.update(CONSTRAINTS)
 
     def __init__(self, *args, **kwargs):
@@ -134,7 +126,7 @@ class PyFileReader(FileReader):
             if name.startswith('_'):
                 continue
             try:
-                if issubclass(obj, Definition):
+                if issubclass(obj, builder.Definition):
                     self.loader.add_definition(self, obj())
             except TypeError:
                 continue
@@ -215,16 +207,16 @@ class SchemaLoader(object):
         schema = self.schemacls(name or 'NoName', directory)
         # register relation types and non final entity types
         for definition in self._defobjects:
-            if isinstance(definition, RelationType):
+            if isinstance(definition, builder.RelationType):
                 definition.rschema = schema.add_relation_type(definition)
-            elif isinstance(definition, EntityType):
+            elif isinstance(definition, builder.EntityType):
                 definition.eschema = schema.add_entity_type(definition)
         # register relation definitions
         for definition in self._defobjects:
-            if isinstance(definition, EntityType):
+            if isinstance(definition, builder.EntityType):
                 definition.register_relations(schema)
         for definition in self._defobjects:
-            if not isinstance(definition, EntityType):
+            if not isinstance(definition, builder.EntityType):
                 definition.register_relations(schema)
         # set permissions on entities and relations
         for erschema in schema.entities(schema=True)+schema.relations(schema=True):
@@ -277,7 +269,7 @@ class SchemaLoader(object):
 
     def add_definition(self, hdlr, defobject):
         """file handler callback to add a definition object"""
-        if not isinstance(defobject, Definition):
+        if not isinstance(defobject, builder.Definition):
             hdlr.error('invalid definition object')
         self._defobjects.append(defobject)
 
