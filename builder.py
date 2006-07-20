@@ -12,22 +12,27 @@ BASE_TYPES = set(('String', 'Int', 'Float', 'Boolean', 'Date',
                   'Time', 'Datetime', 'Password', 'Bytes'))
 
 
+# \(Object\|Subject\)Relation(relations, '\([a-z_A-Z]+\)',
+# -->
+# \2 = \1Relation(
+
 class ObjectRelation(object):
     cardinality = None
     constraints = ()
     created = 0
-    
+
     def __init__(self, etype, **kwargs):
-        self.name = '<undefined>'
-        self.etype = etype
         ObjectRelation.created += 1
         self.creation_rank = ObjectRelation.created
+        self.name = '<undefined>'
+        self.etype = etype
         self.constraints = list(self.constraints)
         self.__dict__.update(kwargs)
 
     def __repr__(self):
         return '%(name)s %(etype)s' % self.__dict__
-    
+
+
         
 class SubjectRelation(ObjectRelation):
     uid = False
@@ -38,26 +43,20 @@ class SubjectRelation(ObjectRelation):
     
     def __repr__(self):
         return '%(etype)s %(name)s' % self.__dict__
-    
 
 
-class metadefinition(type):
+class BothWayRelation(object):
 
-    def __new__(mcs, name, bases, classdict):
-        relations = []
-        for attrname, attrvalue in classdict.items():
-            if isinstance(attrvalue, ObjectRelation):
-                relations.append(attrvalue)
-                attrvalue.name = attrname
-        classdict['relations'] = sorted(relations, key=lambda x:x.creation_rank)
-        return type.__new__(mcs, name, bases, classdict)
+    def __init__(self, subjectrel, objectrel):
+        assert isinstance(subjectrel, SubjectRelation)
+        assert isinstance(objectrel, ObjectRelation)
+        self.subjectrel = subjectrel
+        self.objectrel = objectrel
 
 
-class Definition:
+class Definition(object):
     """abstract class for entity / relation definition classes"""
 
-    __metaclass__ = metadefinition
-    
     meta = False
     name = None
     subject, object = None, None
@@ -111,13 +110,60 @@ class Definition:
 
 
 
+
+class metadefinition(type):
+    
+    # This is a property of the metaclass which means it will behave
+    # as a getter for the attribute <relations> of all instances of
+    # metadefinition
+##     def relations(cls):
+##         if hasattr(cls, '_relations'):
+##             return cls._relations
+##         rels = []
+##         for attrname in dir(cls):
+##             attrvalue = getattr(cls, attrname)
+##             if isinstance(attrvalue, ObjectRelation):
+##                 attrvalue.name = attrname
+##                 rels.append(attrvalue)
+##         cls._relations = sorted(rels, key=lambda x: x.creation_rank)
+##         return cls._relations
+##     relations = property(relations)
+
+
+    def __new__(mcs, name, bases, classdict):
+        # XXX: need to handle base classes
+        rels = []
+        for attrname, attrvalue in classdict.items():
+            if isinstance(attrvalue, ObjectRelation):
+                attrvalue.name = attrname
+                rels.append(attrvalue)
+                # relation's name **must** be removed from class namespace
+                # to avoid conflicts with instance's potential attributes
+                del classdict[attrname]
+            elif isinstance(attrvalue, BothWayRelation):
+                subjectrel = attrvalue.subjectrel
+                objectrel = attrvalue.objectrel
+                subjectrel.name = attrname
+                objectrel.name = attrname
+                rels.append(subjectrel)
+                rels.append(objectrel)
+                del classdict[attrname]
+        for base in bases:
+            rels.extend(getattr(base, '__relations__', []))
+        classdict['__relations__'] = sorted(rels, key=lambda r:r.creation_rank)
+        return super(metadefinition, mcs).__new__(mcs, name, bases, classdict)
+    
+        
+        
 class EntityType(Definition):
+
+    __metaclass__ = metadefinition
     
     def __init__(self, *args, **kwargs):
         super(EntityType, self).__init__(*args, **kwargs)
-        if not hasattr(self, 'relations'):
-            self.relations = []
-    
+        # if not hasattr(self, 'relations'):
+        self.relations = list(self.__relations__)
+
     def register_relations(self, schema):
         order = 1
         for relation in self.relations:
@@ -138,6 +184,7 @@ class EntityType(Definition):
             else:
                 raise BadSchemaDefinition('duh?')
             rdef.add_relations(schema)
+
     
 class RelationBase(Definition):
     cardinality = None
