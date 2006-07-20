@@ -285,7 +285,7 @@ class Employee(Person):
     company = B.String()
 
 class Foo(B.EntityType):
-    i = B.Int()
+    i = B.Int(required=True)
     f = B.Float()
     d = B.Datetime()
     
@@ -302,9 +302,11 @@ class PySchemaTC(TestCase):
         
 
     def test_relationtype(self):
-        self.assertEquals([r.etype for r in Foo().relations],
+        foo = Foo()
+        self.assertEquals([r.etype for r in foo.relations],
                           ['Int', 'Float', 'Datetime'])
-        
+        self.assertEquals(foo.relations[0].cardinality, '11')
+        self.assertEquals(foo.relations[1].cardinality, '?1')
         
 
 if __name__ == '__main__':
