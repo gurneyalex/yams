@@ -1,9 +1,13 @@
 ChangeLog for yams 
 ------------------
 
+  --
+    * improved schema definition
+	
 2006-07-13  --  0.5.3
     * enhance schema validation (focus on attributes only)
     * check password value is an encoded string
+
 
 2006-06-08  --  0.5.2
     * fix eschema.default method to deal with boolean default values stored as string

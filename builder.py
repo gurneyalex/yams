@@ -5,16 +5,87 @@ __revision__ = "$Id: builder.py,v 1.6 2006-04-10 14:38:59 syt Exp $"
 __docformat__ = "restructuredtext en"
 __metaclass__ = type
 
-from logilab.common.compat import set
+from logilab.common.compat import set, sorted
 from yams import BadSchemaDefinition
 
 BASE_TYPES = set(('String', 'Int', 'Float', 'Boolean', 'Date',
                   'Time', 'Datetime', 'Password', 'Bytes'))
 
+__all__ = ('ObjectRelation', 'SubjectRelation', 'BothWayRelation',
+           'RelationDefinition', 'EntityType', 'MetaEntityType',
+           'UserEntityType', 'MetaUserEntityType', 'RelationType',
+           'MetaRelationType', 'UserRelationType', 'MetaUserRelationType',
+           'AttributeRelationType', 'MetaAttributeRelationType',
+           'SubjectRelation', 'ObjectRelation', 'BothWayRelation',
+           ) + tuple(BASE_TYPES)
+
+
+# \(Object\|Subject\)Relation(relations, '\([a-z_A-Z]+\)',
+# -->
+# \2 = \1Relation(
+
+class ObjectRelation(object):
+    cardinality = None
+    constraints = ()
+    created = 0
+
+    def __init__(self, etype, **kwargs):
+        ObjectRelation.created += 1
+        self.creation_rank = ObjectRelation.created
+        self.name = '<undefined>'
+        self.etype = etype
+        self.constraints = list(self.constraints)
+        self.__dict__.update(kwargs)
+
+    def __repr__(self):
+        return '%(name)s %(etype)s' % self.__dict__
+
+
+        
+class SubjectRelation(ObjectRelation):
+    uid = False
+    indexed = False
+    fulltextindexed = False
+    internationalizable = False
+    default = None
+    
+    def __repr__(self):
+        return '%(etype)s %(name)s' % self.__dict__
+
+
+class BothWayRelation(object):
+
+    def __init__(self, subjectrel, objectrel):
+        assert isinstance(subjectrel, SubjectRelation)
+        assert isinstance(objectrel, ObjectRelation)
+        self.subjectrel = subjectrel
+        self.objectrel = objectrel
+
+
+class AbstractTypedAttribute(SubjectRelation):
+    """AbstractTypedAttribute is not directly instantiable
+    
+    subclasses must provide a <etype> attribute to be instantiable
+    """
+    def __init__(self, **kwargs):
+        required = kwargs.pop('required', False)
+        if required:
+            cardinality = '11'
+        else:
+            cardinality = '?1'
+        kwargs['cardinality'] = cardinality
+        # use the etype attribute provided by subclasses
+        super(AbstractTypedAttribute, self).__init__(self.etype, **kwargs)
+
+# build a specific class for each base type
+for basetype in BASE_TYPES:
+    globals()[basetype] = type(basetype, (AbstractTypedAttribute,),
+                               {'etype' : basetype})
+
 
 class Definition(object):
     """abstract class for entity / relation definition classes"""
-    
+
     meta = False
     name = None
     subject, object = None, None
@@ -67,13 +138,47 @@ class Definition(object):
             yield eschema.type
 
 
+
+
+class metadefinition(type):
+    """this metaclass builds the __relations__ attribute
+    of EntityType's subclasses
+    """
+    def __new__(mcs, name, bases, classdict):
+        rels = []
+        for attrname, attrvalue in classdict.items():
+            if isinstance(attrvalue, ObjectRelation):
+                attrvalue.name = attrname
+                rels.append(attrvalue)
+                # relation's name **must** be removed from class namespace
+                # to avoid conflicts with instance's potential attributes
+                del classdict[attrname]
+            elif isinstance(attrvalue, BothWayRelation):
+                # BothWayRelation
+                subjectrel = attrvalue.subjectrel
+                objectrel = attrvalue.objectrel
+                subjectrel.name = attrname
+                objectrel.name = attrname
+                rels.append(subjectrel)
+                rels.append(objectrel)
+                del classdict[attrname]
+        # take baseclases' relation into account
+        for base in bases:
+            rels.extend(getattr(base, '__relations__', []))
+        classdict['__relations__'] = sorted(rels, key=lambda r:r.creation_rank)
+        return super(metadefinition, mcs).__new__(mcs, name, bases, classdict)
+    
+        
+        
 class EntityType(Definition):
+
+    __metaclass__ = metadefinition
     
     def __init__(self, *args, **kwargs):
         super(EntityType, self).__init__(*args, **kwargs)
-        if not hasattr(self, 'relations'):
-            self.relations = []
-    
+        # if not hasattr(self, 'relations'):
+        self.relations = list(self.__relations__)
+
     def register_relations(self, schema):
         order = 1
         for relation in self.relations:
@@ -94,6 +199,7 @@ class EntityType(Definition):
             else:
                 raise BadSchemaDefinition('duh?')
             rdef.add_relations(schema)
+
     
 class RelationBase(Definition):
     cardinality = None
@@ -140,31 +246,6 @@ class RelationDefinition(RelationBase):
         
     def __repr__(self):
         return '%(subject)s %(name)s %(object)s' % self.__dict__
-    
-class ObjectRelation(object):
-    cardinality = None
-    constraints = ()
-    
-    def __init__(self, relations, rname, etype, **kwargs):
-        relations.append(self)
-        self.name = rname
-        self.etype = etype
-        self.constraints = list(self.constraints)
-        self.__dict__.update(kwargs)
-
-    def __repr__(self):
-        return '%(name)s %(etype)s' % self.__dict__
-    
-        
-class SubjectRelation(ObjectRelation):
-    uid = False
-    indexed = False
-    fulltextindexed = False
-    internationalizable = False
-    default = None
-    
-    def __repr__(self):
-        return '%(etype)s %(name)s' % self.__dict__
     
 
 class MetaEntityType(EntityType):
