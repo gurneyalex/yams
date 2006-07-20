@@ -270,5 +270,28 @@ class SchemaLoaderTC(TestCase):
                            'delete': ('managers', 'owners',),
                            'update': ('managers', 'owners',)})
         
+
+from yams.builder import EntityType, SubjectRelation
+class PySchemaTC(TestCase):
+
+    def test_inheritance(self):
+        class BasePerson(EntityType):
+            firstname = SubjectRelation('String')
+            lastname = SubjectRelation('String')
+
+        class Person(BasePerson):
+            email = SubjectRelation('String')
+
+        class Employee(Person):
+            company = SubjectRelation('String')
+
+        bp = BasePerson()
+        p = Person()
+        e = Employee()
+        self.assertEquals([r.name for r in bp.relations], ['firstname', 'lastname'])
+        self.assertEquals([r.name for r in p.relations], ['firstname', 'lastname', 'email'])
+        self.assertEquals([r.name for r in e.relations], ['firstname', 'lastname', 'email', 'company'])
+        
+
 if __name__ == '__main__':
     unittest_main()

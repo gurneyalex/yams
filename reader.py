@@ -115,6 +115,7 @@ class PyFileReader(FileReader):
                
                'SubjectRelation':      SubjectRelation,
                'ObjectRelation':       ObjectRelation,
+               'BothWayRelation':      BothWayRelation,
                'RelationDefinition':   RelationDefinition,
                '_': str,
                }
