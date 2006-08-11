@@ -55,4 +55,4 @@ ftp = "ftp://ftp.logilab.org/pub/%s" % modname
 # is there some directories to include with the source installation
 include_dirs = []
 
-pyversions = ['2.2', '2.3', '2.4']
+pyversions = ['2.3', '2.4']
