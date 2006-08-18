@@ -244,7 +244,12 @@ class EntitySchema(ERSchema):
         """convenience method to access a property of a subject relation"""
         rschema = self.subject_relation(rtype)
         return rschema.rproperty(self.type, self.destination_type(rtype), prop)
-    
+
+    def set_rproperty(self, rtype, prop, value):
+        """convenience method to set the value of a property of a subject relation"""
+        rschema = self.subject_relation(rtype)
+        return rschema.set_rproperty(self.type, self.destination_type(rtype), prop, value)
+
     def rproperties(self, rtype):
         """convenience method to access properties of a subject relation"""
         rschema = self.schema.rschema(rtype)
