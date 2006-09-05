@@ -3,7 +3,10 @@ ChangeLog for yams
 
   --
     * improved schema definition
-	
+    * support for comments (lines beginning with a #) in Include file
+	* new internal dictionary to ease definition of non final relation
+	  properties
+
 2006-07-13  --  0.5.3
     * enhance schema validation (focus on attributes only)
     * check password value is an encoded string
