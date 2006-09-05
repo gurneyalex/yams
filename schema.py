@@ -408,6 +408,7 @@ class RelationSchema(ERSchema):
                     'constraints': (),
                     'order': 0,
                     'description': ''}
+    _NONFINAL_RPROPERTIES = {}
     _FINAL_RPROPERTIES = {'default': None,
                           'uid': False,
                           'indexed': False}
@@ -535,7 +536,7 @@ class RelationSchema(ERSchema):
         """
         basekeys = self._RPROPERTIES.items()
         if not self.is_final():
-            return basekeys
+            return basekeys + self._NONFINAL_RPROPERTIES.items()
         basekeys += self._FINAL_RPROPERTIES.items()
         if desttype != 'String':
             return basekeys

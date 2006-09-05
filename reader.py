@@ -231,6 +231,8 @@ class SchemaLoader(object):
                 continue
             if filename.lower() == 'include':
                 for etype in lines(join(base_directory, filename)):
+                    if etype.startswith('#'):
+                        continue
                     for filepath in self.include_schema_files(etype):
                         result.append(filepath)
                 continue
