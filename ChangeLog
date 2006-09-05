@@ -1,7 +1,7 @@
 ChangeLog for yams 
 ------------------
 
-  --
+2006-09-05  --  0.6.0
     * improved schema definition
     * support for comments (lines beginning with a #) in Include file
 	* new internal dictionary to ease definition of non final relation

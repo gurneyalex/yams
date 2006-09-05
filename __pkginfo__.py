@@ -23,7 +23,7 @@ __revision__ = "$Id: __pkginfo__.py,v 1.18 2006-04-10 15:29:18 syt Exp $"
 modname = 'yams'
 
 # release version
-numversion = [0, 5, 3]
+numversion = [0, 6, 0]
 version = '.'.join([str(num) for num in numversion])
 
 # license and copyright
