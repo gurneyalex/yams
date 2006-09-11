@@ -1,6 +1,9 @@
 ChangeLog for yams 
 ------------------
 
+2006-09-11  --  0.6.1
+    * consider meta when a relation type is implicitly created
+
 2006-09-05  --  0.6.0
     * improved schema definition
     * support for comments (lines beginning with a #) in Include file
