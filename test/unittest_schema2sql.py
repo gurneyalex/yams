@@ -5,14 +5,16 @@ Copyright Logilab 2002-2005, all rights reserved.
 http://www.logilab.fr/ -- mailto:contact@logilab.fr
 """
 
-__revision__ = "$Id: unittest_schema2sql.py,v 1.9 2006-03-20 09:36:41 syt Exp $"
-
 from cStringIO import StringIO
 
 from logilab.common.testlib import TestCase, unittest_main
 
 from yams import SchemaLoader
 from yams.schema2sql import schema2sql
+
+import os.path as osp
+
+DATADIR = osp.abspath(osp.join(osp.dirname(__file__),'data'))
 
 class DummyDefaultHandler:
 
@@ -25,7 +27,7 @@ class DummyDefaultHandler:
     def vocabulary_debian_handler(self):
         return ['machin', 'bidule']
 
-schema = SchemaLoader().load('data', default_handler=DummyDefaultHandler())
+schema = SchemaLoader().load(DATADIR, default_handler=DummyDefaultHandler())
 
 EXPECTED_DATA_DROP = """
 DROP TABLE Affaire;
