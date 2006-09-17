@@ -1,13 +1,14 @@
 """unittests for schema2dot"""
 
-__revision__ = '$Id: unittest_schema2dot.py,v 1.5 2006-03-17 18:17:54 syt Exp $'
-
 from logilab.common.testlib import TestCase, unittest_main
 from logilab.common.compat import set
 
 from yams import SchemaLoader
 from yams import schema2dot
 
+import os.path as osp
+
+DATADIR = osp.abspath(osp.join(osp.dirname(__file__),'data'))
 
 class DummyDefaultHandler:
 
@@ -20,14 +21,14 @@ class DummyDefaultHandler:
     def vocabulary_debian_handler(self):
         return ['machin', 'bidule']
 
-schema = SchemaLoader().load('data', default_handler=DummyDefaultHandler())
+schema = SchemaLoader().load(DATADIR, default_handler=DummyDefaultHandler())
 
 DOT_SOURCE = """digraph Schema {
 rankdir=BT
 ratio=compress
 size="12,30"
-Societe [label="Societe"];
 Person [label="Person"];
+Societe [label="Societe"];
 edge [label="travaille"];
 Person -> Societe
 }"""
