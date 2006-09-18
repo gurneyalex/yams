@@ -106,7 +106,7 @@ class Definition(object):
             rschema = schema.rschema(self.name)
         except KeyError:
             # .rel file compat: the relation type may have not been added
-            rtype = RelationType(name=self.name, symetric=self.symetric, meta=self.meta)
+            rtype = RelationType(**self.__dict__)
             rschema = schema.add_relation_type(rtype)
         for subj in self._actual_types(schema, self.subject):
             for obj in self._actual_types(schema, self.object):

@@ -64,6 +64,10 @@ class RelationFileReader(builder.FileReader):
         except TypeError:
             self.error('bad syntax')
         rdef = self.rdefcls(_from, rtype, _to)
+        self.process_properties(rdef, relation_def)
+        self.loader.add_definition(self, rdef)
+
+    def process_properties(self, rdef, relation_def):
         if 'symetric' in relation_def:
             rdef.symetric = True
             relation_def.remove('symetric')
@@ -77,8 +81,7 @@ class RelationFileReader(builder.FileReader):
                 self.handle_constraint(rdef, ' '.join(relation_def[1:]))
             else:
                 self.error()
-        self.loader.add_definition(self, rdef)
-
+        
     def handle_constraint(self, rdef, constraint_text):
         """handle an arbitrary constraint on a relation, should be overridden for
         application specific stuff
