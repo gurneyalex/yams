@@ -3,15 +3,15 @@
 Copyright Logilab 2003-2006, all rights reserved.
 """
 
-__revision__ = "$Id: unittest_schema_readers.py,v 1.11 2006-04-10 14:39:03 syt Exp $"
-
-from os.path import join, isabs, basename
 from logilab.common.testlib import TestCase, unittest_main
 from logilab.common.compat import sorted
 
 from yams.schema import Schema, EntitySchema
 from yams.reader import SchemaLoader, RelationFileReader
 
+import os.path as osp
+
+DATADIR = osp.abspath(osp.join(osp.dirname(__file__),'data'))
 
 class DummyDefaultHandler:
 
@@ -24,7 +24,7 @@ class DummyDefaultHandler:
     def vocabulary_debian_handler(self):
         return ['machin', 'bidule']
 
-schema = SchemaLoader().load('data/', 'Test', DummyDefaultHandler())
+schema = SchemaLoader().load(DATADIR, 'Test', DummyDefaultHandler())
 
 
 class SchemaLoaderTC(TestCase):
@@ -32,16 +32,16 @@ class SchemaLoaderTC(TestCase):
     # test helper functions ###################################################
     
     def test_get_schema_files(self):
-        files = sorted([basename(f) for f in SchemaLoader().get_schema_files('data')])
+        files = sorted([osp.basename(f) for f in SchemaLoader().get_schema_files(DATADIR)])
         self.assertEquals(files,
                           ['Affaire.sql', 'Note.sql', 'Person.sql', 'Societe.sql',
                            'State.py', 'pkginfo.esql', 'relations.rel'])
     
     def test_include(self):
-        files = SchemaLoader().include_schema_files('Person', 'data')
-        self.assertEquals(files, ['data/Person.sql'])
-        files = SchemaLoader().include_schema_files('pkginfo', 'data')
-        self.assertEquals(files, ['data/pkginfo.esql'])
+        files = SchemaLoader().include_schema_files('Person', DATADIR)
+        self.assertEquals(files, [osp.join(DATADIR,'Person.sql')])
+        files = SchemaLoader().include_schema_files('pkginfo', DATADIR)
+        self.assertEquals(files, [osp.join(DATADIR, 'pkginfo.esql')])
 
     # test load_schema readen entity and relation types #######################
     

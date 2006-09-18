@@ -6,13 +6,16 @@ Copyright Logilab 2003-2006, all rights reserved.
 
 from __future__ import generators
 
-__revision__ = "$Id: unittest_sqlschema.py,v 1.9 2006-03-30 19:50:56 syt Exp $"
-
 from logilab.common.testlib import TestCase, unittest_main
 
 from yams.constraints import SizeConstraint
-from yams.reader import EntityType
-from yams.sqlschema import BadSchemaDefinition, EsqlFileReader
+from yams.builder import EntityType
+from yams import BadSchemaDefinition
+from yams.sqlschema import EsqlFileReader
+
+import os.path as osp
+
+DATADIR = osp.abspath(osp.join(osp.dirname(__file__),'data'))
 
 def __getattr__(self, attr):
     for e in self.relations:
@@ -38,7 +41,7 @@ class SQLSchemaReaderClassTest(TestCase):
         
     def test_bad_schema(self):
         """tests schema_readers on a bad schema"""
-        testfile = 'data/_missing_dynamicchoice_handler.sql'
+        testfile = osp.join(DATADIR, '_missing_dynamicchoice_handler.sql')
         self.assertRaises(BadSchemaDefinition,
                           self.reader, testfile)
         try:
@@ -46,18 +49,18 @@ class SQLSchemaReaderClassTest(TestCase):
         except Exception, ex:
             self.assertEquals(ex.args,
                                ("yo dynamicchoice('')",
-                                'data/_missing_dynamicchoice_handler.sql',
+                                osp.join(DATADIR, '_missing_dynamicchoice_handler.sql'),
                                 'missing callback for dynamic choice relation yo'))
         
     def test_bad_esql(self):
         """test schema_readers on a bad entity definition"""
-        testfile = 'data/_bad_entity.sql'
+        testfile = osp.join(DATADIR,'_bad_entity.sql')
         self.assertRaises(BadSchemaDefinition,
                           self.reader, testfile)
         try:
             self.reader(testfile)
         except Exception, ex:
-            self.assertEquals(ex.args, ('bla bla bla', 'data/_bad_entity.sql', 'Bla'))
+            self.assertEquals(ex.args, ('bla bla bla', osp.join(DATADIR,'_bad_entity.sql'), 'Bla'))
         
 ##     def test_bad_schema_stream(self):
 ##         """tests stream schema_readers on a bad schema"""
@@ -106,7 +109,7 @@ class SQLSchemaReaderClassTest(TestCase):
     
     def test_read_constraints(self):
         """checks how constraints are read and stored"""
-        self.reader('data/Person.sql')
+        self.reader(osp.join(DATADIR,'Person.sql'))
         edef = self._get_result()
         nom_constraints = edef.nom.constraints
         self.assert_(isinstance(nom_constraints[0], SizeConstraint))
@@ -117,7 +120,7 @@ class SQLSchemaReaderClassTest(TestCase):
 
     def test_read_defaults(self):
         """checks how default values are read and stored"""
-        self.reader('data/Person.sql')
+        self.reader(osp.join(DATADIR,'Person.sql'))
         edef = self._get_result()
         self.assertEqual(edef.nom.default, None)
         self.assertEqual(edef.tel.default, None)
@@ -125,7 +128,7 @@ class SQLSchemaReaderClassTest(TestCase):
 
     def test_read_types(self):
         """checks how base types are read"""
-        self.reader('data/Person.sql')
+        self.reader(osp.join(DATADIR,'Person.sql'))
         edef = self._get_result()
         for attr, etype in ( ('nom', 'String'), ('tel', 'Int'), ('fax', 'Int'),
                             ('test', 'Boolean'), ('promo', 'String'),
