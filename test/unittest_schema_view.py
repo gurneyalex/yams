@@ -13,10 +13,14 @@ from yams.schema_view import SchemaViewer
 
 from unittest_schema_readers import DummyDefaultHandler
 
+import os.path as osp
+
+DATADIR = osp.abspath(osp.join(osp.dirname(__file__),'data'))
+
 class SchemaViewTC(TestCase):
 
     def test_noerror(self):
-        schema = SchemaLoader().load('data/', 'Test', DummyDefaultHandler())
+        schema = SchemaLoader().load(DATADIR, 'Test', DummyDefaultHandler())
         SchemaViewer().visit_schema(schema, True)
         
 if __name__ == '__main__':
