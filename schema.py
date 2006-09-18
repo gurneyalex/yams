@@ -113,7 +113,8 @@ class EntitySchema(ERSchema):
     __implements__ = IEntitySchema    
     
     ACTIONS = ('read', 'add', 'update', 'delete')
-
+    field_checkers = BASE_CHECKERS
+    
     def __init__(self, schema, edef):
         super(EntitySchema, self).__init__(schema, edef)
         # quick access to bounded relation schemas
@@ -385,7 +386,7 @@ class EntitySchema(ERSchema):
     def check_value(self, value):
         """check the value of a final entity (ie a const value)"""
         assert self.is_final()
-        return BASE_CHECKERS[self.type](self, value)
+        return self.field_checkers[self.type](self, value)
     
     # bw compat
     subject_relation_schema = subject_relation
