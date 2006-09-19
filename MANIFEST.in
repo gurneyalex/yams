@@ -1,7 +1,5 @@
 include ChangeLog
 include DEPENDS
-include test/data/*.sql
-include test/data/*.rel
-include test/data/*.esql
+recursive-include test/data/ *.sql *.rel *.esql *.py
 include test/data/toignore
 
