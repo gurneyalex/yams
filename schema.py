@@ -370,7 +370,7 @@ class EntitySchema(ERSchema):
                 continue
             # skip other constraint if value is None and None is allowed
             if value is None and not required:
-                break
+                continue
             if not aschema.check_value(value):
                 errors[rtype] = 'incorrect value %r for type %s' % (value,
                                                                     aschema.type)

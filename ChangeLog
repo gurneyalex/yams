@@ -1,5 +1,9 @@
 ChangeLog for yams 
 ------------------
+	
+ --
+    * fix a major bug in entity validation
+    * refactor RelationFileReader to ease customization
 
 2006-09-11  --  0.6.1
     * consider meta when a relation type is implicitly created
