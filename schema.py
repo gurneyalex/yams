@@ -123,8 +123,8 @@ class EntitySchema(ERSchema):
         
     def __repr__(self):
         return '<%s %s %s - %s>' % (self.__class__.__name__, self.type,
-                                    self.subject_relations(),
-                                    self.object_relations())
+                                    self.subject_relations(False),
+                                    self.object_relations(False))
         
     # schema building methods #################################################
                 
