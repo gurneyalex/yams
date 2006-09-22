@@ -17,13 +17,11 @@
 """yams packaging information
 """
 
-__revision__ = "$Id: __pkginfo__.py,v 1.18 2006-04-10 15:29:18 syt Exp $"
-
 # package name
 modname = 'yams'
 
 # release version
-numversion = [0, 6, 1]
+numversion = [0, 7, 0]
 version = '.'.join([str(num) for num in numversion])
 
 # license and copyright

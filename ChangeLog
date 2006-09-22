@@ -1,7 +1,7 @@
 ChangeLog for yams 
 ------------------
-	
- --
+
+2006-09-22  --  0.7.0
     * fix a major bug in entity validation
     * refactor RelationFileReader to ease customization
 
@@ -11,8 +11,8 @@ ChangeLog for yams
 2006-09-05  --  0.6.0
     * improved schema definition
     * support for comments (lines beginning with a #) in Include file
-	* new internal dictionary to ease definition of non final relation
-	  properties
+    * new internal dictionary to ease definition of non final relation
+      properties
 
 2006-07-13  --  0.5.3
     * enhance schema validation (focus on attributes only)
@@ -40,13 +40,13 @@ ChangeLog for yams
 
 2006-03-14  --  0.3.3
     * // in schema definition files may be used to indicate a deprecated
-	  attribute
+      attribute
     * control which entities are considered by wildcarded relations refinition
-	  using a variable on the relations file reader
+      using a variable on the relations file reader
 
 2006-02-24  --  0.3.2
     * let subject_types and object_types rschema methods raise a KeyError if a
-   type is specified but not found for the relation (as it was documented)
+      type is specified but not found for the relation (as it was documented)
    
    
 2006-01-25  --  0.3.1
