@@ -6,7 +6,6 @@
 :contact: http://www.logilab.fr/ -- mailto:contact@logilab.fr
 """
 
-__revision__ = "$Id: constraints.py,v 1.1 2006-03-30 19:50:56 syt Exp $"
 __docformat__ = "restructuredtext en"
 
 from yams.interfaces import IConstraint, IVocabularyConstraint
@@ -69,10 +68,10 @@ class SizeConstraint(BaseConstraint):
     def serialize(self):
         """simple text serialization"""
         if self.max and self.min:
-            return 'min=%s,max=%s' % (self.min, self.max)
+            return u'min=%s,max=%s' % (self.min, self.max)
         if self.max:
-            return 'max=%s' % (self.max)
-        return 'min=%s' % (self.min)
+            return u'max=%s' % (self.max)
+        return u'min=%s' % (self.min)
             
     def deserialize(cls, value):
         """simple text deserialization"""
@@ -106,7 +105,7 @@ class BoundConstraint(BaseConstraint):
 
     def serialize(self):
         """simple text serialization"""
-        return '%s %s' % (self.type, self.bound)
+        return u'%s %s' % (self.type, self.bound)
     
     def deserialize(cls, value):
         """simple text deserialization"""

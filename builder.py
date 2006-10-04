@@ -1,7 +1,6 @@
 """defines classes used to build a schema
 """
 
-__revision__ = "$Id: builder.py,v 1.6 2006-04-10 14:38:59 syt Exp $"
 __docformat__ = "restructuredtext en"
 __metaclass__ = type
 
@@ -13,9 +12,10 @@ BASE_TYPES = set(('String', 'Int', 'Float', 'Boolean', 'Date',
 
 __all__ = ('ObjectRelation', 'SubjectRelation', 'BothWayRelation',
            'RelationDefinition', 'EntityType', 'MetaEntityType',
-           'UserEntityType', 'MetaUserEntityType', 'RelationType',
-           'MetaRelationType', 'UserRelationType', 'MetaUserRelationType',
-           'AttributeRelationType', 'MetaAttributeRelationType',
+           'RestrictedEntityType', 'UserEntityType', 'MetaUserEntityType',
+           'RelationType', 'MetaRelationType', 'UserRelationType',
+           'MetaUserRelationType', 'AttributeRelationType',
+           'MetaAttributeRelationType',
            'SubjectRelation', 'ObjectRelation', 'BothWayRelation',
            ) + tuple(BASE_TYPES)
 
@@ -256,6 +256,14 @@ class MetaEntityType(EntityType):
         'update': ('managers', 'owners',),
         }
     meta = True
+
+class RestrictedEntityType(MetaEntityType):
+    permissions = {
+        'read':   ('managers', 'users',),
+        'add':    ('managers',),
+        'delete': ('managers',),
+        'update': ('managers', 'owners',),
+        }
 
 class UserEntityType(EntityType):
     permissions = {
