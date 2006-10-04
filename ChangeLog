@@ -1,6 +1,9 @@
 ChangeLog for yams 
 ------------------
 
+ --
+    * new RestrictedEntityType base class to ease schema construction
+
 2006-09-22  --  0.7.0
     * fix a major bug in entity validation
     * refactor RelationFileReader to ease customization
