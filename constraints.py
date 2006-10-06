@@ -33,6 +33,8 @@ class UniqueConstraint(BaseConstraint):
     def check(self, entity, rtype, values):
         """return true if the value satisfy the constraint, else false"""
         return True
+    def __str__(self):
+        return 'unique'
     
 class SizeConstraint(BaseConstraint):
     """the string size constraint :
