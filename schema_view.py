@@ -2,11 +2,10 @@
 
 :version: $Revision: 1.8 $  
 :organization: Logilab
-:copyright: 2003-2005 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
+:copyright: 2003-2006 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
 :contact: http://www.logilab.fr/ -- mailto:contact@logilab.fr
 """
 
-__revision__ = '$Id: schema_view.py,v 1.8 2006-03-30 19:50:56 syt Exp $'
 __docformat__ = "restructuredtext en"
 __metaclass__ = type
 
@@ -20,55 +19,73 @@ class SchemaViewer:
     def __init__(self, encoding='UTF-8'):
         self.encoding = encoding
         
-    def visit_schema(self, schema, display_relations=0):
+    def visit_schema(self, schema, display_relations=0,
+                     skiprels=(), skipmeta=True):
         """get a layout for a whole schema"""
         title = Title(_('Schema %s') % schema.name,
                       klass='titleUnderline')
         layout = Section(children=(title,))
-        entities = Section(children=(Title(_('Entities'),
+        esection = Section(children=(Title(_('Entities'),
                                            klass='titleUnderline'),))
-        layout.append(entities)
-        keys = [eschema.type for eschema in schema.entities(schema=1)
-                if not eschema.is_final()]
-        keys.sort()
-        for key in keys:
-            entities.append(self.visit_entityschema(schema.eschema(key)))
+        layout.append(esection)
+        entities = [eschema for eschema in schema.entities(schema=1)
+                    if not eschema.is_final()]
+        if skipmeta:
+            entities = [eschema for eschema in entities
+                        if not eschema.meta]
+        keys = [(eschema.type, eschema) for eschema in entities]
+        for key, eschema in sorted(keys):
+            esection.append(self.visit_entityschema(eschema, skiprels))
         if display_relations:
             title = Title(_('Relations'), klass='titleUnderline')
-            relations = Section(children=(title,)) 
-            layout.append(relations)
-            keys = [rschema.type for rschema in schema.relations(schema=1)
-                    if not rschema.is_final()]
-            keys.sort()
-            for key in keys:
-                relstr = self.visit_relationschema(schema.rschema(key))
-                relations.append(relstr)
+            rsection = Section(children=(title,)) 
+            layout.append(rsection)
+            relations = [rschema for rschema in schema.relations(schema=1)
+                         if not (rschema.is_final() or rschema.type in skiprels)]
+            if skipmeta:
+                relations = [rschema for rschema in relations
+                             if not rschema.meta]
+            keys = [(rschema.type, rschema) for rschema in relations]
+            for key, rschema in sorted(keys):
+                relstr = self.visit_relationschema(rschema)
+                rsection.append(relstr)
         return layout
-    
-    def visit_entityschema(self, eschema):
-        """get a layout for an entity schema"""
-        layout = Section(title=_('Entity %s') % eschema.type, id=eschema.type,
-                         klass='schema')
-        data = [_('ATTRIBUTE'), _('TYPE'), _('DEFAULT'), _('CONSTRAINTS')]
+
+    def _entity_attributes_data(self, eschema):
+        data = [_('attribute'), _('type'), _('default'), _('constraints')]
         for rschema, aschema in eschema.attribute_definitions():
             aname = rschema.type
             data.append(aname)
             data.append(aschema.type)
             data.append(self.to_string(eschema.default(aname)))
-            constraints = rschema.rproperty(eschema.type, aschema.type, 'constraints')
+            constraints = rschema.rproperty(eschema.type, aschema.type,
+                                            'constraints')
             data.append(', '.join([str(constr) for constr in constraints]))
-            rschema = eschema.subject_relation(aname)
+        return data
+
+    def eschema_link_url(self, eschema):
+        return '#'+eschema.type
+    def rschema_link_url(self, rschema):
+        return '#'+rschema.type
+    
+    def visit_entityschema(self, eschema, skiprels=()):
+        """get a layout for an entity schema"""
+        layout = Section(title=_('Entity %s') % eschema.type, id=eschema.type,
+                         klass='schema')
+        data = self._entity_attributes_data(eschema)
         table = Table(cols=4, cheaders=1, children=data)
         layout.append(Section(children=(table,), klass='entityAttributes'))
-        data = [_('RELATION'), _('TYPE'), _('TARGETS')]#, _('CONSTRAINTS')]
+        data = [_('relation'), _('type'), _('targets')]#, _('constraints')]
         for rschema, targetschemas, x in eschema.relation_definitions():
+            if rschema.type in skiprels:
+                continue
             rname = rschema.type
-            data.append(Link('#'+rname, rname))
+            data.append(Link(self.rschema_link_url(rschema), rname))
             data.append(Text(x))
             targets = List()
             for oeschema in targetschemas:
-                targets = List()
-                targets.append(Link('#'+oeschema.type, oeschema.type))
+                targets.append(Link(self.eschema_link_url(oeschema),
+                                    oeschema.type))
             data.append(targets)
             data.append(Text(constraints))
         table = Table(cols=3, cheaders=1, children=data)
@@ -77,16 +94,25 @@ class SchemaViewer:
     
     def visit_relationschema(self, rschema):
         """get a layout for a relation schema"""
-        title = _('Relation %s') % rschema.type
-        physicalmode = rschema.physical_mode()
-        if physicalmode:
-            title += ' (%s)' % _(physicalmode)
-        layout = Section(title=title, id=rschema.type, klass='schema')
-        data = [_('FROM'), _('TO')]
+        title = Link(self.rschema_link_url(rschema), rschema.type)
+        stereotypes = []
+        if rschema.meta:
+            stereotypes.append('meta')
+        if rschema.symetric:
+            stereotypes.append('symetric')
+        if rschema.inlined:
+            stereotypes.append('inlined')
+        if stereotypes:
+            stereotypes = [self.stereotype(','.join(stereotypes))]
+        
+        layout = Section(title=title, children=stereotypes,
+                         id=rschema.type, klass='schema')
+        data = [_('from'), _('to')]
+        schema = rschema.schema
         for from_type, to_types in rschema.association_types():
             for to_type in to_types:
-                data.append(Link('#'+from_type, from_type))
-                data.append(Link('#'+to_type, to_type))
+                data.append(Link(self.eschema_link_url(schema[from_type]), from_type))
+                data.append(Link(self.eschema_link_url(schema[to_type]), to_type))
         table = Table(cols=2, cheaders=1, children=data)
         layout.append(Section(children=(table,), klass='relationDefinition'))
         return layout

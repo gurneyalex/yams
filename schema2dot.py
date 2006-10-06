@@ -7,7 +7,6 @@
 :contact: http://www.logilab.fr/ -- mailto:contact@logilab.fr
 """
 
-__revision__ = "$Id: schema2dot.py,v 1.6 2006-03-28 23:26:44 syt Exp $"
 __docformat__ = "restructuredtext en"
 __metaclass__ = type
 
@@ -20,8 +19,25 @@ from yams.reader import SchemaLoader
 
 _ = getattr(__builtins__, '_', str)
 
-class DotGenerator:
-    """Dot File generator"""
+
+# XXX move to logilab common... ###############################################
+
+def escape(value):
+    """make <value> usable in a dot file"""
+    lines = [line.replace('"', '\\"') for line in value.split('\n')]
+    data = '\\l'.join(lines)
+    return '\\n' + data
+
+def target_info_from_filename(filename):
+    """transforms /some/path/foo.png into ('/some/path', 'foo.png', 'png')"""
+    abspath = osp.abspath(filename)
+    basename = osp.basename(filename)
+    storedir = osp.dirname(abspath)
+    target = filename.split('.')[-1]
+    return storedir, basename, target
+
+class DotBackend:
+    """Dot File backend"""
     def __init__(self, graphname, rankdir=None, size=None, ratio=None):
         self.graphname = graphname
         self.lines = []
@@ -60,9 +76,14 @@ class DotGenerator:
         dotfile = dotfile or ('%s.dot' % self.graphname)
         dot_sourcepath = osp.join(storedir, dotfile)
         pdot = file(dot_sourcepath, 'w')
-        pdot.write(self.source)
+        if isinstance(self.source, unicode):
+            pdot.write(self.source.encode('UTF8'))
+        else:
+            pdot.write(self.source)
         pdot.close()
-        os.system('dot -T%s %s -o%s' % (target, dot_sourcepath, outputfile))
+        if target != 'dot':
+            os.system('dot -T%s %s -o%s' % (target, dot_sourcepath, outputfile))
+            os.unlink(dot_sourcepath)
         return outputfile
 
     def emit(self, line):
@@ -84,51 +105,151 @@ class DotGenerator:
         self.emit('%s [%s];' % (name, ", ".join(attrs)))
 
 
-class SchemaVisitor:
+class GraphGenerator:
+    def __init__(self, backend):
+        # the backend is responsible to output the graph is a particular format
+        self.backend = backend
+
+    def generate(self, visitor, propshdlr, outputfile=None):
+        # the visitor 
+        # the properties handler is used to get nodes and edges properties
+        # according to the graph and to the backend
+        self.propshdlr = propshdlr
+        for nodeid, node in visitor.nodes():
+            props = propshdlr.node_properties(node)
+            self.backend.emit_node(nodeid, **props)
+        for subjnode, objnode, edge in visitor.edges():
+            props = propshdlr.edge_properties(edge)
+            self.backend.emit_edge(subjnode, objnode, **props)
+        return self.backend.generate(outputfile)
+
+
+# ... end move to common ######################################################
+
+class SchemaDotPropsHandler:
+    def node_properties(self, eschema):
+        """return default DOT drawing options for an entity schema"""
+        return {'label' : eschema.type, 'shape' : "box",
+                'fontname' : "Courier", 'style' : "filled"}
+    def edge_properties(self, rschema):
+        """return default DOT drawing options for a relation schema"""
+        if rschema.symetric:
+            return {'label': rschema.type, 'dir': 'both',
+                    'color': '#887788', 'style': 'dashed'}
+        return {'label': rschema.type, 'dir': 'forward',
+                'color' : 'black', 'style' : 'filled'}
+
+class FullSchemaVisitor:
+    def __init__(self, schema, skipetypes=(), skiprels=(), skipmeta=True):
+        self.schema = schema
+        self.skiprels = skiprels
+        self.skipmeta = skipmeta
+        self._eindex = None
+        entities = [eschema for eschema in schema.entities(True)
+                    if not (eschema.is_final() or eschema.type in skipetypes)]
+        if skipmeta:
+            entities = [eschema for eschema in entities if not eschema.meta]
+        self._eindex = dict([(e.type, e) for e in entities])
+
+    def nodes(self):
+        for eschema in self._eindex.values():
+            yield eschema.type, eschema
+            
+    def edges(self):
+        for rschema in self.schema.relations(schema=True):
+            if rschema.is_final() or rschema.type in self.skiprels:
+                continue
+            for setype, tetype in rschema._rproperties:
+                if not (setype in self._eindex and tetype in self._eindex):
+                    continue
+                yield setype, tetype, rschema
+
+class OneHopESchemaVisitor:
+    def __init__(self, eschema, skiprels=()):
+        nodes = set()
+        edges = set()
+        nodes.add((eschema.type, eschema))
+        for rschema in eschema.subject_relations():
+            if rschema.is_final() or rschema.type in skiprels:
+                continue
+            for teschema in rschema.objects(eschema.type):
+                nodes.add((teschema.type, teschema))
+                edges.add((eschema.type, teschema.type, rschema))
+        for rschema in eschema.object_relations():
+            if rschema.type in skiprels:
+                continue
+            for teschema in rschema.subjects(eschema.type):
+                nodes.add((teschema.type, teschema))
+                edges.add((teschema.type, eschema.type, rschema))
+        self._nodes = nodes
+        self._edges = edges
+
+    def nodes(self):
+        for nodeid, node in self._nodes:
+            if not node.meta:
+                yield nodeid, node
+        for nodeid, node in self._nodes:
+            if node.meta:
+                yield nodeid, node
+            
+    def edges(self):
+        return self._edges
+
+class OneHopRSchemaVisitor(OneHopESchemaVisitor):
+    def __init__(self, rschema, skiprels=()):
+        nodes = set()
+        edges = set()
+        for seschema in rschema.subjects():
+            nodes.add((seschema.type, seschema))
+            for oeschema in rschema.objects(seschema.type):
+                nodes.add((oeschema.type, oeschema))
+                edges.add((seschema.type, oeschema.type, rschema))
+        self._nodes = nodes
+        self._edges = edges
+
+
+def schema2dot(schema=None, outputfile=None, skipentities=(),
+               skiprels=(), skipmeta=True, visitor=None,
+               prophdlr=None):
+    """write to the output stream a dot graph representing the given schema"""
+    visitor = visitor or FullSchemaVisitor(schema, skipentities,
+                                           skiprels, skipmeta)
+    prophdlr = prophdlr or SchemaDotPropsHandler()
+    generator = GraphGenerator(DotBackend('Schema',  'BT',
+                                          ratio='compress', size='12,30'))
+    return generator.generate(visitor, prophdlr, outputfile)
+
+
+# XXX deprecated ##############################################################
+
+class SchemaVisitor(SchemaDotPropsHandler):
     """used to dump a dot graph from a Schema instance
     
     NOTE: this is not a Visitor DP
     Would be nice to provide control on node/edges properties
     """
     def __init__(self, generator=None):
-        self.generator = generator or DotGenerator('Schema',  'BT',
-                                                   ratio='compress', size='12,30')
-        self.processed_entities = set()
-        self.processed_relations = set()
-
-    def get_props_for_eschema(self, eschema):
-        """return default drawing options for <eschema>
-
-        override this method if you want to customize node properties
-        """
-        return {'label' : eschema.type,
-                'fontname' : "Courier",
-                'shape' : "box",
-                'style' : "filled"
-                }
-
-    def get_props_for_rschema(self, rschema):
-        """return default drawing options for <rschema>
-
-        override this method if you want to customize node properties
-        """
-        if rschema.symetric:
-            return {'label' :  rschema.type, 'dir' : "both"}
-        else:
-            return {'label' :  rschema.type, 'dir' : "forward"}
+        self.generator = generator or DotBackend('Schema',  'BT',
+                                                 ratio='compress', size='12,30')
+        self._processed = set()
+        self._eindex = None
+        
+    get_props_for_eschema = SchemaDotPropsHandler.node_properties
+    get_props_for_rschema = SchemaDotPropsHandler.edge_properties
 
     def visit(self, schema, skipped_entities=(), skipped_relations=()):
         """browse schema nodes and generate dot instructions"""
-        for eschema in schema.entities(schema=True):
-            self.visit_entity_schema(eschema, skipped_entities,
-                                     skipped_relations)
+        entities = [eschema for eschema in schema.entities(True)
+                    if not (eschema.is_final() or eschema.type in skipped_entities)]
+        self._eindex = dict([(e.type, e) for e in entities])
+        for eschema in entities:
+            self.visit_entity_schema(eschema)
         for rschema in schema.relations(schema=True):
-            self.visit_relation_schema(rschema, skipped_entities,
-                                       skipped_relations)
+            if rschema.is_final() or rschema.type in skipped_relations:
+                continue
+            self.visit_relation_schema(rschema)
 
-
-    def visit_entity_schema(self, eschema, skipped_entities=(),
-                            skipped_relations=()):
+    def visit_entity_schema(self, eschema, hop=0):
         """dumps a entity node in the graph
 
         :param eschema: the entity's schema
@@ -139,71 +260,31 @@ class SchemaVisitor:
                                   displayed
         """
         etype = eschema.type
-        if etype in self.processed_entities or etype in skipped_entities or \
-               eschema.is_final():
+        if etype in self._processed:
             return
-        self.processed_entities.add(etype)
+        self._processed.add(etype)
         nodeprops = self.get_props_for_eschema(eschema)
         self.generator.emit_node(etype, **nodeprops)
-        # XXX try to have related entities near ?
-        for rschema, targetschemas, x in eschema.relation_definitions():
-            if rschema.type in skipped_relations:
-                continue
-            if x == 'object':
-                # display object related entities latter
-                continue
-            for destschema in targetschemas:
-                if destschema.type in skipped_entities:
-                    continue
-                self.visit_entity_schema(destschema, skipped_entities,
-                                         skipped_relations)
 
-    def visit_relation_schema(self, rschema, skipped_entities=(),
-                              skipped_relations=()):
+    def visit_relation_schema(self, rschema, comingfrom=None):
         """visit relations separately to handle easily symetric relations"""
         rtype = rschema.type
-        if rschema.is_final() or rtype in skipped_relations:
+        if rtype in self._processed:
             return
+        self._processed.add(rtype)
+        if comingfrom:
+            etype, target = comingfrom
         for subjtype, objtypes in rschema.association_types():
-            if subjtype in skipped_entities:
+            if self._eindex and not subjtype in self._eindex:
                 continue
             for objtype in objtypes:
-                triplet = (subjtype, rtype, objtype)
-                if objtype in skipped_entities or \
-                       triplet in self.processed_relations:
+                if self._eindex and not objtype in self._eindex:
                     continue
                 edgeprops = self.get_props_for_rschema(rschema)
                 self.generator.emit_edge(subjtype, objtype, **edgeprops)
-                self.processed_relations.add(triplet)
-                if rschema.symetric:
-                    self.processed_relations.add((objtype, rtype, subjtype))
 
 
-def schema2dot(schema, outputfile=None, skipped_entities=(),
-               skipped_relations=()):
-    """write to the output stream a dot graph"""
-    visitor = SchemaVisitor()
-    visitor.visit(schema, skipped_entities, skipped_relations)
-    generator = visitor.generator
-    return generator.generate(outputfile)
 
-
-## Utilities #####################################
-
-def escape(value):
-    """make <value> usable in a dot file"""
-    lines = [line.replace('"', '\\"') for line in value.split('\n')]
-    data = '\\l'.join(lines)
-    return '\\n' + data
-
-def target_info_from_filename(filename):
-    """transforms /some/path/foo.png into ('/some/path', 'foo.png', 'png')"""
-    abspath = osp.abspath(filename)
-    basename = osp.basename(filename)
-    storedir = osp.dirname(abspath)
-    target = filename.split('.')[-1]
-    return storedir, basename, target
-   
 
 def run():
     """main routine when schema2dot is used as a script"""
