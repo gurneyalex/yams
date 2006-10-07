@@ -139,16 +139,46 @@ class SchemaDotPropsHandler:
         return {'label': rschema.type, 'dir': 'forward',
                 'color' : 'black', 'style' : 'filled'}
 
-class FullSchemaVisitor:
+class SchemaVisitor:
+    def __init__(self, skipmeta=True):
+        self._done = set()
+        self.skipmeta = skipmeta
+        self._nodes = None
+        self._edges = None
+        
+    def display_schema(self, erschema):
+        return not (erschema.is_final() or (self.skipmeta and erschema.meta))
+
+    def display_rel(self, rschema, setype, tetype):
+        rtype = rschema.type
+        if (rtype, setype, tetype) in self._done:
+            return False
+        self._done.add((rtype, setype, tetype))
+        if rschema.symetric:
+            self._done.add((rtype, tetype, setype))
+        return True
+
+    def nodes(self):
+        # yield non meta first then meta to group them on the graph
+        for nodeid, node in self._nodes:
+            if not node.meta:
+                yield nodeid, node
+        for nodeid, node in self._nodes:
+            if node.meta:
+                yield nodeid, node
+            
+    def edges(self):
+        return self._edges
+
+    
+class FullSchemaVisitor(SchemaVisitor):
     def __init__(self, schema, skipetypes=(), skiprels=(), skipmeta=True):
+        super(FullSchemaVisitor, self).__init__(skipmeta)
         self.schema = schema
         self.skiprels = skiprels
-        self.skipmeta = skipmeta
         self._eindex = None
         entities = [eschema for eschema in schema.entities(True)
-                    if not (eschema.is_final() or eschema.type in skipetypes)]
-        if skipmeta:
-            entities = [eschema for eschema in entities if not eschema.meta]
+                    if self.display_schema(eschema) and not eschema.type in skipetypes]
         self._eindex = dict([(e.type, e) for e in entities])
 
     def nodes(self):
@@ -162,10 +192,13 @@ class FullSchemaVisitor:
             for setype, tetype in rschema._rproperties:
                 if not (setype in self._eindex and tetype in self._eindex):
                     continue
+                if not self.display_rel(rschema, setype, tetype):
+                    continue
                 yield setype, tetype, rschema
-
-class OneHopESchemaVisitor:
+    
+class OneHopESchemaVisitor(SchemaVisitor):
     def __init__(self, eschema, skiprels=()):
+        super(OneHopESchemaVisitor, self).__init__(skipmeta=False)
         nodes = set()
         edges = set()
         nodes.add((eschema.type, eschema))
@@ -174,35 +207,32 @@ class OneHopESchemaVisitor:
                 continue
             for teschema in rschema.objects(eschema.type):
                 nodes.add((teschema.type, teschema))
+                if not self.display_rel(rschema, eschema.type, teschema.type):
+                    continue                
                 edges.add((eschema.type, teschema.type, rschema))
         for rschema in eschema.object_relations():
             if rschema.type in skiprels:
                 continue
             for teschema in rschema.subjects(eschema.type):
                 nodes.add((teschema.type, teschema))
+                if not self.display_rel(rschema, teschema.type, eschema.type):
+                    continue                
                 edges.add((teschema.type, eschema.type, rschema))
         self._nodes = nodes
         self._edges = edges
 
-    def nodes(self):
-        for nodeid, node in self._nodes:
-            if not node.meta:
-                yield nodeid, node
-        for nodeid, node in self._nodes:
-            if node.meta:
-                yield nodeid, node
-            
-    def edges(self):
-        return self._edges
-
-class OneHopRSchemaVisitor(OneHopESchemaVisitor):
+class OneHopRSchemaVisitor(SchemaVisitor):
     def __init__(self, rschema, skiprels=()):
+        super(OneHopRSchemaVisitor, self).__init__(skipmeta=False)
         nodes = set()
         edges = set()
-        for seschema in rschema.subjects():
+        done = set()
+        for oeschema in rschema.subjects():
             nodes.add((seschema.type, seschema))
             for oeschema in rschema.objects(seschema.type):
                 nodes.add((oeschema.type, oeschema))
+                if not self.display_rel(rschema, seschema.type, oeschema.type):
+                    continue                                
                 edges.add((seschema.type, oeschema.type, rschema))
         self._nodes = nodes
         self._edges = edges
