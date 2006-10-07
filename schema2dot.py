@@ -227,7 +227,7 @@ class OneHopRSchemaVisitor(SchemaVisitor):
         nodes = set()
         edges = set()
         done = set()
-        for oeschema in rschema.subjects():
+        for seschema in rschema.subjects():
             nodes.add((seschema.type, seschema))
             for oeschema in rschema.objects(seschema.type):
                 nodes.add((oeschema.type, oeschema))
