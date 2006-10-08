@@ -8,7 +8,6 @@ relation definitions files or a direct python definition file)
 :contact: http://www.logilab.fr/ -- mailto:contact@logilab.fr
 """
 
-__revision__ = "$Id: reader.py,v 1.16 2006-04-10 14:38:59 syt Exp $"
 __docformat__ = "restructuredtext en"
 __metaclass__ = type
 
