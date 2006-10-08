@@ -5,6 +5,7 @@ ChangeLog for yams
     * new RestrictedEntityType base class and new maxsize, vocabulary and unique
       parameters on relation definition to ease schema construction
     * schema2dot nicely refactored but schema_view'll probably deprecated soon
+    * fix schema reading to correctly handle raw RelationDefinition classes
 
 2006-09-22  --  0.7.0
     * fix a major bug in entity validation

@@ -251,10 +251,19 @@ class RelationType(RelationBase):
 class RelationDefinition(RelationBase):
     subject = None
     object = None
-    def __init__(self, subject, name, object, **kwargs):
-        self.subject = subject
-        self.object = object
-        self.name = name
+    def __init__(self, subject=None, name=None, object=None, **kwargs):
+        if subject:
+            self.subject = subject
+        else:
+            self.subject = self.__class__.subject
+        if object:
+            self.object = object
+        else:
+            self.object = self.__class__.object
+        if name:
+            self.name = name
+        elif not getattr(self, 'name', None):
+            self.name = self.__class__.__name__
         super(RelationDefinition, self).__init__(**kwargs)
         
     def register_relations(self, schema):
