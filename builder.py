@@ -7,7 +7,8 @@ __metaclass__ = type
 from logilab.common.compat import set, sorted
 
 from yams import BadSchemaDefinition
-from yams.constraints import SizeConstraint, StaticVocabularyConstraint
+from yams.constraints import SizeConstraint, UniqueConstraint, \
+     StaticVocabularyConstraint
 
 BASE_TYPES = set(('String', 'Int', 'Float', 'Boolean', 'Date',
                   'Time', 'Datetime', 'Password', 'Bytes'))
@@ -63,7 +64,12 @@ class BothWayRelation(object):
         self.subjectrel = subjectrel
         self.objectrel = objectrel
 
-
+def add_constraint(kwargs, constraint):
+    if kwargs.get('constraints'):
+        kwargs['constraints'].append(constraint)
+    else:
+        kwargs['constraints'] = [constraint]
+    
 class AbstractTypedAttribute(SubjectRelation):
     """AbstractTypedAttribute is not directly instantiable
     
@@ -78,16 +84,13 @@ class AbstractTypedAttribute(SubjectRelation):
         kwargs['cardinality'] = cardinality
         maxsize = kwargs.pop('maxsize', None)
         if maxsize is not None:
-            if kwargs.get('constraints'):
-                kwargs['constraints'].append(SizeConstraint(max=maxsize))
-            else:
-                kwargs['constraints'] = [SizeConstraint(max=maxsize)]
+            add_constraint(kwargs, SizeConstraint(max=maxsize))
         vocabulary = kwargs.pop('vocabulary', None)
         if vocabulary is not None:
-            if kwargs.get('constraints'):
-                kwargs['constraints'].append(StaticVocabularyConstraint(vocabulary))
-            else:
-                kwargs['constraints'] = [StaticVocabularyConstraint(vocabulary)]
+            add_constraint(kwargs, StaticVocabularyConstraint(vocabulary))
+        unique = kwargs.pop('unique', None)
+        if unique:
+            add_constraint(kwargs, UniqueConstraint())
         # use the etype attribute provided by subclasses
         super(AbstractTypedAttribute, self).__init__(self.etype, **kwargs)
 
