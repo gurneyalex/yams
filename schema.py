@@ -268,9 +268,8 @@ class EntitySchema(ERSchema):
         * schema of the destination entity type
         """
         for rschema in self.ordered_relations():
-            if rschema.is_final():
-                continue
-            yield rschema, rschema.objects(etype=self.type), 'subject'
+            if not rschema.is_final():
+                yield rschema, rschema.objects(etype=self.type), 'subject'
         for rschema in self.object_relations():
             yield rschema, rschema.subjects(etype=self.type), 'object'
             
@@ -280,19 +279,17 @@ class EntitySchema(ERSchema):
         attribute defined in the entity schema
         """
         for rschema, _ in self.attribute_definitions():
-            if rschema.meta:
-                continue
-            return rschema.type
+            if not rschema.meta:
+                return rschema.type
     
     def indexable_attributes(self):
         """return the name of relations to index"""
         assert not self.is_final()
         for rschema in self.subject_relations():
-            if not rschema.is_final():
-                continue
-            rtype = rschema.type
-            if self.rproperty(rtype, 'fulltextindexed'):
-                yield rtype                
+            if rschema.is_final():
+                rtype = rschema.type
+                if self.rproperty(rtype, 'fulltextindexed'):
+                    yield rtype                
     #indexable_attributes = cached(indexable_attributes)
     
     def defaults(self):
@@ -300,11 +297,10 @@ class EntitySchema(ERSchema):
         """
         assert not self.is_final()
         for rschema in self.ordered_relations():
-            if not rschema.is_final():
-                continue
-            value = self.default(rschema.type)
-            if value is not None:
-                yield rschema.type, value   
+            if rschema.is_final():
+                value = self.default(rschema.type)
+                if value is not None:
+                    yield rschema.type, value   
         
     def default(self, rtype):
         """return the default value of a subject relation"""
@@ -415,6 +411,7 @@ class RelationSchema(ERSchema):
                           'indexed': False}
     _STRING_RPROPERTIES = {'fulltextindexed': False,
                            'internationalizable': False}
+    _BYTES_RPROPERTIES = {'fulltextindexed': False}
     
     __implements__ = IRelationSchema    
     
@@ -539,9 +536,11 @@ class RelationSchema(ERSchema):
         if not self.is_final():
             return basekeys + self._NONFINAL_RPROPERTIES.items()
         basekeys += self._FINAL_RPROPERTIES.items()
-        if desttype != 'String':
-            return basekeys
-        return basekeys + self._STRING_RPROPERTIES.items()
+        if desttype == 'String':
+            return basekeys + self._STRING_RPROPERTIES.items()
+        if desttype == 'Bytes':
+            return basekeys + self._BYTES_RPROPERTIES.items()
+        return basekeys
 
     def rproperty_keys(self):
         """return the list of keys which have associated rproperties"""
