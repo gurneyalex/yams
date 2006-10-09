@@ -97,12 +97,12 @@ class DotBackend:
         """
         attrs = ['%s="%s"' % (prop, value) for prop, value in props.items()]
         self.emit('edge [%s];' % ", ".join(attrs))
-        self.emit('%s -> %s' % (name1, name2))
+        self.emit('%s -> %s' % (name1.replace(' ', '_'), name2.replace(' ', '_')))
 
     def emit_node(self, name, **props):
         """authorized props: shape, label, color, fillcolor, style"""
         attrs = ['%s="%s"' % (prop, value) for prop, value in props.items()]
-        self.emit('%s [%s];' % (name, ", ".join(attrs)))
+        self.emit('%s [%s];' % (name.replace(' ', '_'), ", ".join(attrs)))
 
 
 class GraphGenerator:
