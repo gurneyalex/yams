@@ -245,7 +245,11 @@ def schema2dot(schema=None, outputfile=None, skipentities=(),
     visitor = visitor or FullSchemaVisitor(schema, skipentities,
                                            skiprels, skipmeta)
     prophdlr = prophdlr or SchemaDotPropsHandler()
-    generator = GraphGenerator(DotBackend('Schema',  'BT',
+    if outputfile:
+        schemaname = osp.splitext(osp.basename(outputfile))[0]
+    else:
+        schemaname = 'Schema'
+    generator = GraphGenerator(DotBackend(schemaname,  'BT',
                                           ratio='compress', size='12,30'))
     return generator.generate(visitor, prophdlr, outputfile)
 
