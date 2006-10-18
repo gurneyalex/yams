@@ -4,8 +4,6 @@
 Copyright Logilab 2002-2004, all rights reserved.
 """
 
-__revision__ = "$Id: unittest_schema.py,v 1.15 2006-04-10 14:39:03 syt Exp $"
-
 from logilab.common.testlib import TestCase, unittest_main
 
 from yams.builder import EntityType, RelationType, RelationDefinition
@@ -51,13 +49,13 @@ class BaseSchemaTC(TestCase):
             ('Person  concerne  Societe'),
             ('Affaire concerne  Societe'),
             )
-        for rel in RELS:
+        for i, rel in enumerate(RELS):
             _from, _type, _to = rel.split()
             try:
                 schema.rschema(_type)
             except KeyError:
                 schema.add_relation_type(RelationType(_type))
-            schema.add_relation_def(RelationDefinition(_from, _type, _to))
+            schema.add_relation_def(RelationDefinition(_from, _type, _to, order=i))
         schema.rschema('nom').set_rproperty('Person', 'String', 'cardinality','11') # not null
 
         enote.set_rproperty('type', 'constraints',
@@ -130,12 +128,37 @@ RELATIONS_GOOD_VALUES = {
         
 class EntitySchemaTC(BaseSchemaTC):
 
-    #def test_base(self):
-    #    self.assertEquals(repr(enote), "<EntitySchema Note ['date', 'type'] - ['evaluee']>")
+    def test_base(self):
+        self.assert_(repr(eperson))
         
 #    def test_is_uid(self):
 #        eperson.set_uid('nom')
 #        self.assertEquals(eperson.is_uid('nom'), True)
+
+    def test_cmp(self):
+        self.failUnless(eperson == 'Person')
+        self.failUnless('Person' == eperson)
+        self.failUnless(eperson != 'Note')
+        self.failUnless('Note' != eperson)
+        self.failIf(enote == eperson)
+        self.failIf(eperson == enote)
+        self.failUnless(enote != eperson)
+        self.failUnless(eperson != enote)
+        l = [eperson, enote, eaffaire, esociete]
+        print 'sort'
+        l.sort()
+        self.assertListEquals(l, [eaffaire, enote, eperson, esociete])
+        self.assertListEquals(l, ['Affaire', 'Note', 'Person', 'Societe'])
+        
+    def test_hash(self):
+        from copy import copy
+        d = {}
+        d[eperson] = 'p'
+        d[enote] = 'n'
+        self.failUnlessEqual(d[copy(eperson)], 'p')
+        self.failUnlessEqual(d[copy(enote)], 'n')
+        self.failUnlessEqual(d['Person'], 'p')
+        self.failUnlessEqual(d['Note'], 'n')
         
     def test_is_final(self):        
         self.assertEquals(eperson.is_final(), False)
@@ -183,7 +206,7 @@ class EntitySchemaTC(BaseSchemaTC):
     def test_object_relations(self):
         """check object relations a returned in the same order as in the
         schema definition"""
-        rels = eaffaire.object_relations(False)
+        rels = eaffaire.object_relations()
         expected = ['concerne']
         self.assertEquals(rels, expected)
         rels = [schem.type for schem in eaffaire.object_relations()]
@@ -202,21 +225,40 @@ class EntitySchemaTC(BaseSchemaTC):
     def test_destination_type(self):
         """check subject relations a returned in the same order as in the
         schema definition"""
-        expected = 'String'
-        self.assertEquals(eperson.destination_type('nom'), expected)
-        self.assertRaises(AssertionError,
-                          eperson.destination_type, 'travaille')
+        self.assertEquals(eperson.destination('nom'), 'String')
+        self.assertRaises(AssertionError, eperson.destination, 'travaille')
         
 class RelationSchemaTC(BaseSchemaTC):
 
+    def test_cmp(self):
+        self.failUnless(rconcerne == 'concerne')
+        self.failUnless('concerne' == rconcerne)
+        self.failUnless(rconcerne != 'nom')
+        self.failUnless('nom' != rconcerne)
+        self.failIf(rnom == rconcerne)
+        self.failIf(rconcerne == rnom)
+        self.failUnless(rnom != rconcerne)
+        self.failUnless(rconcerne != rnom)
+        
+    def test_hash(self):
+        from copy import copy
+        d = {}
+        d[rconcerne] = 'p'
+        d[rnom] = 'n'
+        self.failUnlessEqual(d[copy(rconcerne)], 'p')
+        self.failUnlessEqual(d[copy(rnom)], 'n')
+        self.failUnlessEqual(d['concerne'], 'p')
+        self.failUnlessEqual(d['nom'], 'n')
+
+
     def test_base(self):
-        self.assertEquals(repr(rnom), "<RelationSchema nom [('Person', ['String'])]>")
+        self.assert_(repr(rnom))
 
     def test_star_types(self):
-        types = rconcerne.subject_types()
+        types = rconcerne.subjects()
         types.sort()
         self.assertEquals(types, ['Affaire', 'Person'])
-        types = rconcerne.object_types()
+        types = rconcerne.objects()
         types.sort()
         self.assertEquals(types, ['Affaire', 'Societe'])
         
@@ -235,11 +277,11 @@ class RelationSchemaTC(BaseSchemaTC):
     def test_association_types(self):
         expected = [ ('Affaire', ['Societe']),
                      ('Person', ['Affaire', 'Societe']) ]
-        assoc_types = rconcerne.association_types()
+        assoc_types = rconcerne.associations()
         assoc_types.sort()
         self.assertEquals(assoc_types, expected)
         assoc_types = []
-        for _from, _to in rconcerne.association_types():
+        for _from, _to in rconcerne.associations():
             assoc_types.append( (_from, _to))
             #assoc_types.append( (_from.type, [s.type for s in _to]) ) 
         assoc_types.sort()
@@ -363,7 +405,7 @@ class SymetricTC(TestCase):
         schema.add_relation_def(RelationDefinition('Project', 'see_also', 'Project'))
         
         rsee_also = schema.rschema('see_also')
-        subj_types = rsee_also.association_types()
+        subj_types = rsee_also.associations()
         subj_types.sort()
         self.assertEquals(subj_types,
                           [('Bug', ['Bug', 'Story', 'Project']),
@@ -375,7 +417,7 @@ class SymetricTC(TestCase):
         rdef.register_relations(schema)
 
         rsee_also = schema.rschema('see_also')
-        subj_types = rsee_also.association_types()
+        subj_types = rsee_also.associations()
         subj_types.sort()
         for key, vals in subj_types:
             vals.sort()

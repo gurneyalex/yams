@@ -143,13 +143,13 @@ class Definition(object):
         return (etype,)
         
     def _wildcard_etypes(self, schema):
-        for eschema in schema.entities(True):
+        for eschema in schema.entities():
             if eschema.is_final() or eschema.meta:
                 continue
             yield eschema.type
         
     def _pow_etypes(self, schema):
-        for eschema in schema.entities(True):
+        for eschema in schema.entities():
             if eschema.is_final():
                 continue
             yield eschema.type

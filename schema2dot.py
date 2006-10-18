@@ -150,12 +150,11 @@ class SchemaVisitor:
         return not (erschema.is_final() or (self.skipmeta and erschema.meta))
 
     def display_rel(self, rschema, setype, tetype):
-        rtype = rschema.type
-        if (rtype, setype, tetype) in self._done:
+        if (rschema, setype, tetype) in self._done:
             return False
-        self._done.add((rtype, setype, tetype))
+        self._done.add((rschema, setype, tetype))
         if rschema.symetric:
-            self._done.add((rtype, tetype, setype))
+            self._done.add((rschema, tetype, setype))
         return True
 
     def nodes(self):
@@ -273,12 +272,12 @@ class SchemaVisitor(SchemaDotPropsHandler):
 
     def visit(self, schema, skipped_entities=(), skipped_relations=()):
         """browse schema nodes and generate dot instructions"""
-        entities = [eschema for eschema in schema.entities(True)
+        entities = [eschema for eschema in schema.entities()
                     if not (eschema.is_final() or eschema.type in skipped_entities)]
         self._eindex = dict([(e.type, e) for e in entities])
         for eschema in entities:
             self.visit_entity_schema(eschema)
-        for rschema in schema.relations(schema=True):
+        for rschema in schema.relations():
             if rschema.is_final() or rschema.type in skipped_relations:
                 continue
             self.visit_relation_schema(rschema)
@@ -298,7 +297,7 @@ class SchemaVisitor(SchemaDotPropsHandler):
             return
         self._processed.add(etype)
         nodeprops = self.get_props_for_eschema(eschema)
-        self.generator.emit_node(etype, **nodeprops)
+        self.generator.emit_node(str(etype), **nodeprops)
 
     def visit_relation_schema(self, rschema, comingfrom=None):
         """visit relations separately to handle easily symetric relations"""
@@ -308,14 +307,14 @@ class SchemaVisitor(SchemaDotPropsHandler):
         self._processed.add(rtype)
         if comingfrom:
             etype, target = comingfrom
-        for subjtype, objtypes in rschema.association_types():
+        for subjtype, objtypes in rschema.associations():
             if self._eindex and not subjtype in self._eindex:
                 continue
             for objtype in objtypes:
                 if self._eindex and not objtype in self._eindex:
                     continue
                 edgeprops = self.get_props_for_rschema(rschema)
-                self.generator.emit_edge(subjtype, objtype, **edgeprops)
+                self.generator.emit_edge(str(subjtype), str(objtype), **edgeprops)
 
 
 
