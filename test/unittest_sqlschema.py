@@ -50,7 +50,7 @@ class SQLSchemaReaderClassTest(TestCase):
             self.assertEquals(ex.args,
                                ("yo dynamicchoice('')",
                                 osp.join(DATADIR, '_missing_dynamicchoice_handler.sql'),
-                                'missing callback for dynamic choice relation yo'))
+                                "unknown type 'Dynamicchoice'"))
         
     def test_bad_esql(self):
         """test schema_readers on a bad entity definition"""
@@ -60,7 +60,8 @@ class SQLSchemaReaderClassTest(TestCase):
         try:
             self.reader(testfile)
         except Exception, ex:
-            self.assertEquals(ex.args, ('bla bla bla', osp.join(DATADIR,'_bad_entity.sql'), 'Bla'))
+            self.assertEquals(ex.args, ('bla bla bla', osp.join(DATADIR,'_bad_entity.sql'),
+                                        "unknown type 'Bla'"))
         
 ##     def test_bad_schema_stream(self):
 ##         """tests stream schema_readers on a bad schema"""

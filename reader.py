@@ -221,7 +221,7 @@ class SchemaLoader(object):
             if not isinstance(definition, builder.EntityType):
                 definition.register_relations(schema)
         # set permissions on entities and relations
-        for erschema in schema.entities(schema=True)+schema.relations(schema=True):
+        for erschema in schema.entities() + schema.relations():
             self._set_perms(directory, erschema)
         return schema
 

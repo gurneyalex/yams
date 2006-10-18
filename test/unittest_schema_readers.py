@@ -78,27 +78,27 @@ class SchemaLoaderTC(TestCase):
                               ['ad1', 'ad2', 'ad3', 'cp', 'evaluee',
                                'fax', 'nom', 'rncs', 'subj_wildcard', 'tel', 'ville',
                                'web'])
-        self.assertListEquals(sorted(eschema.object_relations(False)),
+        self.assertListEquals(sorted(eschema.object_relations()),
                           ['concerne', 'obj_wildcard', 'travaille'])
         
         eschema = schema.eschema('Eetype')
         self.assertEquals(eschema.description, 'define an entity type, used to build the application schema')
         self.assertEquals(eschema.meta, True)
         self.assertEquals(eschema.is_final(), False)
-        self.assertListEquals(sorted(eschema.subject_relations(False)),
+        self.assertListEquals(sorted(eschema.subject_relations()),
                               ['description', 'final', 'initial_state', 'meta',
                                'name'])
-        self.assertListEquals(sorted(eschema.object_relations(False)),
+        self.assertListEquals(sorted(eschema.object_relations()),
                               ['state_of'])
 
         eschema = schema.eschema('Boolean')
         self.assertEquals(eschema.description, '')
         self.assertEquals(eschema.meta, True)
         self.assertEquals(eschema.is_final(), True)
-        self.assertListEquals(sorted(eschema.subject_relations(False)),
+        self.assertListEquals(sorted(eschema.subject_relations()),
                               [])
-        self.assertListEquals(sorted(eschema.object_relations(False)),
-                          ['final', 'meta', 'test'])
+        self.assertListEquals(sorted(eschema.object_relations()),
+                              ['final', 'meta', 'test'])
 
     # test base entity type's subject relation properties #####################
 
@@ -134,8 +134,8 @@ class SchemaLoaderTC(TestCase):
 
     def test_vocabulary(self):
         eschema = schema.eschema('pkginfo')
-        self.assertEquals(eschema.vocabulary('license'), ['GPL', 'ZPL'])
-        self.assertEquals(eschema.vocabulary('debian_handler'), ['machin', 'bidule'])
+        self.assertEquals(eschema.vocabulary('license'), ('GPL', 'ZPL'))
+        self.assertEquals(eschema.vocabulary('debian_handler'), ('machin', 'bidule'))
         
     def test_default(self):
         eschema = schema.eschema('pkginfo')
@@ -150,32 +150,32 @@ class SchemaLoaderTC(TestCase):
         self.assertEquals(rschema.description, '')
         self.assertEquals(rschema.meta, False)
         self.assertEquals(rschema.is_final(), False)
-        self.assertListEquals(sorted(rschema.subject_types()), ['Person', 'Societe'])
-        self.assertListEquals(sorted(rschema.object_types()), ['Note'])
+        self.assertListEquals(sorted(rschema.subjects()), ['Person', 'Societe'])
+        self.assertListEquals(sorted(rschema.objects()), ['Note'])
 
         rschema = schema.rschema('sym_rel')
         self.assertEquals(rschema.symetric, True)
         self.assertEquals(rschema.description, '')
         self.assertEquals(rschema.meta, False)
         self.assertEquals(rschema.is_final(), False)
-        self.assertListEquals(sorted(rschema.subject_types()), ['Affaire', 'Person'])
-        self.assertListEquals(sorted(rschema.object_types()), ['Person'])
+        self.assertListEquals(sorted(rschema.subjects()), ['Affaire', 'Person'])
+        self.assertListEquals(sorted(rschema.objects()), ['Affaire', 'Person'])
 
         rschema = schema.rschema('initial_state')
         self.assertEquals(rschema.symetric, False)
         self.assertEquals(rschema.description, 'indicate which state should be used by default when an entity using states is created')
         self.assertEquals(rschema.meta, True)
         self.assertEquals(rschema.is_final(), False)
-        self.assertListEquals(sorted(rschema.subject_types()), ['Eetype'])
-        self.assertListEquals(sorted(rschema.object_types()), ['State'])
+        self.assertListEquals(sorted(rschema.subjects()), ['Eetype'])
+        self.assertListEquals(sorted(rschema.objects()), ['State'])
 
         rschema = schema.rschema('name')
         self.assertEquals(rschema.symetric, False)
         self.assertEquals(rschema.description, '')
         self.assertEquals(rschema.meta, False)
         self.assertEquals(rschema.is_final(), True)
-        self.assertListEquals(sorted(rschema.subject_types()), ['Eetype', 'State'])
-        self.assertListEquals(sorted(rschema.object_types()), ['String'])
+        self.assertListEquals(sorted(rschema.subjects()), ['Eetype', 'State'])
+        self.assertListEquals(sorted(rschema.objects()), ['String'])
     
     def test_cardinality(self):
         rschema = schema.rschema('evaluee')

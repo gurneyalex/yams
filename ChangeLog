@@ -1,6 +1,14 @@
 ChangeLog for yams 
 ------------------
 
+ --
+    * implements __cmp__ and __hash__ on entity and relation schemas to
+      make them comparable to their equivalent type (eg string representation)
+    * major api cleanup thanks to this change
+    * deprecate schema_view
+    * test fixes
+    * backward compatible with proper warnings when necessary
+	
 2006-10-08  --  0.8.0
     * new RestrictedEntityType base class and new maxsize, vocabulary and unique
       parameters on relation definition to ease schema construction

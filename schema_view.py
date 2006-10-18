@@ -13,6 +13,9 @@ from logilab.common.ureports import Section, Title, Table, Link, Text, List
 
 _ = getattr(__builtins__, '_', str)
 
+from warnings import warn
+warn('deprecated module', DeprecationWarning, stacklevel=2)
+
 class SchemaViewer:
     """return an ureport layout for some part of a schema"""
 

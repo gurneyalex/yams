@@ -94,7 +94,7 @@ class EsqlFileReader(FileReader):
             arg = [eval(val.strip()) for val in typeattrs.split(',')]
             rqltype = check_choice_values(arg)
             return rqltype, [CHOICE_CLASSES[sqltype](arg)], 0
-        self.error(sqltype)
+        self.error('unknown type %r' % sqltype)
 
 
     def parse_suite(self, rdef, suite, etype):

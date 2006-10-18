@@ -36,11 +36,11 @@ Person -> Societe
 
 class MyVisitor(schema2dot.SchemaVisitor):
     """customize drawing options for better control"""
-    def get_props_for_eschema(self, e_schema):
-        return {'label' : e_schema.type}
+    def get_props_for_eschema(self, eschema):
+        return {'label' : eschema.type}
 
-    def get_props_for_rschema(self, r_schema):
-        return {'label' : r_schema.type}
+    def get_props_for_rschema(self, rschema):
+        return {'label' : rschema.type}
 
 class DotTC(TestCase):
     
