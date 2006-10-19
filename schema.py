@@ -11,6 +11,7 @@ from __future__ import generators
 __docformat__ = "restructuredtext en"
 
 from warnings import warn
+from copy import deepcopy
 
 from mx.DateTime import today, now
 
@@ -28,12 +29,22 @@ KEYWORD_MAP = {'NOW' : now,
                'TODAY': today,
                }
 
+def format_properties(props):
+    res = []
+    for prop, value in props.items():
+        if value:
+            res.append('%s=%s' % (prop, value))
+    return ','.join(res)
+
 class ERSchema(object):
     """common base class to entity and relation schema
     """
 
-    def __init__(self, schema, erdef):
-        self.schema = schema
+    def __init__(self, erdef=None):#, schema, erdef):
+        if erdef is None:
+            return
+        assert erdef
+        #self.schema = schema
         self.type = erdef.name
         self.meta = erdef.meta
         if erdef.__doc__:
@@ -49,7 +60,17 @@ class ERSchema(object):
         return cmp(self.type, other)
             
     def __hash__(self):
+        #try:
         return hash(self.type)
+        #except AttributeError:
+        #    return super(ERSchema, self).__hash__()
+        
+    def __deepcopy__(self, memo):
+        clone = self.__class__()
+        memo[id(self)] = clone
+        clone.type = deepcopy(self.type, memo)
+        clone.__dict__ = deepcopy(self.__dict__, memo)
+        return clone
     
     def __str__(self):
         return self.type
@@ -127,8 +148,8 @@ class EntitySchema(ERSchema):
     ACTIONS = ('read', 'add', 'update', 'delete')
     field_checkers = BASE_CHECKERS
     
-    def __init__(self, schema, edef):
-        super(EntitySchema, self).__init__(schema, edef)
+    def __init__(self, *args, **kwargs):
+        super(EntitySchema, self).__init__(*args, **kwargs)
         # quick access to bounded relation schemas
         self._subj_relations = {}
         self._obj_relations = {}
@@ -197,7 +218,7 @@ class EntitySchema(ERSchema):
         """
         if schema is not None:
             warn('schema argument is deprecated', DeprecationWarning, stacklevel=2)
-        return [rschema for rschema in self.ordered_relations()]
+        return self.ordered_relations()
     
     def object_relations(self, schema=None):
         """return a list of relations that may have this type of entity as
@@ -211,7 +232,7 @@ class EntitySchema(ERSchema):
         """return the relation schema for the rtype subject relation
         
         Raise `KeyError` if rtype is not a subject relation of this entity type
-        """        
+        """
         return self._subj_relations[rtype]
     
     def object_relation(self, rtype):
@@ -268,7 +289,7 @@ class EntitySchema(ERSchema):
 
     def rproperties(self, rtype):
         """convenience method to access properties of a subject relation"""
-        rschema = self.schema.rschema(rtype)
+        rschema = self.subject_relation(rtype)
         desttype = rschema.objects(self)[0]
         return rschema.rproperties(self, desttype)
 
@@ -284,9 +305,9 @@ class EntitySchema(ERSchema):
         """
         for rschema in self.ordered_relations():
             if not rschema.is_final():
-                yield rschema, rschema.objects(etype=self), 'subject'
+                yield rschema, rschema.objects(self), 'subject'
         for rschema in self.object_relations():
-            yield rschema, rschema.subjects(etype=self), 'object'
+            yield rschema, rschema.subjects(self), 'object'
             
     
     def main_attribute(self):
@@ -362,7 +383,7 @@ class EntitySchema(ERSchema):
         for rschema in self.ordered_relations():
             if not rschema.is_final():
                 continue
-            aschema = self.schema[self.destination(rschema)]
+            aschema = self.destination(rschema)
             # don't care about rhs cardinality, always '*' (if it make senses)
             card = rschema.rproperty(self, aschema, 'cardinality')[0]
             assert card in '?1'
@@ -427,21 +448,23 @@ class RelationSchema(ERSchema):
     
     __implements__ = IRelationSchema    
     
-    def __init__(self, schema, rdef):
-        super(RelationSchema, self).__init__(schema, rdef)
-        # if this relation is symetric
-        self.symetric = rdef.symetric
-        # if this relation is an attribute relation
-        self.final = False
-        # mapping to subject/object with schema as key
-        self._subj_schemas = {}
-        self._obj_schemas = {}
-        # relation properties
-        self._rproperties = {}
+    def __init__(self, rdef=None, **kwargs):
+        if rdef is not None:
+            # if this relation is symetric
+            self.symetric = rdef.symetric
+            # if this relation is an attribute relation
+            self.final = False
+            # mapping to subject/object with schema as key
+            self._subj_schemas = {}
+            self._obj_schemas = {}
+            # relation properties
+            self._rproperties = {}
+        super(RelationSchema, self).__init__(rdef, **kwargs)
         
     def __repr__(self):
-        return '<%s %s>' % (self.type, ['%s: %s'%((s.type, o.type), props)
-                                        for (s, o), props in self._rproperties.items()])
+        return '<%s [%s]>' % (self.type,
+                              '; '.join('%s,%s:%s'%(s.type, o.type, format_properties(props))
+                                        for (s, o), props in self._rproperties.items()))
         
     # schema building methods #################################################
 
@@ -701,7 +724,8 @@ class Schema(object):
         if self._entities.has_key(etype):
             msg = "entity type %s is already defined" % etype
             raise BadSchemaDefinition(msg)
-        eschema = self.entity_class(self, edef)
+        eschema = self.entity_class(edef)
+        eschema.schema = self # XXX
         self._entities[etype] = eschema
         return eschema
     
@@ -710,7 +734,8 @@ class Schema(object):
         if self._relations.has_key(rtype):
             msg = "relation type %s is already defined" % rtype
             raise BadSchemaDefinition(msg)
-        rschema = self.relation_class(self, rtypedef)
+        rschema = self.relation_class(rtypedef)
+        rschema.schema = self # XXX
         self._relations[rtype] = rschema
         return rschema
         
