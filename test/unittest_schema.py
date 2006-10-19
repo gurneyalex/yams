@@ -145,7 +145,6 @@ class EntitySchemaTC(BaseSchemaTC):
         self.failUnless(enote != eperson)
         self.failUnless(eperson != enote)
         l = [eperson, enote, eaffaire, esociete]
-        print 'sort'
         l.sort()
         self.assertListEquals(l, [eaffaire, enote, eperson, esociete])
         self.assertListEquals(l, ['Affaire', 'Note', 'Person', 'Societe'])
@@ -159,6 +158,23 @@ class EntitySchemaTC(BaseSchemaTC):
         self.failUnlessEqual(d[copy(enote)], 'n')
         self.failUnlessEqual(d['Person'], 'p')
         self.failUnlessEqual(d['Note'], 'n')
+        d = {}
+        d['Person'] = eperson
+        d['Note'] = enote
+        self.failUnlessEqual(copy(eperson), 'Person')
+        self.failUnlessEqual(d[copy(eperson)], 'Person')
+        self.failUnlessEqual(d[copy(enote)], 'Note')
+        
+    def test_deepcopy(self):
+        from copy import deepcopy
+        global schema
+        schema = deepcopy(schema)
+        self.failIf(eperson is schema['Person'])
+        self.failUnlessEqual(eperson, schema['Person'])
+        self.failUnlessEqual('Person', schema['Person'])
+        self.failUnlessEqual(eperson.subject_relations(), schema['Person'].subject_relations())
+        self.failUnlessEqual(eperson.object_relations(), schema['Person'].object_relations())
+
         
     def test_is_final(self):        
         self.assertEquals(eperson.is_final(), False)
