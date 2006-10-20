@@ -193,7 +193,7 @@ class FullSchemaVisitor(SchemaVisitor):
                     continue
                 if not self.display_rel(rschema, setype, tetype):
                     continue
-                yield setype, tetype, rschema
+                yield str(setype), str(tetype), rschema
     
 class OneHopESchemaVisitor(SchemaVisitor):
     def __init__(self, eschema, skiprels=()):

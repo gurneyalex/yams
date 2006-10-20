@@ -315,9 +315,12 @@ class EntitySchema(ERSchema):
         attribute defined in the entity schema
         """
         for rschema, _ in self.attribute_definitions():
+            print 'main attr', rschema, '?',
             if not rschema.meta:
+                print 'yes'
                 # XXX return rschema.type for bw compat ?
                 return rschema
+            print 'no'
     
     def indexable_attributes(self):
         """return the name of relations to index"""
