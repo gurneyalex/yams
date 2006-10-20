@@ -119,9 +119,3 @@ class SchemaViewer:
         table = Table(cols=2, cheaders=1, children=data)
         layout.append(Section(children=(table,), klass='relationDefinition'))
         return layout
-
-    def to_string(self, value):
-        """used to converte arbitrary values to encoded string"""
-        if isinstance(value, unicode):
-            return value.encode(self.encoding, 'replace')
-        return str(value)
