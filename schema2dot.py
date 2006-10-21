@@ -13,118 +13,12 @@ __metaclass__ = type
 import sys, os
 import os.path as osp
 
-from logilab.common.compat import set
+from logilab.common.graph import DotBackend, GraphGenerator
 
 from yams.reader import SchemaLoader
 
 _ = getattr(__builtins__, '_', str)
 
-
-# XXX move to logilab common... ###############################################
-
-def escape(value):
-    """make <value> usable in a dot file"""
-    lines = [line.replace('"', '\\"') for line in value.split('\n')]
-    data = '\\l'.join(lines)
-    return '\\n' + data
-
-def target_info_from_filename(filename):
-    """transforms /some/path/foo.png into ('/some/path', 'foo.png', 'png')"""
-    abspath = osp.abspath(filename)
-    basename = osp.basename(filename)
-    storedir = osp.dirname(abspath)
-    target = filename.split('.')[-1]
-    return storedir, basename, target
-
-class DotBackend:
-    """Dot File backend"""
-    def __init__(self, graphname, rankdir=None, size=None, ratio=None):
-        self.graphname = graphname
-        self.lines = []
-        self._source = None
-        self.emit("digraph %s {" % graphname)
-        if rankdir:
-            self.emit('rankdir=%s' % rankdir)
-        if ratio:
-            self.emit('ratio=%s' % ratio)
-        if size:
-            self.emit('size="%s"' % size)
-
-    def get_source(self):
-        """returns self._source"""
-        if self._source is None:
-            self.emit("}")
-            self._source = '\n'.join(self.lines)
-            del self.lines
-        return self._source
-
-    source = property(get_source)
-    
-    def generate(self, outputfile=None, dotfile=None):
-        """generates a graph file
-        :param target: output format ('png', 'ps', etc.). If None,
-                       the raw dot source will be returned
-        :return: a path to the generated file
-        """
-        if outputfile is not None:
-            storedir, basename, target = target_info_from_filename(outputfile)
-        else:
-            storedir = '/tmp'
-            basename = '%s.png' % (self.graphname)
-            target = 'png'
-            outputfile = osp.join(storedir, basename)
-        dotfile = dotfile or ('%s.dot' % self.graphname)
-        dot_sourcepath = osp.join(storedir, dotfile)
-        pdot = file(dot_sourcepath, 'w')
-        if isinstance(self.source, unicode):
-            pdot.write(self.source.encode('UTF8'))
-        else:
-            pdot.write(self.source)
-        pdot.close()
-        if target != 'dot':
-            os.system('dot -T%s %s -o%s' % (target, dot_sourcepath, outputfile))
-            os.unlink(dot_sourcepath)
-        return outputfile
-
-    def emit(self, line):
-        """adds <line> to final output"""
-        self.lines.append(line)
-
-    def emit_edge(self, name1, name2, **props):
-        """emits edge from <name1> to <name2>
-        
-        authorized props: label, style, color, dir, weight
-        """
-        attrs = ['%s="%s"' % (prop, value) for prop, value in props.items()]
-        self.emit('edge [%s];' % ", ".join(attrs))
-        self.emit('%s -> %s' % (name1.replace(' ', '_'), name2.replace(' ', '_')))
-
-    def emit_node(self, name, **props):
-        """authorized props: shape, label, color, fillcolor, style"""
-        attrs = ['%s="%s"' % (prop, value) for prop, value in props.items()]
-        self.emit('%s [%s];' % (name.replace(' ', '_'), ", ".join(attrs)))
-
-
-class GraphGenerator:
-    def __init__(self, backend):
-        # the backend is responsible to output the graph is a particular format
-        self.backend = backend
-
-    def generate(self, visitor, propshdlr, outputfile=None):
-        # the visitor 
-        # the properties handler is used to get nodes and edges properties
-        # according to the graph and to the backend
-        self.propshdlr = propshdlr
-        for nodeid, node in visitor.nodes():
-            props = propshdlr.node_properties(node)
-            self.backend.emit_node(nodeid, **props)
-        for subjnode, objnode, edge in visitor.edges():
-            props = propshdlr.edge_properties(edge)
-            self.backend.emit_edge(subjnode, objnode, **props)
-        return self.backend.generate(outputfile)
-
-
-# ... end move to common ######################################################
 
 class SchemaDotPropsHandler:
     def node_properties(self, eschema):

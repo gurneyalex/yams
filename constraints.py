@@ -13,6 +13,9 @@ from yams.interfaces import IConstraint, IVocabularyConstraint
 class BaseConstraint(object):
     """base class for constraints"""
     __implements__ = IConstraint
+
+    def type(self):
+        return self.__class__.__name__
     
     def serialize(self):
         """called to make persistent valuable data of a constraint"""

@@ -647,6 +647,7 @@ class RelationSchema(ERSchema):
         warn('deprecated method, use .objects()', DeprecationWarning, stacklevel=2)
         return self.objects(etype)
 
+    @cached
     def physical_mode(self):
         """return an appropriate mode for physical storage of this relation type:
         * 'subjectinline' if every possible subject cardinalities are 1 or ?
@@ -667,8 +668,13 @@ class RelationSchema(ERSchema):
         if objinline:
             return 'objectinline'
         return None
-    physical_mode = cached(physical_mode)
 
+    def constraint_by_type(self, subjtype, objtype, cstrtype):
+        for cstr in self.rproperty(subjtype, objtype, 'constraints'):
+            if cstr.type() == cstrtype:
+                return cstr
+        return None
+    
         
 class Schema(object):
     """set of entities and relations schema defining the possible data sets
