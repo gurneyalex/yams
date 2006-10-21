@@ -8,7 +8,9 @@ ChangeLog for yams
     * deprecate schema_view module
     * test fixes
     * (almost) backward compatible with proper warnings when necessary
-	
+    * new .type() method on constraints
+    * moved some code of schema2dot into logilab-common
+
 2006-10-08  --  0.8.0
     * new RestrictedEntityType base class and new maxsize, vocabulary and unique
       parameters on relation definition to ease schema construction
