@@ -1,7 +1,7 @@
 # -*- coding: iso-8859-1 -*-
 """unit tests for module yams.schema classes
 
-Copyright Logilab 2002-2004, all rights reserved.
+Copyright Logilab 2004-2006, all rights reserved.
 """
 
 from logilab.common.testlib import TestCase, unittest_main
@@ -371,12 +371,12 @@ class SchemaTC(BaseSchemaTC):
             eschema.check(dict(val_list))
                 
     def test_entities_badValues_check(self):
-        """check bad values of entity raises InvalidEntity exception"""
+        """check bad values of entity raises ValidationError exception"""
         for etype, val_list in ATTRIBUTE_BAD_VALUES:
             eschema = schema.eschema(etype)
             # check attribute values one each time...
             for item in val_list:
-                self.assertRaises(InvalidEntity, eschema.check, dict([item]))
+                self.assertRaises(ValidationError, eschema.check, dict([item]))
         
 
 ##     def test_relations_goodValues_check(self):
