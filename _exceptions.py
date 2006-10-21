@@ -1,24 +1,15 @@
 """Exceptions shared by different ER-Schema modules.
 
 :organization: Logilab
-:copyright: 2004 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
+:copyright: 2004-2006 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
 :contact: http://www.logilab.fr/ -- mailto:contact@logilab.fr
 :version: $Revision: 1.4 $  
 """
 
-__revision__ = "$Id: _exceptions.py,v 1.4 2006-03-17 18:17:51 syt Exp $"
 __docformat__ = "restructuredtext en"
 
-#class MyException(
 class SchemaError(Exception):
     """base class for schema exceptions"""
-
-class InvalidEntity(SchemaError):
-    """the entity is not valid according to its schema"""
-    msg = 'Invalid entity %s: \n%s'
-    
-## class InvalidAttributeValue(SchemaError):
-##     """an entity's attribute value is not valid according to its schema"""
     
 class UnknownType(SchemaError):
     """using an unknown entity type"""
@@ -39,3 +30,16 @@ class ESQLParseError(Exception):
     args = ()
     def __str__(self):
         return self.msg % self.args
+
+class ValidationError(SchemaError):
+    """validation error are used when some validation failed and precisily
+    explain why using a dictionary describing each error
+    """
+
+    def __init__(self, entity, explanation):
+        # pylint: disable-msg=W0231
+        self.entity = entity
+        self.errors = explanation
+        
+    def __str__(self):
+        return '\n'.join('%s: %s' % (k, v) for k, v in self.errors.items())

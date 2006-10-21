@@ -19,7 +19,7 @@ from logilab.common import cached
 from logilab.common.compat import sorted
 from logilab.common.interface import implements
 
-from yams import InvalidEntity, BadSchemaDefinition
+from yams import ValidationError, BadSchemaDefinition
 from yams.interfaces import ISchema, IRelationSchema, IEntitySchema, \
      IVocabularyConstraint
 from yams.constraints import BASE_CHECKERS
@@ -315,12 +315,9 @@ class EntitySchema(ERSchema):
         attribute defined in the entity schema
         """
         for rschema, _ in self.attribute_definitions():
-            print 'main attr', rschema, '?',
             if not rschema.meta:
-                print 'yes'
                 # XXX return rschema.type for bw compat ?
                 return rschema
-            print 'no'
     
     def indexable_attributes(self):
         """return the name of relations to index"""
@@ -378,7 +375,7 @@ class EntitySchema(ERSchema):
         return constraint.vocabulary()
     
     def check(self, entity, creation=False):
-        """check the entity and raises an InvalidEntity exception if it
+        """check the entity and raises an ValidationError exception if it
         contains some invalid fields (ie some constraints failed)
         """
         assert not self.is_final()
@@ -413,7 +410,7 @@ class EntitySchema(ERSchema):
                 if not constraint.check(entity, rschema, value):
                     errors[rschema] = '%s constraint failed' % constraint
         if errors:
-            raise InvalidEntity(entity, errors)
+            raise ValidationError(entity, errors)
 
     def check_value(self, value):
         """check the value of a final entity (ie a const value)"""
