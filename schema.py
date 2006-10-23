@@ -346,9 +346,14 @@ class EntitySchema(ERSchema):
         if default is not None:
             attrtype = self.destination(rtype)
             if attrtype == 'Boolean':
-                # XXX Int, Float...
                 if not isinstance(default, bool):
                     default = default == 'True'
+            elif attrtype == 'Int':
+                if not isinstance(default, int):
+                    default = int(default)
+            elif attrtype == 'Float':
+                if not isinstance(default, float):
+                    default = float(default)
             elif attrtype in ('Date', 'Datetime'):
                 default = KEYWORD_MAP[default.upper()]()
             else:
