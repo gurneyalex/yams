@@ -1,6 +1,5 @@
 """classes to define generic Entities/Relations schemas
 
-:version: $Revision: 1.35 $  
 :organization: Logilab
 :copyright: 2003-2006 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
 :contact: http://www.logilab.fr/ -- mailto:contact@logilab.fr
@@ -524,7 +523,7 @@ class RelationSchema(ERSchema):
         self._obj_schemas[objschema].remove(subjschema)
         if len(self._obj_schemas[objschema]) == 0:
             del self._obj_schemas[objschema]
-        del self._rproperties[(subjschema.type, objschema.type)]
+        del self._rproperties[(subjschema, objschema)]
         if not self._obj_schemas or not self._subj_schemas:
             assert not self._obj_schemas and not self._subj_schemas
             return True
@@ -647,6 +646,13 @@ class RelationSchema(ERSchema):
         warn('deprecated method, use .objects()', DeprecationWarning, stacklevel=2)
         return self.objects(etype)
 
+    def targets(self, etype, x='subject'):
+        """return possible target types with <etype> as <x>"""
+        assert x in ('subject', 'object')
+        if x == 'subject':
+            return self.objects(etype)
+        return self.subjects(etype)
+    
     @cached
     def physical_mode(self):
         """return an appropriate mode for physical storage of this relation type:
