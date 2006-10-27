@@ -1,12 +1,10 @@
 """write a schema as sql
 
-:version: $Revision: 1.15 $  
 :organization: Logilab
 :copyright: 2003-2006 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
 :contact: http://www.logilab.fr/ -- mailto:contact@logilab.fr
 """
 
-__revision__ = "$Id: schema2sql.py,v 1.15 2006-03-30 19:50:56 syt Exp $"
 __docformat__ = "restructuredtext en"
 __metaclass__ = type
 
@@ -16,15 +14,22 @@ from yams.constraints import SizeConstraint, UniqueConstraint
 
 
 TYPE_MAPPING = {
-    'String' : 'text',
-    'Int' : 'integer',
-    'Float' : 'float',
-    'Boolean' : 'boolean',
-    'Date' : 'date', 
-    'Time' : 'time', 
+    'String' :   'text',
+    'Int' :      'integer',
+    'Float' :    'float',
+    'Boolean' :  'boolean',
+    'Date' :     'date', 
+    'Time' :     'time', 
     'Datetime' : 'timestamp',
     'Password' : 'bytea',
-    'Bytes' : 'bytea',         # FIXME: pgsql specific
+    'Bytes' :    'bytea',         # FIXME: pgsql specific
+    # FIXME: aggregat function AVG not supported
+    'COUNT' : 'integer',
+    'MIN' :   'integer',
+    'MAX' :   'integer',
+    'SUM' :   'integer',
+    'LOWER' : 'text',
+    'UPPER' : 'text',
     }
 
 
