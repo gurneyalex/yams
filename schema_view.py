@@ -1,6 +1,5 @@
 """an helper class to display a schema using ureports
 
-:version: $Revision: 1.8 $  
 :organization: Logilab
 :copyright: 2003-2006 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
 :contact: http://www.logilab.fr/ -- mailto:contact@logilab.fr
