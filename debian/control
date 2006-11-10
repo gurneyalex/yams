@@ -4,7 +4,7 @@ Priority: optional
 Maintainer: Logilab <devel@logilab.fr> 
 Uploaders: Alexandre Fayolle <afayolle@debian.org>
 Build-Depends: debhelper (>= 5.0.37.2), python (>=2.3.5-7), python-central (>=0.5)
-XS-Python-Version: all
+XS-Python-Version: current
 Standards-Version: 3.7.2
 
 Package: python-yams

@@ -5,8 +5,6 @@ all rights reserved.
 http://www.logilab.fr/ -- mailto:contact@logilab.fr
 """
 
-__revision__ = "$Id: interfaces.py,v 1.8 2006-03-30 19:50:56 syt Exp $"
-
 from logilab.common.interface import Interface
 
 # remove this to avoid a dependency on rql for client code
