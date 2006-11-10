@@ -14,7 +14,7 @@ from copy import deepcopy
 
 from mx.DateTime import today, now
 
-from logilab.common import cached
+from logilab.common.decorators import cached
 from logilab.common.compat import sorted
 from logilab.common.interface import implements
 
