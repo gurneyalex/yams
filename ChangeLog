@@ -1,6 +1,9 @@
 ChangeLog for yams 
 ------------------
 
+ --
+    * fix (well, hack) pickling problem
+
 2006-10-27  --  0.9.0
     * implements __cmp__ and __hash__ on entity and relation schemas to
       make them comparable to their equivalent type (eg string representation)
