@@ -6,6 +6,7 @@ Copyright Logilab 2004-2006, all rights reserved.
 
 from logilab.common.testlib import TestCase, unittest_main
 
+from tempfile import mktemp
 from yams.builder import EntityType, RelationType, RelationDefinition
 
 from yams.schema import *
@@ -378,31 +379,24 @@ class SchemaTC(BaseSchemaTC):
             for item in val_list:
                 self.assertRaises(ValidationError, eschema.check, dict([item]))
         
+    def test_pickle(self):
+        """schema should be pickeable"""
+        import pickle
+        picklefile = mktemp()
+        picklestream = open(picklefile, 'w')
+        schema.__hashmode__ = 'pickle'
+        pickle.dump(schema, picklestream)
+        picklestream.close()
+        pschema = pickle.load(open(picklefile))
+        schema.__hashmode__ = None
+        self.assertEquals(pschema.__hashmode__, None)
+        self.failIf(eperson is pschema['Person'])
+        self.failUnlessEqual(eperson, pschema['Person'])
+        self.failUnlessEqual('Person', pschema['Person'])
+        self.failUnlessEqual(eperson.subject_relations(), pschema['Person'].subject_relations())
+        self.failUnlessEqual(eperson.object_relations(), pschema['Person'].object_relations())
 
-##     def test_relations_goodValues_check(self):
-##         """ check good values of relation return true """
-##         for r, list in RELATIONS_GOOD_VALUES.items():
-##             rschema = schema.rschema(r)
-##             for efrom, eto in list:
-##                 es_from = schema.eschema(efrom)
-##                 es_to = schema.eschema(eto)
-##                 e1 = EntityInstance(es_from, None)
-##                 e2 = EntityInstance(es_to, None)
-##                 r = RelationInstance(rschema, e1, e2)
-##                 r.check()
-                
-##     def test_relations_badValues_check(self):
-##         """ check bad values of relation raise InvalidRelation exception """
-##         for r, list in RELATIONS_BAD_VALUES.items():
-##             rschema = schema.rschema(r)
-##             for efrom, eto in list:
-##                 es_from = schema.eschema(efrom)
-##                 es_to = schema.eschema(eto)
-##                 e1 = EntityInstance(es_from, None)
-##                 e2 = EntityInstance(es_to, None)
-##                 r = RelationInstance(rschema, e1, e2)
-##                 self.assertRaises(InvalidRelation, r.check)
-
+        
 class SymetricTC(TestCase):
     def setUp(self):
         global schema

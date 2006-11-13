@@ -28,6 +28,12 @@ KEYWORD_MAP = {'NOW' : now,
                'TODAY': today,
                }
 
+def rehash(dictionary):
+    res = {}
+    for key, val in dictionary.items():
+        res[key] = val
+    return res
+
 def format_properties(props):
     res = []
     for prop, value in props.items():
@@ -38,12 +44,12 @@ def format_properties(props):
 class ERSchema(object):
     """common base class to entity and relation schema
     """
-
-    def __init__(self, erdef=None):#, schema, erdef):
+    def __init__(self, schema=None, erdef=None):#, schema, erdef):
         if erdef is None:
             return
+        assert schema
         assert erdef
-        #self.schema = schema
+        self.schema = schema
         self.type = erdef.name
         self.meta = erdef.meta
         if erdef.__doc__:
@@ -59,15 +65,19 @@ class ERSchema(object):
         return cmp(self.type, other)
             
     def __hash__(self):
-        #try:
-        return hash(self.type)
-        #except AttributeError:
-        #    return super(ERSchema, self).__hash__()
+        try:
+            if self.schema.__hashmode__ is None:
+                return hash(self.type)
+        except AttributeError:
+            pass
+        return hash(id(self))
         
     def __deepcopy__(self, memo):
         clone = self.__class__()
         memo[id(self)] = clone
         clone.type = deepcopy(self.type, memo)
+        clone.schema = deepcopy(self.schema, memo)
+        clone.schema.__hashmode__ = None
         clone.__dict__ = deepcopy(self.__dict__, memo)
         return clone
     
@@ -147,17 +157,22 @@ class EntitySchema(ERSchema):
     ACTIONS = ('read', 'add', 'update', 'delete')
     field_checkers = BASE_CHECKERS
     
-    def __init__(self, *args, **kwargs):
-        super(EntitySchema, self).__init__(*args, **kwargs)
-        # quick access to bounded relation schemas
-        self._subj_relations = {}
-        self._obj_relations = {}
+    def __init__(self, schema=None, rdef=None, *args, **kwargs):
+        super(EntitySchema, self).__init__(schema, rdef, *args, **kwargs)
+        if rdef is not None:
+            # quick access to bounded relation schemas
+            self._subj_relations = {}
+            self._obj_relations = {}
         
     def __repr__(self):
         return '<%s %s - %s>' % (self.type,
                                  [rs.type for rs in self.subject_relations()],
                                  [rs.type for rs in self.object_relations()])
         
+    def _rehash(self):
+        self._subj_relations = rehash(self._subj_relations)
+        self._obj_relations = rehash(self._obj_relations)
+            
     # schema building methods #################################################
                 
     def add_subject_relation(self, rschema, rdef):
@@ -425,7 +440,6 @@ class EntitySchema(ERSchema):
     subject_relation_schema = subject_relation
     object_relation_schema = object_relation
 
-    
 class RelationSchema(ERSchema):
     """A relation is a named ordered link between two entities.
     A relation schema defines the possible types of both extremities.
@@ -452,7 +466,7 @@ class RelationSchema(ERSchema):
     
     __implements__ = IRelationSchema    
     
-    def __init__(self, rdef=None, **kwargs):
+    def __init__(self, schema=None, rdef=None, **kwargs):
         if rdef is not None:
             # if this relation is symetric
             self.symetric = rdef.symetric
@@ -463,13 +477,18 @@ class RelationSchema(ERSchema):
             self._obj_schemas = {}
             # relation properties
             self._rproperties = {}
-        super(RelationSchema, self).__init__(rdef, **kwargs)
+        super(RelationSchema, self).__init__(schema, rdef, **kwargs)
         
     def __repr__(self):
         return '<%s [%s]>' % (self.type,
                               '; '.join('%s,%s:%s'%(s.type, o.type, format_properties(props))
                                         for (s, o), props in self._rproperties.items()))
-        
+
+    def _rehash(self):
+        self._subj_schemas = rehash(self._subj_schemas)
+        self._obj_schemas = rehash(self._obj_schemas)
+        self._rproperties = rehash(self._rproperties)
+            
     # schema building methods #################################################
 
     def update(self, subjschema, objschema, rdef):
@@ -575,7 +594,6 @@ class RelationSchema(ERSchema):
     
     def rproperties(self, subject, object):
         """return the properties dictionary of a relation"""
-        #assert rtype in self._subj_relations
         try:
             return self._rproperties[(subject, object)]
         except KeyError:
@@ -658,7 +676,8 @@ class RelationSchema(ERSchema):
             return self.objects(etype)
         return self.subjects(etype)
     
-    @cached
+    # XXX deprecated
+    @cached 
     def physical_mode(self):
         """return an appropriate mode for physical storage of this relation type:
         * 'subjectinline' if every possible subject cardinalities are 1 or ?
@@ -701,9 +720,14 @@ class Schema(object):
     __implements__ = ISchema
     entity_class = EntitySchema
     relation_class = RelationSchema
+    # __hashmode__ is a evil hack to support schema pickling
+    # it should be set to 'pickle' before pickling is done and reset to None
+    # once it's done
+    __hashmode__ = 'pickle' # None | 'pickle'
     
-    def __init__(self, name, directory=None, **kwargs):
-        super(Schema, self).__init__(**kwargs)
+    def __init__(self, name, directory=None):
+        super(Schema, self).__init__()
+        self.__hashmode__ = None
         self.name = name
         self.base = directory
         self._entities = {}
@@ -712,6 +736,18 @@ class Schema(object):
             edef = EntityType(name=etype, meta=True)
             self.add_entity_type(edef).set_default_groups()
 
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        # restore __hashmode__
+        self.__hashmode__ = None
+        self._rehash()
+        
+    def _rehash(self):
+        for eschema in self._entities.values():
+            eschema._rehash()
+        for rschema in self._relations.values():
+            rschema._rehash()
+            
     def __getitem__(self, name):
         try:
             return self.eschema(name)
@@ -741,8 +777,7 @@ class Schema(object):
         if self._entities.has_key(etype):
             msg = "entity type %s is already defined" % etype
             raise BadSchemaDefinition(msg)
-        eschema = self.entity_class(edef)
-        eschema.schema = self # XXX
+        eschema = self.entity_class(self, edef)
         self._entities[etype] = eschema
         return eschema
     
@@ -751,8 +786,7 @@ class Schema(object):
         if self._relations.has_key(rtype):
             msg = "relation type %s is already defined" % rtype
             raise BadSchemaDefinition(msg)
-        rschema = self.relation_class(rtypedef)
-        rschema.schema = self # XXX
+        rschema = self.relation_class(self, rtypedef)
         self._relations[rtype] = rschema
         return rschema
         
