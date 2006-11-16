@@ -21,7 +21,7 @@
 modname = 'yams'
 
 # release version
-numversion = (0, 9, 1)
+numversion = (0, 9, 2)
 version = '.'.join([str(num) for num in numversion])
 
 # license and copyright

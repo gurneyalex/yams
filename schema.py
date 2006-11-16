@@ -307,7 +307,7 @@ class EntitySchema(ERSchema):
         desttype = rschema.objects(self)[0]
         return rschema.rproperties(self, desttype)
 
-    def relation_definitions(self):
+    def relation_definitions(self, includefinal=False):
         """return an iterator on "real" relation definitions
         
         "real"  relations are a subset of subject relations where the
@@ -318,7 +318,7 @@ class EntitySchema(ERSchema):
         * schema of the destination entity type
         """
         for rschema in self.ordered_relations():
-            if not rschema.is_final():
+            if includefinal or not rschema.is_final():
                 yield rschema, rschema.objects(self), 'subject'
         for rschema in self.object_relations():
             yield rschema, rschema.subjects(self), 'object'
