@@ -2,7 +2,6 @@
 relation definitions files or a direct python definition file)
 
 
-:version: $Revision: 1.16 $  
 :organization: Logilab
 :copyright: 2003-2006 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
 :contact: http://www.logilab.fr/ -- mailto:contact@logilab.fr

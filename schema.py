@@ -29,6 +29,10 @@ KEYWORD_MAP = {'NOW' : now,
                }
 
 def rehash(dictionary):
+    # WARNING: don't replace this function by a simple dictionary copy
+    #          this is necessary since the __hash__ method of objects
+    #          contained in the original dictionary has changed and we
+    #          want a fresh dictionary built using the new __hash__ method
     res = {}
     for key, val in dictionary.items():
         res[key] = val
