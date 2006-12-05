@@ -92,7 +92,7 @@ class ERSchema(object):
         :type action: str
         :param action: the name of a permission
 
-        :type groups: list
+        :type groups: tuple
         :param groups: the groups with the given permission
         """
         assert type(groups) is tuple
@@ -106,7 +106,7 @@ class ERSchema(object):
         :type action: str
         :param action: the name of a permission
 
-        :rtype: list
+        :rtype: tuple
         :return: the groups with the given permission
         """
         assert action in self.ACTIONS, action
