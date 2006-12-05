@@ -1,6 +1,10 @@
 ChangeLog for yams 
 ------------------
 
+ --
+    * fix _ to unicode so we can have unicode description in schema file
+    * automatically sets maxsize when some vocabulary is defined
+	
 2006-11-14  --  0.9.2
     * new "includefinal" optional argument to ESchema.relation_definitions
 

@@ -2,7 +2,6 @@
 relation definitions files or a direct python definition file)
 
 
-:version: $Revision: 1.16 $  
 :organization: Logilab
 :copyright: 2003-2006 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
 :contact: http://www.logilab.fr/ -- mailto:contact@logilab.fr
@@ -111,7 +110,7 @@ def _builder_context():
 
 class PyFileReader(builder.FileReader):
     """read schema definition objects from a python file"""
-    context = {'_' : str}
+    context = {'_' : unicode}
     context.update(_builder_context())
     context.update(CONSTRAINTS)
 
