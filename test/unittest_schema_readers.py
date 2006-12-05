@@ -8,6 +8,7 @@ from logilab.common.compat import sorted
 
 from yams.schema import Schema, EntitySchema
 from yams.reader import SchemaLoader, RelationFileReader
+from yams.constraints import StaticVocabularyConstraint, SizeConstraint
 
 import os.path as osp
 
@@ -275,14 +276,14 @@ class SchemaLoaderTC(TestCase):
 from yams import builder as B
 
 class BasePerson(B.EntityType):
-    firstname = B.String()
-    lastname = B.String()
+    firstname = B.String(vocabulary=('logilab', 'caesium'), maxsize=10)
+    lastname = B.String(constraints=[StaticVocabularyConstraint(['logilab', 'caesium'])])
 
 class Person(BasePerson):
     email = B.String()
 
 class Employee(Person):
-    company = B.String()
+    company = B.String(vocabulary=('logilab', 'caesium'))
 
 class Foo(B.EntityType):
     i = B.Int(required=True)
@@ -307,7 +308,17 @@ class PySchemaTC(TestCase):
                           ['Int', 'Float', 'Datetime'])
         self.assertEquals(foo.relations[0].cardinality, '11')
         self.assertEquals(foo.relations[1].cardinality, '?1')
-        
+
+    def test_maxsize(self):
+        bp = BasePerson()
+        def maxsize(e):
+            for e in e.constraints:
+                if isinstance(e, SizeConstraint):
+                    return e.max
+        self.assertEquals(maxsize(bp.relations[0]), 10)
+        self.assertEquals(maxsize(bp.relations[1]), 7)
+        emp = Employee()
+        self.assertEquals(maxsize(emp.relations[3]), 7)
 
 if __name__ == '__main__':
     unittest_main()
