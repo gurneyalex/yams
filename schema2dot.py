@@ -1,9 +1,8 @@
 """write a schema as a dot file
 
-(adapted from pypy/translator/tool/make_dot.py)
-:version: $Revision: 1.6 $  
+
 :organization: Logilab
-:copyright: 2003-2005 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
+:copyright: 2003-2006 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
 :contact: http://www.logilab.fr/ -- mailto:contact@logilab.fr
 """
 
