@@ -1,7 +1,10 @@
 ChangeLog for yams 
 ------------------
-
+	
  --
+    * automatically sets maxsize only for String attributes (fix #3272)
+
+2006-12-06 --  0.9.3
     * fix _ to unicode so we can have unicode description in schema file
     * automatically sets maxsize when some vocabulary is defined
 	
