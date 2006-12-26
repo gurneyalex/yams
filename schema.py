@@ -418,15 +418,15 @@ class EntitySchema(ERSchema):
                 if creation and required:
                     # missing required attribute with no default on creation
                     # is not autorized
-                    errors[rschema] = 'missing attribute'
+                    errors[rschema] = _('required attribute')
                 # on edition, missing attribute is considered as no changes
                 continue
             # skip other constraint if value is None and None is allowed
             if value is None and not required:
                 continue
             if not aschema.check_value(value):
-                errors[rschema] = 'incorrect value %r for type %s' % (value,
-                                                                      aschema)
+                errors[rschema] = _('incorrect value %r for type %s') % (value,
+                                                                         aschema)
                 continue
             # check arbitrary constraints
             for constraint in rschema.rproperty(self, aschema, 'constraints'):
