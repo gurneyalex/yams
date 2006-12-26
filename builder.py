@@ -88,14 +88,17 @@ class AbstractTypedAttribute(SubjectRelation):
         vocabulary = kwargs.pop('vocabulary', None)
         if vocabulary is not None:
             add_constraint(kwargs, StaticVocabularyConstraint(vocabulary))
-        for constraint in kwargs.get('constraints', ()):
-            if isinstance(constraint, SizeConstraint):
-                break
-            if isinstance(constraint, StaticVocabularyConstraint):
-                maxsize = max(len(x) for x in constraint.values)
-        else:
-            if maxsize:
-                add_constraint(kwargs, SizeConstraint(max=maxsize))
+        # for String, guess maxsize from vocab constraint if not already
+        # specified
+        if self.__class__.__name__ == 'String': # XXX
+            for constraint in kwargs.get('constraints', ()):
+                if isinstance(constraint, SizeConstraint):
+                    break
+                if isinstance(constraint, StaticVocabularyConstraint):
+                    maxsize = max(len(x) for x in constraint.values)
+            else:
+                if maxsize:
+                    add_constraint(kwargs, SizeConstraint(max=maxsize))
         unique = kwargs.pop('unique', None)
         if unique:
             add_constraint(kwargs, UniqueConstraint())

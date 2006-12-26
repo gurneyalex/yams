@@ -3,7 +3,6 @@
 :organization: Logilab
 :copyright: 2004-2006 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
 :contact: http://www.logilab.fr/ -- mailto:contact@logilab.fr
-:version: $Revision: 1.4 $  
 """
 
 __docformat__ = "restructuredtext en"
