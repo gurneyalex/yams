@@ -28,7 +28,6 @@ def read_perms_def(schema, filepath):
     each no empty/comment line should be of the form :
     <action>: <group1> [,<group2]*
     """
-    log(LOG_INFO, 'reading permission for %s from %s', (schema.type, filepath))
     for line in lines(filepath, '#'):
         try:
             action, groups = line.split(':')
