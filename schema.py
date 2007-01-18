@@ -651,7 +651,10 @@ class RelationSchema(ERSchema):
         """
         if etype is None:
             return self._subj_schemas.keys()
-        return self._obj_schemas[etype]
+        try:
+            return self._obj_schemas[etype]
+        except KeyError:
+            raise KeyError("%s don't have %s as object" % (self, etype))
     
     def subject_types(self, etype=None):
         warn('deprecated method, use .subjects()', DeprecationWarning, stacklevel=2)
@@ -667,7 +670,10 @@ class RelationSchema(ERSchema):
         """
         if etype is None:
             return self._obj_schemas.keys()
-        return self._subj_schemas[etype]
+        try:
+            return self._subj_schemas[etype]
+        except KeyError:
+            raise KeyError("%s don't have %s as subject" % (self, etype))
     
     def object_types(self, etype=None):
         warn('deprecated method, use .objects()', DeprecationWarning, stacklevel=2)
