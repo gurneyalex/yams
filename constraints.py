@@ -1,6 +1,5 @@
 """some default constraint classes
 
-:version: $Revision: 1.1 $  
 :organization: Logilab
 :copyright: 2003-2006 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
 :contact: http://www.logilab.fr/ -- mailto:contact@logilab.fr
@@ -132,9 +131,9 @@ class StaticVocabularyConstraint(BaseConstraint):
         
     def check(self, entity, rtype, value):
         """return true if the value is in the specific vocabulary"""
-        return value in self.vocabulary()
+        return value in self.vocabulary(entity)
 
-    def vocabulary(self):
+    def vocabulary(self, entity=None):
         """return a list of possible values for the attribute
         """
         return self.values
@@ -161,7 +160,7 @@ class MultipleStaticVocabularyConstraint(StaticVocabularyConstraint):
     """    
     def check(self, entity, rtype, values):
         """return true if the values satisfy the constraint, else false"""
-        vocab = self.vocabulary()
+        vocab = self.vocabulary(entity)
         for value in values:
             if not value in vocab:
                 return False
