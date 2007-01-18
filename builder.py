@@ -95,7 +95,10 @@ class AbstractTypedAttribute(SubjectRelation):
                 if isinstance(constraint, SizeConstraint):
                     break
                 if isinstance(constraint, StaticVocabularyConstraint):
-                    maxsize = max(len(x) for x in constraint.values)
+                    try:
+                        maxsize = max(len(x) for x in constraint.values)
+                    except AttributeError:
+                        break
             else:
                 if maxsize:
                     add_constraint(kwargs, SizeConstraint(max=maxsize))
