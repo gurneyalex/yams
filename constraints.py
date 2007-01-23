@@ -97,19 +97,19 @@ class BoundConstraint(BaseConstraint):
     
     def __init__(self, operator, bound=None):
         assert operator in ('<=', '<', '>', '>=')
-        self.type = operator
+        self.operator = operator
         self.bound = bound
         
     def check(self, entity, rtype, value):
         """return true if the value satisfy the constraint, else false"""
-        return eval('%s %s %s' % (value, self.type, self.bound))
+        return eval('%s %s %s' % (value, self.operator, self.bound))
 
     def __str__(self):
         return 'value %s' % self.serialize()
 
     def serialize(self):
         """simple text serialization"""
-        return u'%s %s' % (self.type, self.bound)
+        return u'%s %s' % (self.operator, self.bound)
     
     def deserialize(cls, value):
         """simple text deserialization"""
