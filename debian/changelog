@@ -1,3 +1,9 @@
+yams (0.9.4-1) unstable; urgency=low
+
+  * new upstream release
+
+ -- Sylvain Thénault <sylvain.thenault@logilab.fr>  Thu,  1 Mar 2007 10:58:28 +0100
+
 yams (0.9.3-1) unstable; urgency=low
 
   * new upstream release
