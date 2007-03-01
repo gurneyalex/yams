@@ -1,10 +1,13 @@
 ChangeLog for yams 
 ------------------
-	
- --
-    * automatically sets maxsize only for String attributes (fix #3272)
 
-2006-12-06 --  0.9.3
+2007-03-01  --  0.9.4
+    * automatically sets maxsize only for String attributes (fix #3272)
+    * #3272: crash when some static vocabulary specified on a non String
+      attribute
+    * #3465: BoundConstraint is not usable
+	
+2006-12-06  --  0.9.3
     * fix _ to unicode so we can have unicode description in schema file
     * automatically sets maxsize when some vocabulary is defined
 	
