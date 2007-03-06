@@ -1,9 +1,9 @@
 """Entity Schema reader, read EntitySchema from Pseudo SQL
 
-Copyright Logilab 2003-2006, all rights reserved.
+:organization: Logilab
+:copyright: 2003-2007 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
+:contact: http://www.logilab.fr/ -- mailto:contact@logilab.fr
 """
-
-__revision__ = "$Id: sqlschema.py,v 1.12 2006-03-30 19:50:56 syt Exp $"
 
 import re
 from os.path import split, splitext

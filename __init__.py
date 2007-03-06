@@ -1,7 +1,7 @@
 """model object and utilities to define generic Entities/Relations schemas
 
 :organization: Logilab
-:copyright: 2004-2006 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
+:copyright: 2004-2007 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
 :contact: http://www.logilab.fr/ -- mailto:contact@logilab.fr
 """
 
