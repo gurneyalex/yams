@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # pylint: disable-msg=W0404,W0622,W0704,W0613,W0403,W0622
-# Copyright (c) 2003 LOGILAB S.A. (Paris, FRANCE).
+# Copyright (c) 2003-2007 LOGILAB S.A. (Paris, FRANCE).
 # http://www.logilab.fr/ -- mailto:contact@logilab.fr
 #
 # This program is free software; you can redistribute it and/or modify it under
@@ -16,8 +16,6 @@
 # this program; if not, write to the Free Software Foundation, Inc.,
 # 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 """ Generic Setup script, takes package info from __pkginfo__.py file """
-
-__revision__ = '$Id: setup.py,v 1.5 2006-03-30 19:50:56 syt Exp $'
 
 import os
 import sys
