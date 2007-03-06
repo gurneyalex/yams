@@ -62,7 +62,10 @@ class ERSchema(object):
             descr = ''
         self.description = descr
         # mapping from action to groups
-        self._groups = getattr(erdef, 'permissions', None) or {}
+        try:
+            self._groups = erdef.permissions.copy()
+        except AttributeError:
+            self._groups = {}
 
     def __cmp__(self, other):
         other = getattr(other, 'type', other)
