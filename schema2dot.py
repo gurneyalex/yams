@@ -2,7 +2,7 @@
 
 
 :organization: Logilab
-:copyright: 2003-2006 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
+:copyright: 2003-2007 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
 :contact: http://www.logilab.fr/ -- mailto:contact@logilab.fr
 """
 
@@ -69,7 +69,7 @@ class FullSchemaVisitor(SchemaVisitor):
         self.schema = schema
         self.skiprels = skiprels
         self._eindex = None
-        entities = [eschema for eschema in schema.entities(True)
+        entities = [eschema for eschema in schema.entities()
                     if self.display_schema(eschema) and not eschema.type in skipetypes]
         self._eindex = dict([(e.type, e) for e in entities])
 
@@ -78,7 +78,7 @@ class FullSchemaVisitor(SchemaVisitor):
             yield eschema.type, eschema
             
     def edges(self):
-        for rschema in self.schema.relations(schema=True):
+        for rschema in self.schema.relations():
             if rschema.is_final() or rschema.type in self.skiprels:
                 continue
             for setype, tetype in rschema._rproperties:
