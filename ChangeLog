@@ -1,7 +1,9 @@
 ChangeLog for yams 
 ------------------
+
  --
     * dropped the schema_view module
+
 	
 2007-03-01  --  0.9.4
     * automatically sets maxsize only for String attributes (fix #3272)
@@ -29,16 +31,19 @@ ChangeLog for yams
     * new .type() method on constraints
     * moved some code of schema2dot into logilab-common
 
+	
 2006-10-08  --  0.8.0
     * new RestrictedEntityType base class and new maxsize, vocabulary and unique
       parameters on relation definition to ease schema construction
     * schema2dot nicely refactored but schema_view'll probably be deprecated soon
     * fix schema reading to correctly handle raw RelationDefinition classes
 
+	
 2006-09-22  --  0.7.0
     * fix a major bug in entity validation
     * refactor RelationFileReader to ease customization
 
+	
 2006-09-11  --  0.6.1
     * consider meta when a relation type is implicitly created
 
@@ -48,14 +53,15 @@ ChangeLog for yams
     * new internal dictionary to ease definition of non final relation
       properties
 
+	
 2006-07-13  --  0.5.3
     * enhance schema validation (focus on attributes only)
     * check password value is an encoded string
 
-
 2006-06-08  --  0.5.2
     * fix eschema.default method to deal with boolean default values stored as string
 
+	
 2006-04-27  --  0.4.3
     * some fixes related to dynamic schema modification
 
@@ -64,13 +70,13 @@ ChangeLog for yams
       relation definition
     * fixed default permissions for user entities
 	
-	
 2006-03-31  --  0.4.1
     * finish api changes, ("final") refactoring
     * cleanup
 	
 2006-03-29  --  0.4.0
     * major api changes
+
 
 2006-03-14  --  0.3.3
     * // in schema definition files may be used to indicate a deprecated
@@ -80,8 +86,7 @@ ChangeLog for yams
 
 2006-02-24  --  0.3.2
     * let subject_types and object_types rschema methods raise a KeyError if a
-      type is specified but not found for the relation (as it was documented)
-   
+      type is specified but not found for the relation (as it was documented)   
    
 2006-01-25  --  0.3.1
     * new function in schema2sql to give grants to a user
@@ -90,10 +95,12 @@ ChangeLog for yams
     * support for a new 'inline' property on relation
     * don't check for type differences for same relation names
 
+
 2005-07-25  --  0.2.0
     * conditional drop into sql schema
     * support for schema displaying using dot (graphviz)
-	
+
+
 2005-07-07  --  0.1.2
     * fixed bug with association types of symetric relation
 
