@@ -8,3 +8,7 @@
 from yams._exceptions import *
 from yams.schema import Schema, EntitySchema, RelationSchema
 from yams.reader import SchemaLoader
+
+# set _ builtin to unicode by default, should be overriden if necessary
+import __builtin__
+__builtin__._ = unicode
