@@ -191,10 +191,16 @@ class EntitySchema(ERSchema):
         self._obj_relations[rschema] = rschema
         
     def del_subject_relation(self, rtype):
-        del self._subj_relations[rtype]
+        try:
+            del self._subj_relations[rtype]
+        except KeyError:
+            pass
         
     def del_object_relation(self, rtype):
-        del self._obj_relations[rtype]
+        try:
+            del self._obj_relations[rtype]
+        except KeyError:
+            pass
 
     def set_default_groups(self):
         """set default action -> groups mapping"""
@@ -548,13 +554,24 @@ class RelationSchema(ERSchema):
             subjtypes.append(subjectschema)
     
     def del_relation_def(self, subjschema, objschema):
-        self._subj_schemas[subjschema].remove(objschema)
-        if len(self._subj_schemas[subjschema]) == 0:
-            del self._subj_schemas[subjschema]
-        self._obj_schemas[objschema].remove(subjschema)
-        if len(self._obj_schemas[objschema]) == 0:
-            del self._obj_schemas[objschema]
-        del self._rproperties[(subjschema, objschema)]
+        try:
+            self._subj_schemas[subjschema].remove(objschema)
+            if len(self._subj_schemas[subjschema]) == 0:
+                del self._subj_schemas[subjschema]
+        except (ValueError, KeyError):
+            pass
+        try:
+            self._obj_schemas[objschema].remove(subjschema)
+            if len(self._obj_schemas[objschema]) == 0:
+                del self._obj_schemas[objschema]
+        except (ValueError, KeyError):
+            pass
+        try:
+            del self._rproperties[(subjschema, objschema)]
+            if self.symetric and subjschema != objschema:
+                del self._rproperties[(objschema, subjschema)]
+        except KeyError:
+            pass
         if not self._obj_schemas or not self._subj_schemas:
             assert not self._obj_schemas and not self._subj_schemas
             return True
