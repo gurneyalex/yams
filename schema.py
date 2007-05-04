@@ -21,7 +21,7 @@ from logilab.common.interface import implements
 from yams import ValidationError, BadSchemaDefinition
 from yams.interfaces import ISchema, IRelationSchema, IEntitySchema, \
      IVocabularyConstraint
-from yams.constraints import BASE_CHECKERS
+from yams.constraints import BASE_CHECKERS, UniqueConstraint
 from yams.builder import BASE_TYPES, EntityType
 
 KEYWORD_MAP = {'NOW' : now,
@@ -386,6 +386,16 @@ class EntitySchema(ERSchema):
             else:
                 default = unicode(default)
         return default
+    
+    def has_unique_values(self, rtype):
+        """convenience method to check presence of the UniqueConstraint on a
+        relation
+        """
+        rschema = self.subject_relation(rtype)
+        for constraint in self.constraints(rtype):
+            if isinstance(constraint, UniqueConstraint):
+                return True
+        return False
     
     def constraints(self, rtype):
         """return constraint of type <cstrtype> associated to the <rtype>
