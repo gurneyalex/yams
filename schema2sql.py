@@ -21,6 +21,7 @@ TYPE_MAPPING = {
     'Date' :     'date', 
     'Time' :     'time', 
     'Datetime' : 'timestamp',
+    'Interval' : 'interval',
     'Password' : 'bytea',
     'Bytes' :    'bytea',         # FIXME: pgsql specific
     # FIXME: aggregat function AVG not supported

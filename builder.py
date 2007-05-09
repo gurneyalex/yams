@@ -11,7 +11,7 @@ from yams.constraints import SizeConstraint, UniqueConstraint, \
      StaticVocabularyConstraint
 
 BASE_TYPES = set(('String', 'Int', 'Float', 'Boolean', 'Date',
-                  'Time', 'Datetime', 'Password', 'Bytes'))
+                  'Time', 'Datetime', 'Interval', 'Password', 'Bytes'))
 
 __all__ = ('ObjectRelation', 'SubjectRelation', 'BothWayRelation',
            'RelationDefinition', 'EntityType', 'MetaEntityType',
