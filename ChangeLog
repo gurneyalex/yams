@@ -1,7 +1,8 @@
 ChangeLog for yams 
 ------------------
 
- --
+ --  0.10.0
+    * introduced Interval
     * dropped the schema_view module
 
 	
