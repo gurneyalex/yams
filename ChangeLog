@@ -1,10 +1,11 @@
 ChangeLog for yams 
 ------------------
- --  0.10.0
+ --
     * introduced Interval
     * dropped the schema_view module
     * new has_unique_values method on EntitySchema instance checking if a 
       subject relation should be unique
+    * improved required attributes' checks
 
 2007-05-14  --  0.10.0
     * automatically sets maxsize only for String attributes (fix #3272)

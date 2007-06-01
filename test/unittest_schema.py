@@ -62,6 +62,8 @@ class BaseSchemaTC(TestCase):
         enote.set_rproperty('type', 'constraints',
                              [StaticVocabularyConstraint((u'bon', u'pasbon',
                                                                   u'bof', u'peux mieux faire'))])
+        enote.set_rproperty('date', 'cardinality', '11')
+        
         eaffaire.set_rproperty('sujet', 'constraints', [SizeConstraint(128)])
         eaffaire.set_rproperty('ref', 'constraints', [SizeConstraint(12)])
         eperson.set_rproperty('nom', 'constraints', [SizeConstraint(20, 10)])
@@ -103,8 +105,11 @@ ATTRIBUTE_BAD_VALUES = (
 ##    ('Affaire', [('starton', 'midi')]),
 
     ('Note', [('type', ['bof', 'peux mieux faire']),
-              ('type', 'bof, je suis pas unicode, alors...')]),
+              ('type', 'bof, je suis pas unicode, alors...'),
+              ('date', None),
+              ]),
     )
+
 ATTRIBUTE_GOOD_VALUES = (
     ('Person', [('nom', u'>10 mais < 20 '), ('sexe', 0.5),
                 ('promo', u'bon'),
@@ -323,7 +328,7 @@ class SchemaTC(BaseSchemaTC):
         """test base schema methods
         """
         all_types = ['Affaire', 'Boolean', 'Bytes', 'Date', 'Datetime',
-                     'Float', 'Int', 'Note', 'Password',
+                     'Float', 'Int', 'Interval', 'Note', 'Password',
                      'Person', 'Societe', 'String', 'Time']
         types = schema.entities()
         types.sort()
