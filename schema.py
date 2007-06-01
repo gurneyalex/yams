@@ -441,7 +441,9 @@ class EntitySchema(ERSchema):
                 # on edition, missing attribute is considered as no changes
                 continue
             # skip other constraint if value is None and None is allowed
-            if value is None and not required:
+            if value is None:
+                if required:
+                    errors[rschema] = _('required attribute')
                 continue
             if not aschema.check_value(value):
                 errors[rschema] = _('incorrect value %r for type %s') % (value,
