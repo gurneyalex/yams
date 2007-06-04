@@ -1,9 +1,10 @@
 ChangeLog for yams 
 ------------------
- --
+
+2007-06-04  --  0.11.0
     * introduced Interval
     * dropped the schema_view module
-    * new has_unique_values method on EntitySchema instance checking if a 
+    * new has_unique_values method on EntitySchema instance checking if a
       subject relation should be unique
     * improved required attributes' checks
 
