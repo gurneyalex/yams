@@ -23,14 +23,14 @@ class DummyDefaultHandler:
 
 schema = SchemaLoader().load(DATADIR, default_handler=DummyDefaultHandler())
 
-DOT_SOURCE = """digraph Schema {
+DOT_SOURCE = """digraph "Schema" {
 rankdir=BT
 ratio=compress
 size="12,30"
-Person [label="Person"];
-Societe [label="Societe"];
+"Person" [label="Person"];
+"Societe" [label="Societe"];
 edge [label="travaille"];
-Person -> Societe
+"Person" -> "Societe"
 }"""
 
 
