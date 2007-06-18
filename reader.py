@@ -131,17 +131,24 @@ class PyFileReader(builder.FileReader):
             except TypeError:
                 continue
         
-    def import_schema(self, schemamod):
+    def import_schema_file(self, schemamod):
         filepath = self.loader.include_schema_files(schemamod)[0]            
         try:
             return self._loaded[filepath]
         except KeyError:
             return self.exec_file(filepath)
+
+    def import_erschema(self, ertype):
+        for erdef in self.loader._defobjects:
+            if erdef.name == ertype:
+                return erdef
+        return getattr(self.import_schema_file(ertype), ertype)
     
     def exec_file(self, filepath):
         #partname = self._partname(filepath)
         flocals = self.context.copy()
-        flocals['import_schema'] = self.import_schema
+        flocals['import_schema'] = self.import_schema_file # XXX rename
+        flocals['import_erschema'] = self.import_erschema
         execfile(filepath, flocals)
         for key in self.context:
             del flocals[key]
