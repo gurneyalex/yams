@@ -1,6 +1,10 @@
 ChangeLog for yams 
 ------------------
 
+    --
+    * IntervalBoundConstraint replaces BoundConstraint
+
+
 2007-06-04  --  0.11.0
     * introduced Interval
     * dropped the schema_view module
