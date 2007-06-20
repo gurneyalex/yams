@@ -68,7 +68,8 @@ class BaseSchemaTC(TestCase):
         eaffaire.set_rproperty('ref', 'constraints', [SizeConstraint(12)])
         eperson.set_rproperty('nom', 'constraints', [SizeConstraint(20, 10)])
         eperson.set_rproperty('prenom', 'constraints', [SizeConstraint(64)])
-        eperson.set_rproperty('tel', 'constraints', [BoundConstraint('<=', 999999)])
+        eperson.set_rproperty('tel', 'constraints', [IntervalBoundConstraint(maxvalue=999999)])
+        eperson.set_rproperty('fax', 'constraints', [IntervalBoundConstraint(minvalue=12, maxvalue=999999)])
         eperson.set_rproperty('promo', 'constraints', [StaticVocabularyConstraint( (u'bon', u'pasbon'))])
 
         estring = schema.eschema('String')
@@ -96,6 +97,8 @@ ATTRIBUTE_BAD_VALUES = (
                 ('promo', 'bon'), ('promo', 'uyou'),
                 ('promo', u' pas bon du tout'),
                 ('tel', 'notastring'), 
+                ('tel', 1000000), 
+                ('fax', 11), 
                 ('TEST', 'notaboolean'), #('TEST', 0), ('TEST', 1)]), #should we accept this ?
                 ('TEST', 'true'), ('TEST', 'false')]),
 ## the date and time are not checked for now 
@@ -114,7 +117,7 @@ ATTRIBUTE_GOOD_VALUES = (
     ('Person', [('nom', u'>10 mais < 20 '), ('sexe', 0.5),
                 ('promo', u'bon'),
                 ('datenaiss', '1977-06-07'),
-                ('tel', 83433), ('fax', None), 
+                ('tel', 83433), ('fax', None), ('fax', 12),
                 ('TEST', True), ('TEST', False)]),
     ('Note', [('date', '2229-01-31 00:00')]),
     ('Affaire', [('starton', '00:00')]),

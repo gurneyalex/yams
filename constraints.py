@@ -7,6 +7,7 @@
 
 __docformat__ = "restructuredtext en"
 
+import warnings
 from yams.interfaces import IConstraint, IVocabularyConstraint
         
 class BaseConstraint(object):
@@ -92,11 +93,14 @@ class BoundConstraint(BaseConstraint):
     """the int/float bound constraint :
 
     set a minimal or maximal value to a numerical value
+    This class is DEPRECATED, use IntervalBoundConstraint instead
     """
     __implements__ = IConstraint
     
     def __init__(self, operator, bound=None):
         assert operator in ('<=', '<', '>', '>=')
+        warnings.warn("use IntervalBoundConstraint instead of BoundConstraint",
+                      DeprecationWarning, stacklevel=2)
         self.operator = operator
         self.bound = bound
         
@@ -118,6 +122,45 @@ class BoundConstraint(BaseConstraint):
         return cls(operator, bound)
     deserialize = classmethod(deserialize)
 
+
+class IntervalBoundConstraint(BaseConstraint):
+    """an int/float bound constraint :
+
+    sets a minimal and / or a maximal value to a numerical value
+    This class aims to replace the BoundConstraint class
+    """
+    __implements__ = IConstraint
+    
+    def __init__(self, minvalue=None, maxvalue=None):
+        """
+        :param minvalue: the minimal value that can be used
+        :param maxvalue: the maxvalue value that can be used
+        """
+        assert not (minvalue is None and maxvalue is None)
+        self.minvalue = minvalue
+        self.maxvalue = maxvalue
+
+    def check(self, entity, rtype, value):
+        if self.minvalue is not None and value < self.minvalue:
+            return False
+        if self.maxvalue is not None and value > self.maxvalue:
+            return False
+        return True
+    
+    def __str__(self):
+        return 'value [%s]' % self.serialize()
+
+    def serialize(self):
+        """simple text serialization"""
+        return u'%s;%s' % (self.minvalue, self.maxvalue)
+    
+    def deserialize(cls, value):
+        """simple text deserialization"""
+        minvalue, maxvalue = value.split(';')
+        return cls(eval(minvalue), eval(maxvalue))
+    deserialize = classmethod(deserialize)
+
+        
 
 class StaticVocabularyConstraint(BaseConstraint):
     """the static vocabulary constraint :
