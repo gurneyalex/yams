@@ -230,6 +230,16 @@ class EntitySchema(ERSchema):
         (and so cannot be used as subject of a relation)
         """
         return self.type in BASE_TYPES
+
+    def is_subobject(self):
+        """return True if this entity type is contained by another"""
+        for rschema in self.object_relations():
+            if self.objrproperty(rschema, 'composite') == 'subject':
+                return True
+        for rschema in self.subject_relations():
+            if self.subjrproperty(rschema, 'composite') == 'object':
+                return True
+        return False
     
     def ordered_relations(self):
         """ return subject relation in an ordered way"""
@@ -481,7 +491,7 @@ class RelationSchema(ERSchema):
                     'constraints': (),
                     'order': 0,
                     'description': ''}
-    _NONFINAL_RPROPERTIES = {}
+    _NONFINAL_RPROPERTIES = {'composite': None}
     _FINAL_RPROPERTIES = {'default': None,
                           'uid': False,
                           'indexed': False}
