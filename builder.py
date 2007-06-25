@@ -114,6 +114,16 @@ for basetype in BASE_TYPES:
                                {'etype' : basetype})
 
 
+def copy_attributes(fromobj, toobj):
+    for attr in ('meta', 'symetric', 'inlined',
+                 'cardinality', 'constraints', 'order', 'description',
+                 'default', 'uid', 'indexed',
+                 'fulltextindexed', 'internationalizable'):
+        try:
+            setattr(toobj, attr, getattr(fromobj, attr))
+        except AttributeError:
+            continue
+        
 class Definition(object):
     """abstract class for entity / relation definition classes"""
 
@@ -142,7 +152,7 @@ class Definition(object):
         for subj in self._actual_types(schema, self.subject):
             for obj in self._actual_types(schema, self.object):
                 rdef = RelationDefinition(subj, self.name, obj)
-                rdef.__dict__.update(self.__dict__)
+                copy_attributes(self, rdef)
                 rdef.subject = subj
                 rdef.object = obj
                 schema.add_relation_def(rdef)
