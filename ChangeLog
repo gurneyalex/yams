@@ -1,9 +1,9 @@
 ChangeLog for yams 
 ------------------
 
-    --
+2007-06-25  --  0.12.0
     * IntervalBoundConstraint replaces BoundConstraint
-
+    * new import_erschema method available in schema definition files
 
 2007-06-04  --  0.11.0
     * introduced Interval
