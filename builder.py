@@ -115,9 +115,10 @@ for basetype in BASE_TYPES:
 
 
 def copy_attributes(fromobj, toobj):
-    for attr in ('meta', 'symetric', 'inlined',
-                 'cardinality', 'constraints', 'order', 'description',
-                 'default', 'uid', 'indexed',
+    for attr in ('meta', 'symetric', 'inlined', 
+                 'cardinality', 'constraints', 'composite',
+                 'order', 'description',
+                 'default', 'uid', 'indexed', 'uid', 
                  'fulltextindexed', 'internationalizable'):
         try:
             setattr(toobj, attr, getattr(fromobj, attr))
