@@ -114,12 +114,14 @@ for basetype in BASE_TYPES:
                                {'etype' : basetype})
 
 
+RDEF_PROPERTIES = ('meta', 'symetric', 'inlined', 
+                   'cardinality', 'constraints', 'composite',
+                   'order', 'description',
+                   'default', 'uid', 'indexed', 'uid', 
+                   'fulltextindexed', 'internationalizable')
+
 def copy_attributes(fromobj, toobj):
-    for attr in ('meta', 'symetric', 'inlined', 
-                 'cardinality', 'constraints', 'composite',
-                 'order', 'description',
-                 'default', 'uid', 'indexed', 'uid', 
-                 'fulltextindexed', 'internationalizable'):
+    for attr in RDEF_PROPERTIES:
         try:
             setattr(toobj, attr, getattr(fromobj, attr))
         except AttributeError:
