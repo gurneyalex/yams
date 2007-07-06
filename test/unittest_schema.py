@@ -65,7 +65,7 @@ class BaseSchemaTC(TestCase):
         enote.set_rproperty('date', 'cardinality', '11')
         
         eaffaire.set_rproperty('sujet', 'constraints', [SizeConstraint(128)])
-        eaffaire.set_rproperty('ref', 'constraints', [SizeConstraint(12)])
+        eaffaire.set_rproperty('ref', 'constraints', [SizeConstraint(12), RegexpConstraint(r'[A-Z]+\d+')])
         eperson.set_rproperty('nom', 'constraints', [SizeConstraint(20, 10)])
         eperson.set_rproperty('prenom', 'constraints', [SizeConstraint(64)])
         eperson.set_rproperty('tel', 'constraints', [IntervalBoundConstraint(maxvalue=999999)])
@@ -111,6 +111,8 @@ ATTRIBUTE_BAD_VALUES = (
               ('type', 'bof, je suis pas unicode, alors...'),
               ('date', None),
               ]),
+    ('Affaire', [('ref', 'ginco01'), ('ref', 'GINCO'),],
+    ),
     )
 
 ATTRIBUTE_GOOD_VALUES = (
@@ -120,7 +122,8 @@ ATTRIBUTE_GOOD_VALUES = (
                 ('tel', 83433), ('fax', None), ('fax', 12),
                 ('TEST', True), ('TEST', False)]),
     ('Note', [('date', '2229-01-31 00:00')]),
-    ('Affaire', [('starton', '00:00')]),
+    ('Affaire', [('starton', '00:00'),
+                 ('ref', u'GINCO01')]),
     )
 
 RELATIONS_BAD_VALUES = {

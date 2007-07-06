@@ -8,6 +8,8 @@
 __docformat__ = "restructuredtext en"
 
 import warnings
+import re
+
 from yams.interfaces import IConstraint, IVocabularyConstraint
         
 class BaseConstraint(object):
@@ -88,6 +90,33 @@ class SizeConstraint(BaseConstraint):
         return cls(**kwargs)
     deserialize = classmethod(deserialize)
             
+class RegexpConstraint(BaseConstraint):
+    """specifies a set of allowed patterns for a string value
+    """
+    __implements__ = IConstraint
+
+    def __init__(self, regexp, flags=0):
+        self.regexp = regexp
+        self.flags = flags
+        self._rgx = re.compile(regexp, flags)
+        
+    def check(self, entity, rtype, value):
+        """return true if the value satisfy the constraint, else false"""
+        return self._rgx.match(value, self.flags)
+
+    def __str__(self):
+        return 'regexp %s' % self.serialize()
+
+    def serialize(self):
+        """simple text serialization"""
+        return u'%s,%s' % (self.regexp, self.flags)
+    
+    def deserialize(cls, value):
+        """simple text deserialization"""
+        regexp, flags = value.rsplit(',', 1)
+        return cls(regexp, int(flags))
+    deserialize = classmethod(deserialize)
+
     
 class BoundConstraint(BaseConstraint):
     """the int/float bound constraint :

@@ -33,6 +33,16 @@ class ConstraintTC(TestCase):
         cstr = IntervalBoundConstraint.deserialize('12.13;13.14')
         self.assertEquals(cstr.minvalue, 12.13)
         self.assertEquals(cstr.maxvalue, 13.14) 
+
+
+    def test_regexp_serialization(self):
+        cstr = RegexpConstraint('[a-z]+,[A-Z]+', 12)
+        self.assertEquals(cstr.serialize(), '[a-z]+,[A-Z]+,12')
+        
+    def test_regexp_deserialization(self):
+        cstr = RegexpConstraint.deserialize('[a-z]+,[A-Z]+,12')
+        self.assertEquals(cstr.regexp, '[a-z]+,[A-Z]+')
+        self.assertEquals(cstr.flags, 12)
         
     
 if __name__ == '__main__':
