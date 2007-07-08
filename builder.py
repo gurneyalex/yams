@@ -26,8 +26,9 @@ __all__ = ('ObjectRelation', 'SubjectRelation', 'BothWayRelation',
 # \(Object\|Subject\)Relation(relations, '\([a-z_A-Z]+\)',
 # -->
 # \2 = \1Relation(
+class Relation(object): pass
 
-class ObjectRelation(object):
+class ObjectRelation(Relation):
     cardinality = None
     constraints = ()
     created = 0
@@ -39,7 +40,7 @@ class ObjectRelation(object):
         self.etype = etype
         self.constraints = list(self.constraints)
         self.__dict__.update(kwargs)
-
+    
     def __repr__(self):
         return '%(name)s %(etype)s' % self.__dict__
 
@@ -56,7 +57,7 @@ class SubjectRelation(ObjectRelation):
         return '%(etype)s %(name)s' % self.__dict__
 
 
-class BothWayRelation(object):
+class BothWayRelation(Relation):
 
     def __init__(self, subjectrel, objectrel):
         assert isinstance(subjectrel, SubjectRelation)
@@ -65,10 +66,12 @@ class BothWayRelation(object):
         self.objectrel = objectrel
 
 def add_constraint(kwargs, constraint):
-    if kwargs.get('constraints'):
-        kwargs['constraints'].append(constraint)
-    else:
-        kwargs['constraints'] = [constraint]
+    constraints = kwargs.setdefault('constraints', [])
+    for i, existingconstraint in enumerate(constraints):
+        if existingconstraint.__class__ is constraint.__class__:
+            constraints[i] = constraint
+            return
+    constraints.append(constraint)
     
 class AbstractTypedAttribute(SubjectRelation):
     """AbstractTypedAttribute is not directly instantiable
@@ -87,27 +90,25 @@ class AbstractTypedAttribute(SubjectRelation):
             add_constraint(kwargs, SizeConstraint(max=maxsize))
         vocabulary = kwargs.pop('vocabulary', None)
         if vocabulary is not None:
-            add_constraint(kwargs, StaticVocabularyConstraint(vocabulary))
-        # for String, guess maxsize from vocab constraint if not already
-        # specified
-        if self.__class__.__name__ == 'String': # XXX
-            for constraint in kwargs.get('constraints', ()):
-                if isinstance(constraint, SizeConstraint):
-                    break
-                if isinstance(constraint, StaticVocabularyConstraint):
-                    try:
-                        maxsize = max(len(x) for x in constraint.values)
-                    except AttributeError:
-                        break
-            else:
-                if maxsize:
-                    add_constraint(kwargs, SizeConstraint(max=maxsize))
+            self.set_vocabulary(vocabulary, kwargs)
         unique = kwargs.pop('unique', None)
         if unique:
             add_constraint(kwargs, UniqueConstraint())
         # use the etype attribute provided by subclasses
         super(AbstractTypedAttribute, self).__init__(self.etype, **kwargs)
 
+    def set_vocabulary(self, vocabulary, kwargs=None):
+        if kwargs is None:
+            kwargs = self.__dict__
+        #constraints = kwargs.setdefault('constraints', [])
+        add_constraint(kwargs, StaticVocabularyConstraint(vocabulary))
+        if self.__class__.__name__ == 'String': # XXX
+            maxsize = max(len(x) for x in vocabulary)
+            add_constraint(kwargs, SizeConstraint(max=maxsize))
+            
+    def __repr__(self):
+        return '<%(name)s(%(etype)s)>' % self.__dict__
+        
 # build a specific class for each base type
 for basetype in BASE_TYPES:
     globals()[basetype] = type(basetype, (AbstractTypedAttribute,),
@@ -131,12 +132,12 @@ class Definition(object):
     """abstract class for entity / relation definition classes"""
 
     meta = False
-    name = None
     subject, object = None, None
     
     def __init__(self, name=None, **kwargs):
         self.__dict__.update(kwargs)
-        self.name = name or getattr(self, 'name', None) or self.__class__.__name__
+        self.name = (name or getattr(self, 'name', None)
+                     or self.__class__.__name__)
         # XXX check properties
         #for key, val in kwargs.items():
         #    if not hasattr(self, key):
@@ -154,8 +155,13 @@ class Definition(object):
             rschema = schema.add_relation_type(rtype)
         for subj in self._actual_types(schema, self.subject):
             for obj in self._actual_types(schema, self.object):
-                rdef = RelationDefinition(subj, self.name, obj)
-                copy_attributes(self, rdef)
+                if isinstance(self, RelationDefinition):
+                    rdef = self
+                else:
+                    rdef = RelationDefinition(subj, self.name, obj)
+                    copy_attributes(self, rdef)
+                assert isinstance(subj, basestring), subj
+                assert isinstance(obj, basestring), obj
                 rdef.subject = subj
                 rdef.object = obj
                 schema.add_relation_def(rdef)
@@ -189,35 +195,61 @@ class metadefinition(type):
     of EntityType's subclasses
     """
     def __new__(mcs, name, bases, classdict):
-        rels = []
-        for attrname, attrvalue in classdict.items():
-            if isinstance(attrvalue, ObjectRelation):
-                attrvalue.name = attrname
-                rels.append(attrvalue)
+        classdict['__relations__'] = rels = []
+        relations = {}
+        for rname, rdef in classdict.items():
+            if isinstance(rdef, Relation):
                 # relation's name **must** be removed from class namespace
                 # to avoid conflicts with instance's potential attributes
-                del classdict[attrname]
-            elif isinstance(attrvalue, BothWayRelation):
-                # BothWayRelation
-                subjectrel = attrvalue.subjectrel
-                objectrel = attrvalue.objectrel
-                subjectrel.name = attrname
-                objectrel.name = attrname
-                rels.append(subjectrel)
-                rels.append(objectrel)
-                del classdict[attrname]
+                del classdict[rname]
+                relations[rname] = rdef
+        defclass = super(metadefinition, mcs).__new__(mcs, name, bases, classdict)
+        for rname, rdef in relations.items():
+            defclass.add_relation(rdef, rname)
         # take baseclases' relation into account
         for base in bases:
             rels.extend(getattr(base, '__relations__', []))
-        classdict['__relations__'] = sorted(rels, key=lambda r:r.creation_rank)
-        return super(metadefinition, mcs).__new__(mcs, name, bases, classdict)
+        # sort relations by creation rank
+        defclass.__relations__ = sorted(rels, key=lambda r: r.creation_rank)
+        return defclass
     
         
         
 class EntityType(Definition):
 
     __metaclass__ = metadefinition
-    
+
+    @classmethod
+    def extend(cls, othermetadefcls):
+        for rdef in othermetadefcls.__relations__:
+            cls.add_relation(rdef)
+        
+    @classmethod
+    def add_relation(cls, rdef, name=None):
+        if isinstance(rdef, BothWayRelation):
+            cls.add_relation(rdef.subjectrel, name)
+            cls.add_relation(rdef.objectrel, name)
+        else:
+            if name is not None:
+                rdef.name = name
+            cls.__relations__.append(rdef)
+            
+    @classmethod
+    def remove_relation(cls, name):
+        for rdef in cls.get_relations(name):
+            cls.__relations__.remove(rdef)
+            
+    @classmethod
+    def get_relations(cls, name):
+        """get a relation definitions by name
+        XXX take care, if the relation is both and subject/object, the
+        first one encountered will be returned
+        """
+        for rdef in cls.__relations__[:]:
+            if rdef.name == name:
+                yield rdef
+            
+        
     def __init__(self, *args, **kwargs):
         super(EntityType, self).__init__(*args, **kwargs)
         # if not hasattr(self, 'relations'):
@@ -236,7 +268,8 @@ class EntityType(Definition):
             elif isinstance(relation, ObjectRelation):
                 kwargs = relation.__dict__.copy()
                 del kwargs['name']
-                rdef = RelationDefinition(subject=relation.etype, name=relation.name,
+                rdef = RelationDefinition(subject=relation.etype,
+                                          name=relation.name,
                                           object=self.name, order=order,
                                           **kwargs)
                 order += 1
@@ -284,8 +317,10 @@ class RelationDefinition(RelationBase):
         else:
             self.subject = self.__class__.subject
         if object:
+            assert isinstance(object, basestring), (subject, name, object)
             self.object = object
         else:
+            assert isinstance(self.__class__.object, basestring), self.__class__.object
             self.object = self.__class__.object
         if name:
             self.name = name

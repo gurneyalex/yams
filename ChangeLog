@@ -1,9 +1,12 @@
 ChangeLog for yams 
 ------------------
 
-  -- 0.13.0
+  -- 
     * new RegexpBasedConstraint
-
+    * api on EntityType to modify an existant type (add_relation,
+      remove_relation, extend)
+    * some refactoring to ease schema modification (set_vocabulary)
+    * use user.matching_groups instead of user.in_groups (ginco 2.35 dev)
 
 2007-06-25  --  0.12.0
     * IntervalBoundConstraint replaces BoundConstraint

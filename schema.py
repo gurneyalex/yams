@@ -55,6 +55,7 @@ class ERSchema(object):
         assert erdef
         self.schema = schema
         self.type = erdef.name
+        assert isinstance(erdef.meta, bool)
         self.meta = erdef.meta
         if erdef.__doc__:
             descr = ' '.join(erdef.__doc__.split())
@@ -149,7 +150,7 @@ class ERSchema(object):
         :rtype: bool
         :return: flag indicating whether the user has the permission
         """
-        return user.in_groups(self.get_groups(action))
+        return user.matching_groups(self.get_groups(action))
 
 
 # Schema objects definition ###################################################
@@ -205,13 +206,14 @@ class EntitySchema(ERSchema):
     def set_default_groups(self):
         """set default action -> groups mapping"""
         if self._groups:
-            pass # already initialized
+            # already initialized
+            pass
+            #assert not self.is_final(), \
+            #       'permission for final entities are not considered'
         elif self.is_final():
-            # give access to everybody for final entities
-            self._groups = {'read': ('managers', 'users', 'guests'),
-                            'update': ('managers', 'users'),
-                            'delete': ('managers', 'users'),
-                            'add': ('managers', 'users')}
+            # no permissions needed for final entities, access to them
+            # is defined through relations
+            self._groups = {'read': ('managers', 'users', 'guests',)}
         elif self.meta:
             self._groups = {'read': ('managers', 'users', 'guests',),
                             'update': ('managers', 'owners',),
