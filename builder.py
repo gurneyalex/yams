@@ -317,10 +317,8 @@ class RelationDefinition(RelationBase):
         else:
             self.subject = self.__class__.subject
         if object:
-            assert isinstance(object, basestring), (subject, name, object)
             self.object = object
         else:
-            assert isinstance(self.__class__.object, basestring), self.__class__.object
             self.object = self.__class__.object
         if name:
             self.name = name
