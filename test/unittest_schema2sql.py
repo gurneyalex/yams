@@ -38,6 +38,14 @@ CREATE TABLE Affaire(
 );
 CREATE INDEX affaire_inline_rel_idx ON Affaire (inline_rel);
 
+CREATE TABLE Company(
+ name text
+);
+
+CREATE TABLE Division(
+ name text
+);
+
 CREATE TABLE Eetype(
  name varchar(64) UNIQUE NOT NULL,
  description text,
@@ -47,6 +55,9 @@ CREATE TABLE Eetype(
 );
 CREATE INDEX eetype_name_idx ON Eetype (name);
 CREATE INDEX eetype_initial_state_idx ON Eetype (initial_state);
+
+CREATE TABLE Employee(
+);
 
 CREATE TABLE Note(
  date varchar(10),
@@ -191,13 +202,24 @@ CREATE TABLE travaille_relation (
 
 CREATE INDEX travaille_relation_from_idx ON travaille_relation (eid_from);
 CREATE INDEX travaille_relation_to_idx ON travaille_relation (eid_to);
+
+CREATE TABLE works_for_relation (
+  eid_from INTEGER NOT NULL,
+  eid_to INTEGER NOT NULL,
+  CONSTRAINT works_for_relation_p_key PRIMARY KEY(eid_from, eid_to),
+  CONSTRAINT works_for_relation_fkey1 FOREIGN KEY (eid_from) REFERENCES entities (eid) ON DELETE CASCADE,
+  CONSTRAINT works_for_relation_fkey2 FOREIGN KEY (eid_to) REFERENCES entities (eid) ON DELETE CASCADE
+);
+
+CREATE INDEX works_for_relation_from_idx ON works_for_relation (eid_from);
+CREATE INDEX works_for_relation_to_idx ON works_for_relation (eid_to);
 """
 
 class SQLSchemaTC(TestCase):
     
     def test_known_values(self):
         output = schema2sql(schema)
-        self.assertLinesEquals(output.strip(), EXPECTED_DATA_NO_DROP.strip())
+        self.assertTextEquals(output.strip(), EXPECTED_DATA_NO_DROP.strip())
 
         
 if __name__ == '__main__':

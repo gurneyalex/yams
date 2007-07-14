@@ -155,15 +155,8 @@ class Definition(object):
             rschema = schema.add_relation_type(rtype)
         for subj in self._actual_types(schema, self.subject):
             for obj in self._actual_types(schema, self.object):
-                if isinstance(self, RelationDefinition):
-                    rdef = self
-                else:
-                    rdef = RelationDefinition(subj, self.name, obj)
-                    copy_attributes(self, rdef)
-                assert isinstance(subj, basestring), subj
-                assert isinstance(obj, basestring), obj
-                rdef.subject = subj
-                rdef.object = obj
+                rdef = RelationDefinition(subj, self.name, obj)
+                copy_attributes(self, rdef)
                 schema.add_relation_def(rdef)
                     
     def _actual_types(self, schema, etype):
