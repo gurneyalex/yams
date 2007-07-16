@@ -138,11 +138,17 @@ class PyFileReader(builder.FileReader):
         except KeyError:
             return self.exec_file(filepath)
 
-    def import_erschema(self, ertype, schemamod=None):
+    def import_erschema(self, ertype, schemamod=None, instantiate=True):
         for erdef in self.loader._defobjects:
             if erdef.name == ertype:
+                assert instantiate, 'can\'t get class of an already registered type'
                 return erdef
-        return getattr(self.import_schema_file(schemamod or ertype), ertype)
+        erdefcls = getattr(self.import_schema_file(schemamod or ertype), ertype)
+        if instantiate:
+            erdef = erdefcls()
+            self.loader.add_definition(self, erdef)
+            return erdef
+        return erdefcls
     
     def exec_file(self, filepath):
         #partname = self._partname(filepath)
