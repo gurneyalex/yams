@@ -64,7 +64,8 @@ class BothWayRelation(Relation):
         assert isinstance(objectrel, ObjectRelation)
         self.subjectrel = subjectrel
         self.objectrel = objectrel
-
+        self.creation_rank = subjectrel.creation_rank
+        
 def add_constraint(kwargs, constraint):
     constraints = kwargs.setdefault('constraints', [])
     for i, existingconstraint in enumerate(constraints):
@@ -198,9 +199,8 @@ class metadefinition(type):
                 relations[rname] = rdef
         defclass = super(metadefinition, mcs).__new__(mcs, name, bases, classdict)
         for rname, rdef in relations.items():
-            rdef.name = rname
-            defclass.__relations__.append(rdef)
-        # take baseclases' relation into account
+            add_relation(defclass.__relations__, rdef, rname)
+        # take base classes'relations into account
         for base in bases:
             rels.extend(getattr(base, '__relations__', []))
         # sort relations by creation rank
@@ -208,6 +208,15 @@ class metadefinition(type):
         return defclass
     
         
+
+def add_relation(relations, rdef, name=None):
+    if isinstance(rdef, BothWayRelation):
+        add_relation(relations, rdef.subjectrel, name)
+        add_relation(relations, rdef.objectrel, name)
+    else:
+        if name is not None:
+            rdef.name = name
+        relations.append(rdef)
         
 class EntityType(Definition):
 
@@ -216,15 +225,9 @@ class EntityType(Definition):
     def extend(self, othermetadefcls):
         for rdef in othermetadefcls.__relations__:
             self.add_relation(rdef)
-        
+            
     def add_relation(self, rdef, name=None):
-        if isinstance(rdef, BothWayRelation):
-            self.add_relation(rdef.subjectrel, name)
-            self.add_relation(rdef.objectrel, name)
-        else:
-            if name is not None:
-                rdef.name = name
-            self.relations.append(rdef)
+        add_relation(self.relations, rdef, name)
             
     def remove_relation(self, name):
         for rdef in self.get_relations(name):
@@ -264,7 +267,7 @@ class EntityType(Definition):
                                           **kwargs)
                 order += 1
             else:
-                raise BadSchemaDefinition('duh?')
+                raise BadSchemaDefinition('dunno how to handle %s' % relation)
             rdef.add_relations(schema)
 
     
