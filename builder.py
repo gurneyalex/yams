@@ -198,7 +198,8 @@ class metadefinition(type):
                 relations[rname] = rdef
         defclass = super(metadefinition, mcs).__new__(mcs, name, bases, classdict)
         for rname, rdef in relations.items():
-            defclass.add_relation(rdef, rname)
+            rdef.name = rname
+            defclass.__relations__.append(rdef)
         # take baseclases' relation into account
         for base in bases:
             rels.extend(getattr(base, '__relations__', []))
@@ -212,33 +213,29 @@ class EntityType(Definition):
 
     __metaclass__ = metadefinition
 
-    @classmethod
-    def extend(cls, othermetadefcls):
+    def extend(self, othermetadefcls):
         for rdef in othermetadefcls.__relations__:
-            cls.add_relation(rdef)
+            self.add_relation(rdef)
         
-    @classmethod
-    def add_relation(cls, rdef, name=None):
+    def add_relation(self, rdef, name=None):
         if isinstance(rdef, BothWayRelation):
-            cls.add_relation(rdef.subjectrel, name)
-            cls.add_relation(rdef.objectrel, name)
+            self.add_relation(rdef.subjectrel, name)
+            self.add_relation(rdef.objectrel, name)
         else:
             if name is not None:
                 rdef.name = name
-            cls.__relations__.append(rdef)
+            self.relations.append(rdef)
             
-    @classmethod
-    def remove_relation(cls, name):
-        for rdef in cls.get_relations(name):
-            cls.__relations__.remove(rdef)
+    def remove_relation(self, name):
+        for rdef in self.get_relations(name):
+            self.relations.remove(rdef)
             
-    @classmethod
-    def get_relations(cls, name):
+    def get_relations(self, name):
         """get a relation definitions by name
         XXX take care, if the relation is both and subject/object, the
         first one encountered will be returned
         """
-        for rdef in cls.__relations__[:]:
+        for rdef in self.relations[:]:
             if rdef.name == name:
                 yield rdef
             
