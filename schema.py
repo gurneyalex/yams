@@ -29,14 +29,36 @@ KEYWORD_MAP = {'NOW' : now,
                }
 
 def rehash(dictionary):
-    # WARNING: don't replace this function by a simple dictionary copy
-    #          this is necessary since the __hash__ method of objects
-    #          contained in the original dictionary has changed and we
-    #          want a fresh dictionary built using the new __hash__ method
-    res = {}
-    for key, val in dictionary.items():
-        res[key] = val
-    return res
+    """this function manually builds a copy of `dictionary` but forces
+    hash values to be recomputed. Note that dict(d) or d.copy() don't
+    do that.
+
+    It is used to :
+      - circumvent Pyro / (un)pickle problems (hash mode is changed
+        during reconstruction)
+      - force to recompute keys' hash values. This is needed when a
+        schema's type is changed because the schema's hash method is based
+        on the type attribute. This problem is illusrated by the pseudo-code
+        below :
+        
+        >>> topic = EntitySchema(type='Topic')
+        >>> d = {topic : 'foo'}
+        >>> d[topic]
+        'foo'
+        >>> d['Topic']
+        'foo'
+        >>> topic.type = 'folder'
+        >>> topic in d
+        False
+        >>> 'Folder' in d
+        False
+        >>> 'Folder' in d.keys() # but it can be found "manually"
+        True
+        >>> d = rehash(d) # explicit rehash()
+        >>> 'Folder' in d
+        True
+    """
+    return dict(item for item in dictionary.items())
 
 def format_properties(props):
     res = []
@@ -71,7 +93,7 @@ class ERSchema(object):
     def __cmp__(self, other):
         other = getattr(other, 'type', other)
         return cmp(self.type, other)
-            
+
     def __hash__(self):
         try:
             if self.schema.__hashmode__ is None:
@@ -224,6 +246,7 @@ class EntitySchema(ERSchema):
                             'update': ('managers', 'owners',),
                             'delete': ('managers', 'owners'),
                             'add': ('managers', 'users',)}
+
 
     # IEntitySchema interface #################################################
 
@@ -525,7 +548,7 @@ class RelationSchema(ERSchema):
         self._subj_schemas = rehash(self._subj_schemas)
         self._obj_schemas = rehash(self._obj_schemas)
         self._rproperties = rehash(self._rproperties)
-            
+        
     # schema building methods #################################################
 
     def update(self, subjschema, objschema, rdef):
@@ -797,11 +820,12 @@ class Schema(object):
         self._rehash()
         
     def _rehash(self):
+        """rehash schema's internal structures"""
         for eschema in self._entities.values():
             eschema._rehash()
         for rschema in self._relations.values():
             rschema._rehash()
-            
+
     def __getitem__(self, name):
         try:
             return self.eschema(name)
@@ -835,6 +859,17 @@ class Schema(object):
         self._entities[etype] = eschema
         return eschema
     
+    def rename_entity_type(self, oldname, newname):
+        """renames an entity type and update internal structures accordingly
+        """
+        assert oldname in self._entities
+        eschema = self._entities.pop(oldname)
+        eschema.type = newname
+        self._entities[newname] = eschema
+        # rebuild internal structures since eschema's hash value has changed
+        self._rehash()        
+        
+
     def add_relation_type(self, rtypedef):
         rtype = rtypedef.name
         if self._relations.has_key(rtype):
