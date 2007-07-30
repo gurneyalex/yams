@@ -9,4 +9,6 @@ web    varchar(128)
 tel    integer
 fax    integer
 datenaiss date
-test   boolean 
+test   boolean
+salary float
+
