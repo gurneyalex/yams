@@ -132,8 +132,9 @@ class SQLSchemaReaderClassTest(TestCase):
         self.reader(osp.join(DATADIR,'Person.sql'))
         edef = self._get_result()
         for attr, etype in ( ('nom', 'String'), ('tel', 'Int'), ('fax', 'Int'),
-                            ('test', 'Boolean'), ('promo', 'String'),
-                            ('datenaiss', 'Date'), ('sexe', 'String')):
+                             ('test', 'Boolean'), ('promo', 'String'),
+                             ('datenaiss', 'Date'), ('sexe', 'String'),
+                             ('salary', 'Float')):
             self.assertEqual(getattr(edef, attr).etype, etype)
         
         

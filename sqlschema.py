@@ -71,6 +71,8 @@ class EsqlFileReader(FileReader):
         sqltype = sqltype.capitalize()
         if sqltype in ('Integer', 'Numeric'):
             return 'Int', [], 0
+        if sqltype == 'Float':
+            return 'Float', [], 0
         elif sqltype in ('Date', 'Time', 'Datetime', 'Boolean'):
             return sqltype, [], 0
         elif sqltype == 'Password':
