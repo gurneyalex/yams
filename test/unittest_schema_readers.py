@@ -65,7 +65,7 @@ class SchemaLoaderTC(TestCase):
                                'name', 'next_state', 'nom', 'obj_wildcard',
                                'para', 'prenom', 'promo', 'pyversions',
                                'ref', 'rncs',
-                               'sexe', 'short_desc', 'state_of', 'subj_wildcard', 'sujet', 'sym_rel',
+                               'salary', 'sexe', 'short_desc', 'state_of', 'subj_wildcard', 'sujet', 'sym_rel',
                                'tel', 'test', 'titre', 'travaille', 'type',
                                'version', 
                                'ville', 'web', 'works_for'])

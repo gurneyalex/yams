@@ -77,7 +77,8 @@ CREATE TABLE Person(
  tel integer,
  fax integer,
  datenaiss date,
- test boolean
+ test boolean,
+ salary float
 );
 
 CREATE TABLE Societe(
