@@ -1,6 +1,10 @@
 ChangeLog for yams 
 ------------------
 
+ --
+    * schema building refactoring to read schema from a bunch of directories
+    * drop .perms file support
+	
 2007-08-13  --  0.13.0
     * new RegexpBasedConstraint
     * new schema.rename_entity_type method

@@ -15,7 +15,7 @@ from yams.sqlschema import EsqlFileReader
 
 import os.path as osp
 
-DATADIR = osp.abspath(osp.join(osp.dirname(__file__),'data'))
+DATADIR = osp.abspath(osp.join(osp.dirname(__file__), 'data', 'schema'))
 
 def __getattr__(self, attr):
     for e in self.relations:
