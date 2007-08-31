@@ -27,6 +27,7 @@ DOT_SOURCE = """digraph "Schema" {
 rankdir=BT
 ratio=compress
 size="12,30"
+charset="utf-8"
 "Person" [label="Person"];
 "Societe" [label="Societe"];
 edge [label="travaille"];

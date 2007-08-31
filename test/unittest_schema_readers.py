@@ -6,6 +6,8 @@ Copyright Logilab 2003-2006, all rights reserved.
 from logilab.common.testlib import TestCase, unittest_main
 from logilab.common.compat import sorted
 
+from mx.DateTime import now, today, Date, DateTimeType, Time, DateTimeDeltaType
+
 from yams.schema import Schema, EntitySchema
 from yams.reader import SchemaLoader, RelationFileReader
 from yams.constraints import StaticVocabularyConstraint, SizeConstraint
@@ -35,7 +37,7 @@ class SchemaLoaderTC(TestCase):
     def test_get_schema_files(self):
         files = sorted([osp.basename(f) for f in SchemaLoader().get_schema_files(DATADIR)])
         self.assertEquals(files,
-                          ['Affaire.sql', 'Company.py', 'Note.sql', 'Person.sql',
+                          ['Affaire.sql', 'Company.py', 'Dates.py', 'Note.sql', 'Person.sql',
                            'Societe.sql', 'State.py', 'pkginfo.esql', 'relations.rel'])
     
     def test_include(self):
@@ -50,14 +52,14 @@ class SchemaLoaderTC(TestCase):
         self.assert_(isinstance(schema, Schema))
         self.assertEquals(schema.name, 'Test')
         self.assertListEquals(sorted(schema.entities()),
-                              ['Affaire', 'Boolean', 'Bytes', 'Company', 'Date', 'Datetime',
+                              ['Affaire', 'Boolean', 'Bytes', 'Company', 'Date', 'Datetest', 'Datetime',
                                'Division', 'Eetype',  'Employee', 'Float', 'Int', 'Interval',
                                'Note', 'Password', 'Person', 'Societe', 'State', 'String', 'Time',
                                'pkginfo'])
         self.assertListEquals(sorted(schema.relations()),
                               ['ad1', 'ad2', 'ad3', 'adel', 'ass', 'author', 'author_email',
                                'concerne', 'copyright', 'cp',
-                               'date', 'datenaiss', 'debian_handler', 'description',
+                               'd1', 'd2', 'date', 'datenaiss', 'debian_handler', 'description', 'dt1', 'dt2',
                                'eid', 'evaluee', 'fax', 'final',
                                'initial_state', 'inline_rel',
                                'license', 'long_desc',
@@ -66,7 +68,7 @@ class SchemaLoaderTC(TestCase):
                                'para', 'prenom', 'promo', 'pyversions',
                                'ref', 'rncs',
                                'salary', 'sexe', 'short_desc', 'state_of', 'subj_wildcard', 'sujet', 'sym_rel',
-                               'tel', 'test', 'titre', 'travaille', 'type',
+                               't1', 't2', 'tel', 'test', 'titre', 'travaille', 'type',
                                'version', 
                                'ville', 'web', 'works_for'])
 
@@ -330,6 +332,34 @@ class PySchemaTC(TestCase):
         # self.assertEquals(maxsize(bp.relations[1]), 7)
         emp = Employee()
         self.assertEquals(maxsize(emp.relations[3]), 7)
+
+    def test_date_defaults(self):
+        _today = today()
+        _now = now()
+        datetest = schema.eschema('Datetest')
+        dt1 = datetest.default('dt1')
+        dt2 = datetest.default('dt2')
+        d1 = datetest.default('d1')
+        d2 = datetest.default('d2')
+        t1 = datetest.default('t1')
+        t2 = datetest.default('t2')
+        # datetimes
+        self.failUnless(isinstance(dt1, DateTimeType))
+        # there's no easy way to test NOW (except monkey patching now() itself)
+        delta = dt1 - _now
+        self.failUnless(abs(delta.seconds) < 5)
+        self.assertEquals(dt2, _today)
+        self.failUnless(isinstance(dt2, DateTimeType))
+        # dates
+        self.assertEquals(d1, _today)
+        self.failUnless(isinstance(d1, DateTimeType))
+        self.assertEquals(d2, Date(2007, 12, 11))
+        self.failUnless(isinstance(d2, DateTimeType))
+        # times
+        self.assertEquals(t1, Time(8, 40))
+        self.failUnless(isinstance(t1, DateTimeDeltaType))
+        self.assertEquals(t2, Time(9, 45))
+        self.failUnless(isinstance(t2, DateTimeDeltaType))
 
 
 if __name__ == '__main__':
