@@ -42,6 +42,15 @@ CREATE TABLE Company(
  name text
 );
 
+CREATE TABLE Datetest(
+ dt1 timestamp,
+ dt2 timestamp,
+ d1 date,
+ d2 date,
+ t1 time,
+ t2 time
+);
+
 CREATE TABLE Division(
  name text
 );

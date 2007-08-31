@@ -12,7 +12,7 @@ __docformat__ = "restructuredtext en"
 from warnings import warn
 from copy import deepcopy
 
-from mx.DateTime import today, now
+from mx.DateTime import today, now, DateTimeFrom, DateFrom, TimeFrom
 
 from logilab.common.decorators import cached
 from logilab.common.compat import sorted
@@ -27,6 +27,12 @@ from yams.builder import BASE_TYPES, EntityType
 KEYWORD_MAP = {'NOW' : now,
                'TODAY': today,
                }
+
+DATE_FACTORY_MAP = {
+    'DateTime' : DateTimeFrom,
+    'Date' : DateFrom,
+    'Time' : TimeFrom,
+    }
 
 def rehash(dictionary):
     """this function manually builds a copy of `dictionary` but forces
@@ -416,8 +422,11 @@ class EntitySchema(ERSchema):
             elif attrtype == 'Float':
                 if not isinstance(default, float):
                     default = float(default)
-            elif attrtype in ('Date', 'Datetime'):
-                default = KEYWORD_MAP[default.upper()]()
+            elif attrtype in ('Date', 'Datetime', 'Time'):
+                try:
+                    default = KEYWORD_MAP[default.upper()]()
+                except KeyError:
+                    default = DATE_FACTORY_MAP[attrtype](default)
             else:
                 default = unicode(default)
         return default
