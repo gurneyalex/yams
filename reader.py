@@ -138,6 +138,7 @@ class PyFileReader(builder.FileReader):
         flocals = self.context.copy()
         flocals['import_schema'] = self.import_schema_file # XXX deprecate local name
         flocals['import_erschema'] = self.import_erschema
+        flocals['defined'] = self.loader.defined
         execfile(filepath, flocals)
         for key in self.context:
             del flocals[key]
@@ -195,6 +196,7 @@ class SchemaLoader(object):
                                                self.read_deprecated_relations)
 
     def _load_definition_files(self, directories):
+        self.defined = set()
         for directory in directories:
             for filepath in self.get_schema_files(directory):
                 self.handle_file(filepath)
@@ -278,5 +280,6 @@ class SchemaLoader(object):
         """file handler callback to add a definition object"""
         if not isinstance(defobject, builder.Definition):
             hdlr.error('invalid definition object')
+        self.defined.add(defobject.name)
         self._defobjects.append(defobject)
             
