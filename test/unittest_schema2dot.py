@@ -8,7 +8,7 @@ from yams import schema2dot
 
 import os.path as osp
 
-DATADIR = osp.abspath(osp.join(osp.dirname(__file__),'data'))
+DATADIR = osp.abspath(osp.join(osp.dirname(__file__), 'data'))
 
 class DummyDefaultHandler:
 
@@ -21,7 +21,7 @@ class DummyDefaultHandler:
     def vocabulary_debian_handler(self):
         return ['machin', 'bidule']
 
-schema = SchemaLoader().load(DATADIR, default_handler=DummyDefaultHandler())
+schema = SchemaLoader().load([DATADIR], default_handler=DummyDefaultHandler())
 
 DOT_SOURCE = """digraph "Schema" {
 rankdir=BT

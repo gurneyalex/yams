@@ -27,7 +27,7 @@ class DummyDefaultHandler:
     def vocabulary_debian_handler(self):
         return ['machin', 'bidule']
 
-schema = SchemaLoader().load(DATADIR, 'Test', DummyDefaultHandler())
+schema = SchemaLoader().load([DATADIR], 'Test', DummyDefaultHandler())
 
 
 class SchemaLoaderTC(TestCase):
@@ -41,10 +41,10 @@ class SchemaLoaderTC(TestCase):
                            'Societe.sql', 'State.py', 'pkginfo.esql', 'relations.rel'])
     
     def test_include(self):
-        files = SchemaLoader().include_schema_files('Person', DATADIR)
-        self.assertEquals(files, [osp.join(DATADIR,'Person.sql')])
-        files = SchemaLoader().include_schema_files('pkginfo', DATADIR)
-        self.assertEquals(files, [osp.join(DATADIR, 'pkginfo.esql')])
+        files = SchemaLoader().include_schema_files('Person', osp.join(DATADIR, 'schema'))
+        self.assertEquals(files, [osp.join(DATADIR, 'schema', 'Person.sql')])
+        files = SchemaLoader().include_schema_files('pkginfo', osp.join(DATADIR, 'schema'))
+        self.assertEquals(files, [osp.join(DATADIR, 'schema', 'pkginfo.esql')])
 
     # test load_schema readen entity and relation types #######################
     

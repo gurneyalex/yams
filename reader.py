@@ -21,23 +21,6 @@ from yams import UnknownType, BadSchemaDefinition
 from yams import constraints, schema as schemamod
 from yams import builder
 
-                
-def read_perms_def(schema, filepath):
-    """read action / groups mapping for an entity / relation schema
-
-    each no empty/comment line should be of the form :
-    <action>: <group1> [,<group2]*
-    """
-    for line in lines(filepath, '#'):
-        try:
-            action, groups = line.split(':')
-        except TypeError:
-            raise BadSchemaDefinition(line, filepath)
-        else:
-            action = action.strip().lower()
-            groups = get_csv(groups)
-            schema.set_groups(action, tuple(groups))            
-
 # .rel and .py formats file readers ###########################################
         
 class RelationFileReader(builder.FileReader):
@@ -189,21 +172,21 @@ class SchemaLoader(object):
         '.sql' : EsqlFileReader,
         }
     
-    def load(self, directory, name=None, default_handler=None):
+    def load(self, directories, name=None, default_handler=None):
         """return a schema from the schema definition readen from <directory>
         """
         self._instantiate_handlers(default_handler)
         self._defobjects = []
-        if self.lib_directory is not None: 
-            sys.path.insert(0, self.lib_directory)
-        sys.path.insert(0, directory)
-        try:
-            self._load_definition_files(directory)
-        finally:
-            sys.path.pop(0)
-            if self.lib_directory is not None: 
-                sys.path.pop(0)
-        return self._build_schema(name, directory)
+        #if self.lib_directory is not None: 
+        #    sys.path.insert(0, self.lib_directory)
+        #sys.path.insert(0, directory)
+        #try:
+        self._load_definition_files(directories)
+        #finally:
+        #    sys.path.pop(0)
+        #    if self.lib_directory is not None: 
+        #        sys.path.pop(0)
+        return self._build_schema(name)
     
     def _instantiate_handlers(self, default_handler=None):
         self._live_handlers = {}
@@ -211,13 +194,14 @@ class SchemaLoader(object):
             self._live_handlers[ext] = hdlrcls(self, default_handler,
                                                self.read_deprecated_relations)
 
-    def _load_definition_files(self, directory):
-        for filepath in self.get_schema_files(directory):
-            self.handle_file(filepath)
+    def _load_definition_files(self, directories):
+        for directory in directories:
+            for filepath in self.get_schema_files(directory):
+                self.handle_file(filepath)
         
-    def _build_schema(self, name, directory):
+    def _build_schema(self, name):
         """build actual schema from definition objects, and return it"""
-        schema = self.schemacls(name or 'NoName', directory)
+        schema = self.schemacls(name or 'NoName')
         # register relation types and non final entity types
         for definition in self._defobjects:
             if isinstance(definition, builder.RelationType):
@@ -233,27 +217,35 @@ class SchemaLoader(object):
                 definition.register_relations(schema)
         # set permissions on entities and relations
         for erschema in schema.entities() + schema.relations():
-            self._set_perms(directory, erschema)
+            erschema.set_default_groups()
         return schema
 
-    def get_schema_files(self, base_directory):
-        """return an ordered list of files defining a schema"""
+    def get_schema_files(self, directory):
+        """return an ordered list of files defining a schema
+
+        look for a schema.py file and or a schema sub-directory in the given
+        directory
+        """
         result = []
-        for filename in listdir(base_directory):
-            if filename[0] == '_':
-                continue
-            if filename.lower() == 'include':
-                for etype in lines(join(base_directory, filename)):
-                    if etype.startswith('#'):
-                        continue
-                    for filepath in self.include_schema_files(etype):
-                        result.append(filepath)
-                continue
-            ext = splitext(filename)[1]
-            if self.file_handlers.has_key(ext):
-                result.append(join(base_directory, filename))
-            elif ext != '.perms':
-                self.unhandled_file(join(base_directory, filename))
+        if exists(join(directory, 'schema.py')):
+            result = [join(directory, 'schema.py')]
+        if exists(join(directory, 'schema')):
+            directory = join(directory, 'schema')
+            for filename in listdir(directory):
+                if filename[0] == '_':
+                    continue
+                if filename.lower() == 'include':
+                    for etype in lines(join(directory, filename)):
+                        if etype.startswith('#'):
+                            continue
+                        for filepath in self.include_schema_files(etype):
+                            result.append(filepath)
+                    continue
+                ext = splitext(filename)[1]
+                if self.file_handlers.has_key(ext):
+                    result.append(join(directory, filename))
+                else:
+                    self.unhandled_file(join(directory, filename))
         return result
 
     def include_schema_files(self, etype, directory=None):
@@ -287,12 +279,4 @@ class SchemaLoader(object):
         if not isinstance(defobject, builder.Definition):
             hdlr.error('invalid definition object')
         self._defobjects.append(defobject)
-
-    def _set_perms(self, directory, erschema):
-        erschema.set_default_groups()
-        filepath = join(directory, erschema.type + '.perms')
-        if not exists(filepath) and self.lib_directory is not None:
-            filepath = join(self.lib_directory, erschema.type + '.perms')
-        if exists(filepath):
-            read_perms_def(erschema, filepath)
             

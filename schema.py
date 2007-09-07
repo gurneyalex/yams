@@ -5,8 +5,6 @@
 :contact: http://www.logilab.fr/ -- mailto:contact@logilab.fr
 """
 
-from __future__ import generators
-
 __docformat__ = "restructuredtext en"
 
 from warnings import warn
@@ -811,11 +809,10 @@ class Schema(object):
     # once it's done
     __hashmode__ = 'pickle' # None | 'pickle'
     
-    def __init__(self, name, directory=None):
+    def __init__(self, name):
         super(Schema, self).__init__()
         self.__hashmode__ = None
         self.name = name
-        self.base = directory
         self._entities = {}
         self._relations = {}
         for etype in BASE_TYPES:
