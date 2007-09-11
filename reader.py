@@ -138,7 +138,7 @@ class PyFileReader(builder.FileReader):
         flocals = self.context.copy()
         flocals['import_schema'] = self.import_schema_file # XXX deprecate local name
         flocals['import_erschema'] = self.import_erschema
-        flocals['defined'] = self.loader.defined
+        flocals['defined_types'] = self.loader.defined
         execfile(filepath, flocals)
         for key in self.context:
             del flocals[key]
@@ -176,6 +176,7 @@ class SchemaLoader(object):
     def load(self, directories, name=None, default_handler=None):
         """return a schema from the schema definition readen from <directory>
         """
+        self.defined = set()
         self._instantiate_handlers(default_handler)
         self._defobjects = []
         #if self.lib_directory is not None: 
@@ -196,7 +197,6 @@ class SchemaLoader(object):
                                                self.read_deprecated_relations)
 
     def _load_definition_files(self, directories):
-        self.defined = set()
         for directory in directories:
             for filepath in self.get_schema_files(directory):
                 self.handle_file(filepath)
@@ -222,6 +222,8 @@ class SchemaLoader(object):
             erschema.set_default_groups()
         return schema
 
+    # has to be overideable sometimes (usually for test purpose)
+    main_schema_directory = 'schema' 
     def get_schema_files(self, directory):
         """return an ordered list of files defining a schema
 
@@ -231,8 +233,8 @@ class SchemaLoader(object):
         result = []
         if exists(join(directory, 'schema.py')):
             result = [join(directory, 'schema.py')]
-        if exists(join(directory, 'schema')):
-            directory = join(directory, 'schema')
+        if exists(join(directory, self.main_schema_directory)):
+            directory = join(directory, self.main_schema_directory)
             for filename in listdir(directory):
                 if filename[0] == '_':
                     continue
