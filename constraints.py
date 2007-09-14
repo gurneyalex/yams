@@ -9,6 +9,7 @@ __docformat__ = "restructuredtext en"
 
 import warnings
 import re
+from StringIO import StringIO
 
 from yams.interfaces import IConstraint, IVocabularyConstraint
         
@@ -247,7 +248,7 @@ def check_string(eschema, value):
     
 def check_password(eschema, value):
     """check value is an encoded string"""
-    return isinstance(value, str)
+    return isinstance(value, (str, StringIO))
     
 def check_int(eschema, value):
     """check value is an integer"""
