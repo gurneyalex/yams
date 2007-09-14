@@ -13,28 +13,7 @@ from logilab.common.compat import sorted
 from yams.constraints import SizeConstraint, UniqueConstraint
 
 
-TYPE_MAPPING = {
-    'String' :   'text',
-    'Int' :      'integer',
-    'Float' :    'float',
-    'Boolean' :  'boolean',
-    'Date' :     'date', 
-    'Time' :     'time', 
-    'Datetime' : 'timestamp',
-    'Interval' : 'interval',
-    'Password' : 'bytea',
-    'Bytes' :    'bytea',         # FIXME: pgsql specific
-    # FIXME: aggregat function AVG not supported
-    'COUNT' : 'integer',
-    'MIN' :   'integer',
-    'MAX' :   'integer',
-    'SUM' :   'integer',
-    'LOWER' : 'text',
-    'UPPER' : 'text',
-    }
-
-
-def schema2sql(schema, skip_entities=(), skip_relations=()):
+def schema2sql(dbhelper, schema, skip_entities=(), skip_relations=()):
     """write to the output stream a SQL schema to store the objects
     corresponding to the given schema
     """
@@ -44,7 +23,7 @@ def schema2sql(schema, skip_entities=(), skip_relations=()):
         eschema = schema.eschema(etype)
         if eschema.is_final() or eschema.type in skip_entities:
             continue
-        w(eschema2sql(eschema, skip_relations))
+        w(eschema2sql(dbhelper, eschema, skip_relations))
     for rtype in sorted(schema.relations()):
         rschema = schema.rschema(rtype)
         if rschema.is_final() or rschema.physical_mode() == 'subjectinline':
@@ -85,7 +64,7 @@ def dropeschema2sql(eschema, skip_relations=()):
     # the table
     return 'DROP TABLE %s;' % eschema.type
 
-def eschema2sql(eschema, skip_relations=()):
+def eschema2sql(dbhelper, eschema, skip_relations=()):
     """write an entity schema as SQL statements to stdout"""
     output = []
     w = output.append
@@ -96,7 +75,7 @@ def eschema2sql(eschema, skip_relations=()):
     for i in xrange(len(attrs)):
         rschema, attrschema = attrs[i]
         if attrschema is not None:
-            sqltype = aschema2sql(eschema, rschema, attrschema, ' ')
+            sqltype = aschema2sql(dbhelper, eschema, rschema, attrschema, ' ')
         else: # inline relation
             # XXX integer is ginco specific
             sqltype = 'integer'
@@ -122,11 +101,11 @@ def eschema2sql(eschema, skip_relations=()):
     return '\n'.join(output)
 
     
-def aschema2sql(eschema, rschema, aschema, indent=''):
+def aschema2sql(dbhelper, eschema, rschema, aschema, indent=''):
     """write an attribute schema as SQL statements to stdout"""
     attr = rschema.type
     constraints = rschema.rproperty(eschema.type, aschema.type, 'constraints')
-    sqltype = _type_from_constraints(aschema.type, constraints)
+    sqltype = _type_from_constraints(dbhelper, aschema.type, constraints)
     default = eschema.default(attr)
     if default is not None:
         if aschema.type == 'Boolean':
@@ -142,18 +121,19 @@ def aschema2sql(eschema, rschema, aschema, indent=''):
     return sqltype
 
     
-def _type_from_constraints(etype, constraints):
+def _type_from_constraints(dbhelper, etype, constraints):
     """return a sql type string corresponding to the constraints"""
     constraints = list(constraints)
-    sqltype = TYPE_MAPPING[etype]
-    unique = False
-    if sqltype == 'text':
+    unique, sqltype = False, None
+    if etype == 'String':
         for constraint in constraints:
             if isinstance(constraint, SizeConstraint):
                 if constraint.max is not None:
                     sqltype = 'varchar(%s)' % constraint.max
             elif isinstance(constraint, UniqueConstraint):
                 unique = True
+    if sqltype is None:
+        sqltype = dbhelper.TYPE_MAPPING[etype]
     if unique:
         sqltype += ' UNIQUE'
     return sqltype
