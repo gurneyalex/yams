@@ -81,7 +81,6 @@ class ERSchema(object):
         assert erdef
         self.schema = schema
         self.type = erdef.name
-        assert isinstance(erdef.meta, bool)
         self.meta = erdef.meta
         if erdef.__doc__:
             descr = ' '.join(erdef.__doc__.split())
