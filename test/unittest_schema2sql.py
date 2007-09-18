@@ -8,6 +8,7 @@ http://www.logilab.fr/ -- mailto:contact@logilab.fr
 from cStringIO import StringIO
 
 from logilab.common.testlib import TestCase, unittest_main
+from logilab.common.db import get_adv_func_helper
 
 from yams import SchemaLoader
 from yams.schema2sql import schema2sql
@@ -228,7 +229,8 @@ CREATE INDEX works_for_relation_to_idx ON works_for_relation (eid_to);
 class SQLSchemaTC(TestCase):
     
     def test_known_values(self):
-        output = schema2sql(schema)
+        dbhelper = get_adv_func_helper('postgres')
+        output = schema2sql(dbhelper, schema)
         self.assertTextEquals(output.strip(), EXPECTED_DATA_NO_DROP.strip())
 
         
