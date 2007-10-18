@@ -51,7 +51,7 @@ class DotTC(TestCase):
         skipped_entities = set(schema.entities()) - wanted_entities
         visitor = MyVisitor()
         visitor.visit(schema, skipped_entities=skipped_entities)
-        self.assertEquals(DOT_SOURCE, visitor.generator.source)
+        self.assertTextEquals(DOT_SOURCE, visitor.generator.source)
         
 if __name__ == '__main__':
     unittest_main()
