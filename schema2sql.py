@@ -95,8 +95,7 @@ def eschema2sql(dbhelper, eschema, skip_relations=()):
     for i in xrange(len(attrs)):
         rschema, attrschema = attrs[i]
         if attrschema is None or eschema.rproperty(rschema.type, 'indexed'):
-            w('CREATE INDEX %s_%s_idx ON %s (%s);' % (
-                etype.lower(), rschema.type.lower(), etype, rschema.type))
+            w(dbhelper.sql_create_index(etype, rschema.type))
     w('')
     return '\n'.join(output)
 
