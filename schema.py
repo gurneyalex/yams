@@ -758,29 +758,6 @@ class RelationSchema(ERSchema):
         if x == 'subject':
             return self.objects(etype)
         return self.subjects(etype)
-    
-    # XXX deprecated
-    @cached 
-    def physical_mode(self):
-        """return an appropriate mode for physical storage of this relation type:
-        * 'subjectinline' if every possible subject cardinalities are 1 or ?
-        * 'objectinline' if 'subjectinline' mode is not possible but every
-          possible object cardinalities are 1 or ?
-        * None if neither 'subjectinline' and 'objectinline'
-        """
-        assert not self.final
-        subjinline, objinline = True, True
-        for key in self._rproperties:
-            cards = self._rproperties[key]['cardinality']
-            if cards[0] not in '1?':
-                subjinline = False
-            if cards[1] not in '1?':
-                objinline = False
-        if subjinline:
-            return 'subjectinline'
-        if objinline:
-            return 'objectinline'
-        return None
 
     def constraint_by_type(self, subjtype, objtype, cstrtype):
         for cstr in self.rproperty(subjtype, objtype, 'constraints'):
