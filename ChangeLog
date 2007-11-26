@@ -1,6 +1,9 @@
 ChangeLog for yams 
 ------------------
 
+ --
+    * removed deprecated code
+	
 2007-10-29  --  0.14.0
     * schema building refactoring to read schema from a bunch of directories
     * drop .perms file support
