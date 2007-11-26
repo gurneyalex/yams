@@ -7,7 +7,6 @@
 
 __docformat__ = "restructuredtext en"
 
-from warnings import warn
 from copy import deepcopy
 
 from mx.DateTime import today, now, DateTimeFrom, DateFrom, TimeFrom
@@ -94,8 +93,7 @@ class ERSchema(object):
             self._groups = {}
 
     def __cmp__(self, other):
-        other = getattr(other, 'type', other)
-        return cmp(self.type, other)
+        return cmp(self.type, getattr(other, 'type', other))
 
     def __hash__(self):
         try:
@@ -277,20 +275,16 @@ class EntitySchema(ERSchema):
             result.append((rschema.rproperty(self, otype, 'order'), rschema))
         return [r[1] for r in sorted(result)]
     
-    def subject_relations(self, schema=None):
+    def subject_relations(self):
         """return a list of relations that may have this type of entity as
         subject
         """
-        if schema is not None:
-            warn('schema argument is deprecated', DeprecationWarning, stacklevel=2)
-        return self.ordered_relations()
+        return self._subj_relations.values()
     
-    def object_relations(self, schema=None):
+    def object_relations(self):
         """return a list of relations that may have this type of entity as
         object
         """
-        if schema is not None:
-            warn('schema argument is deprecated', DeprecationWarning, stacklevel=2)
         return self._obj_relations.values()
 
     def subject_relation(self, rtype):
@@ -322,14 +316,6 @@ class EntitySchema(ERSchema):
                 continue
             eschema = rschema.objects(self)[0]
             yield rschema, eschema
-
-    def destination_type(self, rtype):
-        """return the type or schema of entities related by the given relation
-
-        `rtype` must be a subject final relation
-        """
-        warn('use .destination method instead', DeprecationWarning, stacklevel=2)
-        return self.destination(rtype)
 
     def destination(self, rtype):
         """return the type or schema of entities related by the given relation
@@ -703,10 +689,6 @@ class RelationSchema(ERSchema):
         entity's type)
         """
         return self.final
-
-    def association_types(self):
-        warn('deprecated method, use .associations()', DeprecationWarning, stacklevel=2)
-        return self.associations()
         
     def associations(self):
         """return a list of (subject, [objects]) defining between
@@ -729,10 +711,6 @@ class RelationSchema(ERSchema):
         except KeyError:
             raise KeyError("%s don't have %s as object" % (self, etype))
     
-    def subject_types(self, etype=None):
-        warn('deprecated method, use .subjects()', DeprecationWarning, stacklevel=2)
-        return self.subjects(etype)
-    
     def objects(self, etype=None):
         """return a list of entity schema which can be object of this relation.
         
@@ -748,10 +726,6 @@ class RelationSchema(ERSchema):
         except KeyError:
             raise KeyError("%s don't have %s as subject" % (self, etype))
     
-    def object_types(self, etype=None):
-        warn('deprecated method, use .objects()', DeprecationWarning, stacklevel=2)
-        return self.objects(etype)
-
     def targets(self, etype, x='subject'):
         """return possible target types with <etype> as <x>"""
         assert x in ('subject', 'object')
@@ -917,17 +891,12 @@ class Schema(object):
             
     # ISchema interface #######################################################
     
-    def entities(self, schema=None):
+    def entities(self):
         """return a list of possible entity's type
-
-        :type schema: bool
-        :param schema: return a list of schemas instead of types if true
 
         :rtype: list
         :return: defined entity's types (str) or schemas (`EntitySchema`)
         """
-        if schema is not None:
-            warn('schema argument is deprecated', DeprecationWarning, stacklevel=2)
         return sorted(self._entities.values())
         
     def has_entity(self, etype):
@@ -950,14 +919,12 @@ class Schema(object):
         """
         return self._entities[etype]
     
-    def relations(self, schema=None):
+    def relations(self):
         """return the list of possible relation'types
 
         :rtype: list
         :return: defined relation's types (str) or schemas (`RelationSchema`)
         """
-        if schema is not None:
-            warn('schema argument is deprecated', DeprecationWarning, stacklevel=2)
         return sorted(self._relations.values())
     
     def has_relation(self, rtype):
@@ -979,17 +946,12 @@ class Schema(object):
         """
         return self._relations[rtype]
         
-    def final_relations(self, schema=None):
+    def final_relations(self):
         """return the list of possible final relation'types
-        
-        :type schema: bool
-        :param schema: return a list of schemas instead of types if true
 
         :rtype: list
         :return: defined relation's types (str) or schemas (`RelationSchema`)
         """
-        if schema is not None:
-            warn('schema argument is deprecated', DeprecationWarning, stacklevel=2)
         for rschema in self.relations():
             if rschema.is_final():
                 if schema:
@@ -997,17 +959,12 @@ class Schema(object):
                 else:
                     yield rschema.type
 
-    def nonfinal_relations(self, schema=None):
+    def nonfinal_relations(self):
         """return the list of possible final relation'types
-        
-        :type schema: bool
-        :param schema: return a list of schemas instead of types if true
 
         :rtype: list
         :return: defined relation's types (str) or schemas (`RelationSchema`)
         """
-        if schema is not None:
-            warn('schema argument is deprecated', DeprecationWarning, stacklevel=2)
         for rschema in self.relations():
             if not rschema.is_final():
                 if schema:
