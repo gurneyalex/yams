@@ -345,14 +345,14 @@ class EntitySchema(ERSchema):
         return rschema.rproperties(self, desttype)
 
     def relation_definitions(self, includefinal=False):
-        """return an iterator on "real" relation definitions
+        """return an iterator on relation definitions
         
-        "real"  relations are a subset of subject relations where the
-        object's type is not a final entity
+        if includefinal is false, only non attribute relation are returned
         
-        a relation definition is a 2-uple :
+        a relation definition is a 3-uple :
         * schema of the (non final) relation
-        * schema of the destination entity type
+        * schemas of the possible destination entity types
+        * a string telling if this is a 'subject' or 'object' relation
         """
         for rschema in self.ordered_relations():
             if includefinal or not rschema.is_final():
@@ -380,9 +380,9 @@ class EntitySchema(ERSchema):
                     yield rschema
     
     def defaults(self):
-        """return the list of (attribute name, default value)"""
+        """return an iterator on (attribute name, default value)"""
         assert not self.is_final()
-        for rschema in self.ordered_relations():
+        for rschema in self.subject_relations():
             if rschema.is_final():
                 value = self.default(rschema)
                 if value is not None:
@@ -449,7 +449,7 @@ class EntitySchema(ERSchema):
         """
         assert not self.is_final()
         errors = {}
-        for rschema in self.ordered_relations():
+        for rschema in self.subject_relations():
             if not rschema.is_final():
                 continue
             aschema = self.destination(rschema)
