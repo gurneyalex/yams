@@ -1,7 +1,7 @@
 """classes to define generic Entities/Relations schemas
 
 :organization: Logilab
-:copyright: 2003-2007 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
+:copyright: 2003-2008 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
 :contact: http://www.logilab.fr/ -- mailto:contact@logilab.fr
 """
 
@@ -14,6 +14,7 @@ from mx.DateTime import today, now, DateTimeFrom, DateFrom, TimeFrom
 from logilab.common.decorators import cached
 from logilab.common.compat import sorted
 from logilab.common.interface import implements
+from logilab.common.deprecation import deprecated_function
 
 from yams import ValidationError, BadSchemaDefinition
 from yams.interfaces import ISchema, IRelationSchema, IEntitySchema, \
@@ -651,9 +652,13 @@ class RelationSchema(ERSchema):
             return basekeys + self._BYTES_RPROPERTIES.items()
         return basekeys
 
-    def rproperty_keys(self):
-        """return the list of keys which have associated rproperties"""
-        return self._rproperties.keys()
+    def iter_rdefs(self):
+        """return an iterator on (subject, object) of this relation"""
+        return self._rproperties.iterkeys()
+    rproperty_keys = deprecated_function(iter_rdefs)
+
+    def has_rdef(self, subj, obj):
+        return (subj, obj) in self._rproperties
     
     def rproperties(self, subject, object):
         """return the properties dictionary of a relation"""
@@ -661,7 +666,7 @@ class RelationSchema(ERSchema):
             return self._rproperties[(subject, object)]
         except KeyError:
             raise KeyError('%s %s %s' % (subject, self, object))
-    
+        
     def rproperty(self, subject, object, property):
         """return the properties dictionary of a relation"""
         return self.rproperties(subject, object).get(property)
@@ -694,6 +699,7 @@ class RelationSchema(ERSchema):
         """return a list of (subject, [objects]) defining between
         which types this relation may exists
         """
+        # XXX deprecates in favor of iter_rdefs() ?
         return self._subj_schemas.items()
         
     def subjects(self, etype=None):
