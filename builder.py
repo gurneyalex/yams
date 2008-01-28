@@ -1,5 +1,10 @@
 """defines classes used to build a schema
+
+:organization: Logilab
+:copyright: 2003-2008 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
+:contact: http://www.logilab.fr/ -- mailto:contact@logilab.fr
 """
+__docformat__ = "restructuredtext en"
 
 __docformat__ = "restructuredtext en"
 __metaclass__ = type
@@ -182,8 +187,6 @@ class Definition(object):
             yield eschema.type
 
 
-
-
 class metadefinition(type):
     """this metaclass builds the __relations__ attribute
     of EntityType's subclasses
@@ -275,6 +278,7 @@ class RelationBase(Definition):
     cardinality = None
     constraints = ()
     symetric = False
+    inlined = False
     
     def __init__(self, *args, **kwargs):
         super(RelationBase, self).__init__(*args, **kwargs)

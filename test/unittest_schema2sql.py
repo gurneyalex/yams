@@ -1,14 +1,10 @@
-"""
-unit tests for module yams.schema2sql
-
-Copyright Logilab 2002-2005, all rights reserved.
-http://www.logilab.fr/ -- mailto:contact@logilab.fr
+"""unit tests for module yams.schema2sql
 """
 
 from cStringIO import StringIO
 
 from logilab.common.testlib import TestCase, unittest_main
-from logilab.common.db import get_adv_func_helper
+from logilab.common.adbh import get_adv_func_helper
 
 from yams import SchemaLoader
 from yams.schema2sql import schema2sql
@@ -37,7 +33,7 @@ CREATE TABLE Affaire(
  ref varchar(12),
  inline_rel integer
 );
-CREATE INDEX affaire_inline_rel_idx ON Affaire (inline_rel);
+CREATE INDEX affaire_inline_rel_idx ON Affaire(inline_rel);
 
 CREATE TABLE Company(
  name text
@@ -63,8 +59,8 @@ CREATE TABLE Eetype(
  final boolean,
  initial_state integer
 );
-CREATE INDEX eetype_name_idx ON Eetype (name);
-CREATE INDEX eetype_initial_state_idx ON Eetype (initial_state);
+CREATE INDEX eetype_name_idx ON Eetype(name);
+CREATE INDEX eetype_initial_state_idx ON Eetype(initial_state);
 
 CREATE TABLE Employee(
 );
@@ -109,7 +105,7 @@ CREATE TABLE State(
  name varchar(256) NOT NULL,
  description text
 );
-CREATE INDEX state_name_idx ON State (name);
+CREATE INDEX state_name_idx ON State(name);
 
 CREATE TABLE pkginfo(
  modname varchar(30) DEFAULT 'yo' NOT NULL,
@@ -130,100 +126,82 @@ CREATE TABLE concerne_relation (
   eid_from INTEGER NOT NULL,
   eid_to INTEGER NOT NULL,
   CONSTRAINT concerne_relation_p_key PRIMARY KEY(eid_from, eid_to),
-  CONSTRAINT concerne_relation_fkey1 FOREIGN KEY (eid_from) REFERENCES entities (eid) ON DELETE CASCADE,
-  CONSTRAINT concerne_relation_fkey2 FOREIGN KEY (eid_to) REFERENCES entities (eid) ON DELETE CASCADE
 );
 
-CREATE INDEX concerne_relation_from_idx ON concerne_relation (eid_from);
-CREATE INDEX concerne_relation_to_idx ON concerne_relation (eid_to);
+CREATE INDEX concerne_relation_from_idx ON concerne_relation(eid_from);
+CREATE INDEX concerne_relation_to_idx ON concerne_relation(eid_to);
 
 CREATE TABLE evaluee_relation (
   eid_from INTEGER NOT NULL,
   eid_to INTEGER NOT NULL,
   CONSTRAINT evaluee_relation_p_key PRIMARY KEY(eid_from, eid_to),
-  CONSTRAINT evaluee_relation_fkey1 FOREIGN KEY (eid_from) REFERENCES entities (eid) ON DELETE CASCADE,
-  CONSTRAINT evaluee_relation_fkey2 FOREIGN KEY (eid_to) REFERENCES entities (eid) ON DELETE CASCADE
 );
 
-CREATE INDEX evaluee_relation_from_idx ON evaluee_relation (eid_from);
-CREATE INDEX evaluee_relation_to_idx ON evaluee_relation (eid_to);
+CREATE INDEX evaluee_relation_from_idx ON evaluee_relation(eid_from);
+CREATE INDEX evaluee_relation_to_idx ON evaluee_relation(eid_to);
 
 CREATE TABLE next_state_relation (
   eid_from INTEGER NOT NULL,
   eid_to INTEGER NOT NULL,
   CONSTRAINT next_state_relation_p_key PRIMARY KEY(eid_from, eid_to),
-  CONSTRAINT next_state_relation_fkey1 FOREIGN KEY (eid_from) REFERENCES entities (eid) ON DELETE CASCADE,
-  CONSTRAINT next_state_relation_fkey2 FOREIGN KEY (eid_to) REFERENCES entities (eid) ON DELETE CASCADE
 );
 
-CREATE INDEX next_state_relation_from_idx ON next_state_relation (eid_from);
-CREATE INDEX next_state_relation_to_idx ON next_state_relation (eid_to);
+CREATE INDEX next_state_relation_from_idx ON next_state_relation(eid_from);
+CREATE INDEX next_state_relation_to_idx ON next_state_relation(eid_to);
 
 CREATE TABLE obj_wildcard_relation (
   eid_from INTEGER NOT NULL,
   eid_to INTEGER NOT NULL,
   CONSTRAINT obj_wildcard_relation_p_key PRIMARY KEY(eid_from, eid_to),
-  CONSTRAINT obj_wildcard_relation_fkey1 FOREIGN KEY (eid_from) REFERENCES entities (eid) ON DELETE CASCADE,
-  CONSTRAINT obj_wildcard_relation_fkey2 FOREIGN KEY (eid_to) REFERENCES entities (eid) ON DELETE CASCADE
 );
 
-CREATE INDEX obj_wildcard_relation_from_idx ON obj_wildcard_relation (eid_from);
-CREATE INDEX obj_wildcard_relation_to_idx ON obj_wildcard_relation (eid_to);
+CREATE INDEX obj_wildcard_relation_from_idx ON obj_wildcard_relation(eid_from);
+CREATE INDEX obj_wildcard_relation_to_idx ON obj_wildcard_relation(eid_to);
 
 CREATE TABLE state_of_relation (
   eid_from INTEGER NOT NULL,
   eid_to INTEGER NOT NULL,
   CONSTRAINT state_of_relation_p_key PRIMARY KEY(eid_from, eid_to),
-  CONSTRAINT state_of_relation_fkey1 FOREIGN KEY (eid_from) REFERENCES entities (eid) ON DELETE CASCADE,
-  CONSTRAINT state_of_relation_fkey2 FOREIGN KEY (eid_to) REFERENCES entities (eid) ON DELETE CASCADE
 );
 
-CREATE INDEX state_of_relation_from_idx ON state_of_relation (eid_from);
-CREATE INDEX state_of_relation_to_idx ON state_of_relation (eid_to);
+CREATE INDEX state_of_relation_from_idx ON state_of_relation(eid_from);
+CREATE INDEX state_of_relation_to_idx ON state_of_relation(eid_to);
 
 CREATE TABLE subj_wildcard_relation (
   eid_from INTEGER NOT NULL,
   eid_to INTEGER NOT NULL,
   CONSTRAINT subj_wildcard_relation_p_key PRIMARY KEY(eid_from, eid_to),
-  CONSTRAINT subj_wildcard_relation_fkey1 FOREIGN KEY (eid_from) REFERENCES entities (eid) ON DELETE CASCADE,
-  CONSTRAINT subj_wildcard_relation_fkey2 FOREIGN KEY (eid_to) REFERENCES entities (eid) ON DELETE CASCADE
 );
 
-CREATE INDEX subj_wildcard_relation_from_idx ON subj_wildcard_relation (eid_from);
-CREATE INDEX subj_wildcard_relation_to_idx ON subj_wildcard_relation (eid_to);
+CREATE INDEX subj_wildcard_relation_from_idx ON subj_wildcard_relation(eid_from);
+CREATE INDEX subj_wildcard_relation_to_idx ON subj_wildcard_relation(eid_to);
 
 CREATE TABLE sym_rel_relation (
   eid_from INTEGER NOT NULL,
   eid_to INTEGER NOT NULL,
   CONSTRAINT sym_rel_relation_p_key PRIMARY KEY(eid_from, eid_to),
-  CONSTRAINT sym_rel_relation_fkey1 FOREIGN KEY (eid_from) REFERENCES entities (eid) ON DELETE CASCADE,
-  CONSTRAINT sym_rel_relation_fkey2 FOREIGN KEY (eid_to) REFERENCES entities (eid) ON DELETE CASCADE
 );
 
-CREATE INDEX sym_rel_relation_from_idx ON sym_rel_relation (eid_from);
-CREATE INDEX sym_rel_relation_to_idx ON sym_rel_relation (eid_to);
+CREATE INDEX sym_rel_relation_from_idx ON sym_rel_relation(eid_from);
+CREATE INDEX sym_rel_relation_to_idx ON sym_rel_relation(eid_to);
 
 CREATE TABLE travaille_relation (
   eid_from INTEGER NOT NULL,
   eid_to INTEGER NOT NULL,
   CONSTRAINT travaille_relation_p_key PRIMARY KEY(eid_from, eid_to),
-  CONSTRAINT travaille_relation_fkey1 FOREIGN KEY (eid_from) REFERENCES entities (eid) ON DELETE CASCADE,
-  CONSTRAINT travaille_relation_fkey2 FOREIGN KEY (eid_to) REFERENCES entities (eid) ON DELETE CASCADE
 );
 
-CREATE INDEX travaille_relation_from_idx ON travaille_relation (eid_from);
-CREATE INDEX travaille_relation_to_idx ON travaille_relation (eid_to);
+CREATE INDEX travaille_relation_from_idx ON travaille_relation(eid_from);
+CREATE INDEX travaille_relation_to_idx ON travaille_relation(eid_to);
 
 CREATE TABLE works_for_relation (
   eid_from INTEGER NOT NULL,
   eid_to INTEGER NOT NULL,
   CONSTRAINT works_for_relation_p_key PRIMARY KEY(eid_from, eid_to),
-  CONSTRAINT works_for_relation_fkey1 FOREIGN KEY (eid_from) REFERENCES entities (eid) ON DELETE CASCADE,
-  CONSTRAINT works_for_relation_fkey2 FOREIGN KEY (eid_to) REFERENCES entities (eid) ON DELETE CASCADE
 );
 
-CREATE INDEX works_for_relation_from_idx ON works_for_relation (eid_from);
-CREATE INDEX works_for_relation_to_idx ON works_for_relation (eid_to);
+CREATE INDEX works_for_relation_from_idx ON works_for_relation(eid_from);
+CREATE INDEX works_for_relation_to_idx ON works_for_relation(eid_to);
 """
 
 class SQLSchemaTC(TestCase):
@@ -231,7 +209,7 @@ class SQLSchemaTC(TestCase):
     def test_known_values(self):
         dbhelper = get_adv_func_helper('postgres')
         output = schema2sql(dbhelper, schema)
-        self.assertTextEquals(output.strip(), EXPECTED_DATA_NO_DROP.strip())
+        self.assertTextEquals(EXPECTED_DATA_NO_DROP.strip(), output.strip())
 
         
 if __name__ == '__main__':

@@ -223,13 +223,10 @@ class EntitySchemaTC(BaseSchemaTC):
     def test_subject_relations(self):
         """check subject relations a returned in the same order as in the
         schema definition"""
-        rels = eperson.subject_relations()
+        rels = eperson.ordered_relations()
         expected = ['nom', 'prenom', 'sexe', 'tel', 'fax', 'datenaiss',
                     'TEST', 'promo', 'travaille', 'evaluee', 'concerne']
         self.assertEquals([r.type for r in rels], expected)
-        rels = [schem.type for schem in eperson.subject_relations()]
-        self.assertEquals(rels, ['nom', 'prenom', 'sexe', 'tel', 'fax', 'datenaiss',
-                                'TEST', 'promo', 'travaille', 'evaluee', 'concerne'])
 
     def test_object_relations(self):
         """check object relations a returned in the same order as in the
@@ -404,7 +401,7 @@ class SchemaTC(BaseSchemaTC):
         self.failIf(eperson is pschema['Person'])
         self.failUnlessEqual(eperson, pschema['Person'])
         self.failUnlessEqual('Person', pschema['Person'])
-        self.failUnlessEqual(eperson.subject_relations(), pschema['Person'].subject_relations())
+        self.failUnlessEqual(eperson.ordered_relations(), pschema['Person'].ordered_relations())
         self.failUnlessEqual(eperson.object_relations(), pschema['Person'].object_relations())
 
 

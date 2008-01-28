@@ -26,7 +26,7 @@ def schema2sql(dbhelper, schema, skip_entities=(), skip_relations=()):
         w(eschema2sql(dbhelper, eschema, skip_relations))
     for rtype in sorted(schema.relations()):
         rschema = schema.rschema(rtype)
-        if rschema.is_final() or rschema.physical_mode() == 'subjectinline':
+        if rschema.is_final() or rschema.inlined:
             continue
         w(rschema2sql(rschema))
     return '\n'.join(output)
@@ -45,7 +45,7 @@ def dropschema2sql(schema, skip_entities=(), skip_relations=()):
         w(dropeschema2sql(eschema, skip_relations))
     for rtype in sorted(schema.relations()):
         rschema = schema.rschema(rtype)
-        if rschema.is_final() or rschema.physical_mode() == 'subjectinline':
+        if rschema.is_final() or rschema.inlined:
             continue
         w(droprschema2sql(rschema))
     return '\n'.join(output)
@@ -55,7 +55,7 @@ def eschema_attrs(eschema, skip_relations):
              if not attrdef[0].type in skip_relations]
     attrs += [(rschema, None)
               for rschema in eschema.subject_relations()
-              if not rschema.final and rschema.physical_mode() == 'subjectinline']
+              if not rschema.final and rschema.inlined]
     return attrs
 
 def dropeschema2sql(eschema, skip_relations=()):
@@ -145,8 +145,8 @@ CREATE TABLE %(table)s (
   CONSTRAINT %(table)s_p_key PRIMARY KEY(eid_from, eid_to),
 );
 
-CREATE INDEX %(table)s_from_idx ON %(table)s (eid_from);
-CREATE INDEX %(table)s_to_idx ON %(table)s (eid_to);"""
+CREATE INDEX %(table)s_from_idx ON %(table)s(eid_from);
+CREATE INDEX %(table)s_to_idx ON %(table)s(eid_to);"""
 
 #  CONSTRAINT %(table)s_fkey1 FOREIGN KEY (eid_from) REFERENCES entities (eid) ON DELETE CASCADE,
 #  CONSTRAINT %(table)s_fkey2 FOREIGN KEY (eid_to) REFERENCES entities (eid) ON DELETE CASCADE
@@ -174,7 +174,7 @@ def grant_schema(schema, user, set_owner=True, skip_entities=()):
         w(grant_eschema(eschema, user, set_owner))
     for rtype in sorted(schema.relations()):
         rschema = schema.rschema(rtype)
-        if rschema.is_final() or rschema.physical_mode() == 'subjectinline':
+        if rschema.is_final() or rschema.inlined:
             continue
         w(grant_rschema(rschema, user, set_owner))
     return '\n'.join(output)
