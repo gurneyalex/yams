@@ -181,17 +181,6 @@ class SchemaLoaderTC(TestCase):
         self.assertListEquals(sorted(rschema.subjects()), ['Company', 'Division', 'Eetype', 'State'])
         self.assertListEquals(sorted(rschema.objects()), ['String'])
 
-
-    def test_nonregr_using_tuple_as_relation_target(self):
-        rschema = schema.rschema('works_for')
-        self.assertEquals(rschema.symetric, False)
-        self.assertEquals(rschema.description, '')
-        self.assertEquals(rschema.meta, False)
-        self.assertEquals(rschema.is_final(), False)
-        self.assertListEquals(sorted(rschema.subjects()), ['Employee'])
-        self.assertListEquals(sorted(rschema.objects()), ['Company', 'Division'])
-
-
     def test_cardinality(self):
         rschema = schema.rschema('evaluee')
         self.assertEquals(rschema.rproperty('Person', 'Note', 'cardinality'), '**')
@@ -221,7 +210,7 @@ class SchemaLoaderTC(TestCase):
         eschema = schema.eschema('Eetype')
         self.assertEquals(len(eschema.constraints('name')), 2)
         
-    def test_physical_mode(self):
+    def test_inlined(self):
         rschema = schema.rschema('evaluee')
         self.assertEquals(rschema.inlined, False)
         rschema = schema.rschema('state_of')
@@ -230,8 +219,6 @@ class SchemaLoaderTC(TestCase):
         self.assertEquals(rschema.inlined, True)
         rschema = schema.rschema('initial_state')        
         self.assertEquals(rschema.inlined, True)
-
-
 
     def test_relation_permissions(self):
         rschema = schema.rschema('state_of')
@@ -285,9 +272,18 @@ class SchemaLoaderTC(TestCase):
                            'delete': ('managers', 'owners',),
                            'update': ('managers', 'owners',)})
         
+    def test_nonregr_using_tuple_as_relation_target(self):
+        rschema = schema.rschema('works_for')
+        self.assertEquals(rschema.symetric, False)
+        self.assertEquals(rschema.description, '')
+        self.assertEquals(rschema.meta, False)
+        self.assertEquals(rschema.is_final(), False)
+        self.assertListEquals(sorted(rschema.subjects()), ['Employee'])
+        self.assertListEquals(sorted(rschema.objects()), ['Company', 'Division'])
 
 
-from yams import builder as B
+
+from yams import buildobjs as B
 
 class BasePerson(B.EntityType):
     firstname = B.String(vocabulary=('logilab', 'caesium'), maxsize=10)
@@ -368,19 +364,19 @@ class SchemaLoaderTC2(TestCase):
         SchemaLoader.main_schema_directory = 'brokenschema1' 
         ex = self.assertRaises(BadSchemaDefinition,
                                SchemaLoader().load, [DATADIR], 'Test', DummyDefaultHandler())
-        self.assertEquals(str(ex), '')
+        self.assertEquals(str(ex), "conflicting values True/False for property inlined of relation type 'rel'")
         
     def test_broken_schema2(self):
         SchemaLoader.main_schema_directory = 'brokenschema2' 
         ex = self.assertRaises(BadSchemaDefinition,
                                SchemaLoader().load, [DATADIR], 'Test', DummyDefaultHandler())
-        self.assertEquals(str(ex), '')
+        self.assertEquals(str(ex), "conflicting values False/True for property inlined of relation type 'rel'")
         
-    def test_broken_schema2(self):
-        SchemaLoader.main_schema_directory = 'brokenschema2' 
+    def test_broken_schema3(self):
+        SchemaLoader.main_schema_directory = 'brokenschema3' 
         ex = self.assertRaises(BadSchemaDefinition,
                                SchemaLoader().load, [DATADIR], 'Test', DummyDefaultHandler())
-        self.assertEquals(str(ex), '')
+        self.assertEquals(str(ex), "conflicting values False/True for property inlined of relation type 'rel'")
         
     def test_schema(self):
         SchemaLoader.main_schema_directory = 'schema2' 

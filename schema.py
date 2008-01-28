@@ -15,11 +15,10 @@ from logilab.common.compat import sorted
 from logilab.common.interface import implements
 from logilab.common.deprecation import deprecated_function
 
-from yams import ValidationError, BadSchemaDefinition
+from yams import BASE_TYPES, MARKER, ValidationError, BadSchemaDefinition
 from yams.interfaces import ISchema, IRelationSchema, IEntitySchema, \
      IVocabularyConstraint
 from yams.constraints import BASE_CHECKERS, UniqueConstraint
-from yams.builder import BASE_TYPES, EntityType
 
 KEYWORD_MAP = {'NOW' : now,
                'TODAY': today,
@@ -70,6 +69,7 @@ def format_properties(props):
             res.append('%s=%s' % (prop, value))
     return ','.join(res)
 
+
 class ERSchema(object):
     """common base class to entity and relation schema
     """
@@ -80,12 +80,8 @@ class ERSchema(object):
         assert erdef
         self.schema = schema
         self.type = erdef.name
-        self.meta = erdef.meta
-        if erdef.__doc__:
-            descr = ' '.join(erdef.__doc__.split())
-        else:
-            descr = ''
-        self.description = descr
+        self.meta = erdef.meta or False
+        self.description = erdef.description or ''
         # mapping from action to groups
         try:
             self._groups = erdef.permissions.copy()
@@ -394,6 +390,8 @@ class EntitySchema(ERSchema):
         default =  self.rproperty(rtype, 'default')
         if callable(default):
             default = default()
+        if default is MARKER:
+            default = None
         if default is not None:
             attrtype = self.destination(rtype)
             if attrtype == 'Boolean':
@@ -492,6 +490,7 @@ class EntitySchema(ERSchema):
     subject_relation_schema = subject_relation
     object_relation_schema = object_relation
 
+
 class RelationSchema(ERSchema):
     """A relation is a named ordered link between two entities.
     A relation schema defines the possible types of both extremities.
@@ -521,8 +520,8 @@ class RelationSchema(ERSchema):
     def __init__(self, schema=None, rdef=None, **kwargs):
         if rdef is not None:
             # if this relation is symetric/inlined
-            self.symetric = rdef.symetric
-            self.inlined = rdef.inlined
+            self.symetric = rdef.symetric or False
+            self.inlined = rdef.inlined or False
             # if this relation is an attribute relation
             self.final = False
             # mapping to subject/object with schema as key
@@ -638,19 +637,20 @@ class RelationSchema(ERSchema):
     # relation definitions properties handling ################################
     
     def rproperty_defs(self, desttype):
-        """return a list tuple (property name, default value)
+        """return a dictionary mapping property name to its definition
         for each allowable properties when the relation has `desttype` as
         target entity's type
         """
-        basekeys = self._RPROPERTIES.items()
+        propdefs = self._RPROPERTIES.copy()
         if not self.is_final():
-            return basekeys + self._NONFINAL_RPROPERTIES.items()
-        basekeys += self._FINAL_RPROPERTIES.items()
-        if desttype == 'String':
-            return basekeys + self._STRING_RPROPERTIES.items()
-        if desttype == 'Bytes':
-            return basekeys + self._BYTES_RPROPERTIES.items()
-        return basekeys
+            propdefs.update(self._NONFINAL_RPROPERTIES)
+        else:
+            propdefs.update(self._FINAL_RPROPERTIES)
+            if desttype == 'String':
+                propdefs.update(self._STRING_RPROPERTIES)
+            elif desttype == 'Bytes':
+                propdefs.update(self._BYTES_RPROPERTIES)
+        return propdefs
 
     def iter_rdefs(self):
         """return an iterator on (subject, object) of this relation"""
@@ -673,7 +673,7 @@ class RelationSchema(ERSchema):
 
     def set_rproperty(self, subject, object, pname, value):
         """set value for a subject relation specific property"""
-        #assert pname in self._rproperties
+        assert pname in self.rproperty_defs(object)
         self._rproperties[(subject, object)][pname] = value
 
     def init_rproperties(self, subject, object, rdef):
@@ -682,8 +682,14 @@ class RelationSchema(ERSchema):
             msg = '%s already defined for %s' % (key, self)
             raise BadSchemaDefinition(msg)
         self._rproperties[key] = {}
-        for prop, default in self.rproperty_defs(key[1]):
-            self._rproperties[key][prop] = getattr(rdef, prop, default)
+        for prop, default in self.rproperty_defs(key[1]).iteritems():
+            rdefval = getattr(rdef, prop, MARKER)
+            if rdefval is MARKER:
+                if prop == 'cardinality':
+                    default = (object in BASE_TYPES) and '?1' or '**'
+            else:
+                default = rdefval
+            self._rproperties[key][prop] = default
 
     # IRelationSchema interface ###############################################
 
@@ -771,9 +777,6 @@ class Schema(object):
         self.name = name
         self._entities = {}
         self._relations = {}
-        for etype in BASE_TYPES:
-            edef = EntityType(name=etype, meta=True)
-            self.add_entity_type(edef).set_default_groups()
 
     def __setstate__(self, state):
         self.__dict__.update(state)

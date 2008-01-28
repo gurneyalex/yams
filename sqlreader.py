@@ -1,16 +1,19 @@
 """Entity Schema reader, read EntitySchema from Pseudo SQL
 
+
 :organization: Logilab
-:copyright: 2003-2007 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
+:copyright: 2003-2008 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
 :contact: http://www.logilab.fr/ -- mailto:contact@logilab.fr
 """
+__docformat__ = "restructuredtext en"
 
 import re
 from os.path import split, splitext
 
+from yams import MARKER, FileReader
 from yams.constraints import StaticVocabularyConstraint, SizeConstraint, \
      MultipleStaticVocabularyConstraint
-from yams.builder import FileReader, EntityType, SubjectRelation
+from yams.buildobjs import EntityType, SubjectRelation
 
 FTI = 1 # Full text indexing
 
@@ -103,7 +106,7 @@ class EsqlFileReader(FileReader):
         """Parses the default value and not null constraint retrieved from an
         attribute definition, modifying the relation definition as necessary
         """
-        default = None
+        default = MARKER
         # First, make a list for each constraint part
         for cst in [cst.strip() for cst in suite.split(',') if cst.strip()]:
             default_m = DEFAULT_VALUE_CST_RE.match(cst)
@@ -116,9 +119,9 @@ class EsqlFileReader(FileReader):
                 rdef.cardinality = '11'
             else:
                 self.error(cst)
-        if default is None:
-            default = getattr(self.default_hdlr, 'default_%s' % rdef.name, None)
-        if default is not None:
+        if default is MARKER:
+            default = getattr(self.default_hdlr, 'default_%s' % rdef.name, MARKER)
+        if default is not MARKER:
             rdef.default = default
             
 

@@ -2,8 +2,12 @@ ChangeLog for yams
 ------------------
 
  --
+    * heavy refactoring of the schema building process
+    * rename rproperty_keys to iter_rdef, new has_rdef method
+    * use dbhelper to generate index sql
+    * don't use ordered_relation when it's not necessary
     * removed deprecated code
-	
+
 2007-10-29  --  0.14.0
     * schema building refactoring to read schema from a bunch of directories
     * drop .perms file support
