@@ -5,8 +5,7 @@ from logilab.common.testlib import TestCase, unittest_main
 
 from tempfile import mktemp
 
-from yams import BASE_TYPES
-from yams.buildobjs import EntityType, RelationType, RelationDefinition
+from yams.buildobjs import register_base_types, EntityType, RelationType, RelationDefinition
 from yams.schema import *
 from yams.constraints import *
 
@@ -19,9 +18,7 @@ class BaseSchemaTC(TestCase):
         global schema, enote, eaffaire, eperson, esociete, estring, eint
         global rconcerne, rnom
         schema = Schema('Test Schema')
-        for etype in BASE_TYPES:
-            edef = EntityType(name=etype, meta=True)
-            schema.add_entity_type(edef).set_default_groups()
+        register_base_types(schema)
         enote = schema.add_entity_type(EntityType('Note'))
         eaffaire = schema.add_entity_type(EntityType('Affaire'))
         eperson = schema.add_entity_type(EntityType('Person'))
