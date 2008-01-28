@@ -4,7 +4,6 @@
 :copyright: 2003-2008 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
 :contact: http://www.logilab.fr/ -- mailto:contact@logilab.fr
 """
-
 __docformat__ = "restructuredtext en"
 
 from copy import deepcopy
@@ -521,8 +520,9 @@ class RelationSchema(ERSchema):
     
     def __init__(self, schema=None, rdef=None, **kwargs):
         if rdef is not None:
-            # if this relation is symetric
+            # if this relation is symetric/inlined
             self.symetric = rdef.symetric
+            self.inlined = rdef.inlined
             # if this relation is an attribute relation
             self.final = False
             # mapping to subject/object with schema as key

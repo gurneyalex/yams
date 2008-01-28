@@ -1,6 +1,6 @@
 """unit tests for module yams.reader
 
-Copyright Logilab 2003-2006, all rights reserved.
+Copyright Logilab 2003-2008, all rights reserved.
 """
 
 from logilab.common.testlib import TestCase, unittest_main
@@ -8,6 +8,7 @@ from logilab.common.compat import sorted
 
 from mx.DateTime import now, today, Date, DateTimeType, Time, DateTimeDeltaType
 
+from yams import BadSchemaDefinition
 from yams.schema import Schema, EntitySchema
 from yams.reader import SchemaLoader, RelationFileReader
 from yams.constraints import StaticVocabularyConstraint, SizeConstraint
@@ -222,13 +223,13 @@ class SchemaLoaderTC(TestCase):
         
     def test_physical_mode(self):
         rschema = schema.rschema('evaluee')
-        self.assertEquals(rschema.physical_mode(), None)
-        rschema = schema.rschema('inline_rel')        
-        self.assertEquals(rschema.physical_mode(), 'subjectinline')
-        rschema = schema.rschema('initial_state')        
-        self.assertEquals(rschema.physical_mode(), 'subjectinline')
+        self.assertEquals(rschema.inlined, False)
         rschema = schema.rschema('state_of')
-        self.assertEquals(rschema.physical_mode(), None)
+        self.assertEquals(rschema.inlined, False)
+        rschema = schema.rschema('inline_rel')        
+        self.assertEquals(rschema.inlined, True)
+        rschema = schema.rschema('initial_state')        
+        self.assertEquals(rschema.inlined, True)
 
 
 
@@ -361,6 +362,42 @@ class PySchemaTC(TestCase):
         self.assertEquals(t2, Time(9, 45))
         self.failUnless(isinstance(t2, DateTimeDeltaType))
 
+
+class SchemaLoaderTC2(TestCase):
+    def test_broken_schema1(self):
+        SchemaLoader.main_schema_directory = 'brokenschema1' 
+        ex = self.assertRaises(BadSchemaDefinition,
+                               SchemaLoader().load, [DATADIR], 'Test', DummyDefaultHandler())
+        self.assertEquals(str(ex), '')
+        
+    def test_broken_schema2(self):
+        SchemaLoader.main_schema_directory = 'brokenschema2' 
+        ex = self.assertRaises(BadSchemaDefinition,
+                               SchemaLoader().load, [DATADIR], 'Test', DummyDefaultHandler())
+        self.assertEquals(str(ex), '')
+        
+    def test_broken_schema2(self):
+        SchemaLoader.main_schema_directory = 'brokenschema2' 
+        ex = self.assertRaises(BadSchemaDefinition,
+                               SchemaLoader().load, [DATADIR], 'Test', DummyDefaultHandler())
+        self.assertEquals(str(ex), '')
+        
+    def test_schema(self):
+        SchemaLoader.main_schema_directory = 'schema2' 
+        schema = SchemaLoader().load([DATADIR], 'Test', DummyDefaultHandler())
+        rel = schema['rel']
+        self.assertEquals(rel.rproperty('Anentity', 'Anentity', 'composite'),
+                          'subject')
+        self.assertEquals(rel.rproperty('Anotherentity', 'Anentity', 'composite'),
+                          'subject')
+        self.assertEquals(rel.rproperty('Anentity', 'Anentity', 'cardinality'),
+                          '1*')
+        self.assertEquals(rel.rproperty('Anotherentity', 'Anentity', 'cardinality'),
+                          '1*')
+        self.assertEquals(rel.symetric, True)
+        self.assertEquals(rel.inlined, True)
+        self.assertEquals(rel.meta, False)
+        
 
 if __name__ == '__main__':
     unittest_main()

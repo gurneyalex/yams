@@ -27,7 +27,7 @@ class initial_state(MetaUserRelationType):
     """indicate which state should be used by default when an entity using states
     is created
     """
-
+    inlined = True
     
 class Eetype(MetaEntityType):
     """define an entity type, used to build the application schema"""
