@@ -6,26 +6,25 @@ relation definitions files or a direct python definition file)
 :copyright: 2004-2008 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
 :contact: http://www.logilab.fr/ -- mailto:contact@logilab.fr
 """
-
 __docformat__ = "restructuredtext en"
-__metaclass__ = type
 
 import sys
 from os.path import exists, join, splitext
 from os import listdir
 
+from logilab.common import attrdict
 from logilab.common.fileutils import lines
 from logilab.common.textutils import get_csv
 
-from yams import UnknownType, BadSchemaDefinition
+from yams import BASE_TYPES, UnknownType, BadSchemaDefinition, FileReader
 from yams import constraints, schema as schemamod
-from yams import builder
+from yams import buildobjs
 
 # .rel and .py formats file readers ###########################################
         
-class RelationFileReader(builder.FileReader):
+class RelationFileReader(FileReader):
     """read simple relation definitions files"""
-    rdefcls = builder.RelationDefinition
+    rdefcls = buildobjs.RelationDefinition
     
     def read_line(self, line):
         """read a relation definition:
@@ -52,7 +51,6 @@ class RelationFileReader(builder.FileReader):
             rdef.symetric = True
             relation_def.remove('symetric')
         if 'inline' in relation_def:
-            #print 'XXX inline is deprecated'
             rdef.cardinality = '?*'
             rdef.inlined = True
             relation_def.remove('inline')
@@ -88,10 +86,10 @@ def _builder_context():
     """builds the context in which the schema files
     will be executed
     """
-    return dict([(attr, getattr(builder, attr))
-                 for attr in builder.__all__])
+    return dict([(attr, getattr(buildobjs, attr))
+                 for attr in buildobjs.__all__])
 
-class PyFileReader(builder.FileReader):
+class PyFileReader(FileReader):
     """read schema definition objects from a python file"""
     context = {'_' : unicode}
     context.update(_builder_context())
@@ -110,10 +108,11 @@ class PyFileReader(builder.FileReader):
             if name.startswith('_'):
                 continue
             try:
-                if issubclass(obj, builder.Definition):
-                    self.loader.add_definition(self, obj())
+                isdef = issubclass(obj, buildobjs.Definition)
             except TypeError:
                 continue
+            if isdef:
+                self.loader.add_definition(self, obj())
         
     def import_schema_file(self, schemamod): 
         filepath = self.loader.include_schema_files(schemamod)[0]            
@@ -123,10 +122,13 @@ class PyFileReader(builder.FileReader):
             return self.exec_file(filepath)
 
     def import_erschema(self, ertype, schemamod=None, instantiate=True):
-        for erdef in self.loader._defobjects:
+        try:
+            erdef = self.loader.defined[ertype]
             if erdef.name == ertype:
                 assert instantiate, 'can\'t get class of an already registered type'
                 return erdef
+        except KeyError:
+            pass
         erdefcls = getattr(self.import_schema_file(schemamod or ertype), ertype)
         if instantiate:
             erdef = erdefcls()
@@ -135,7 +137,6 @@ class PyFileReader(builder.FileReader):
         return erdefcls
     
     def exec_file(self, filepath):
-        #partname = self._partname(filepath)
         flocals = self.context.copy()
         flocals['import_schema'] = self.import_schema_file # XXX deprecate local name
         flocals['import_erschema'] = self.import_erschema
@@ -146,18 +147,10 @@ class PyFileReader(builder.FileReader):
         del flocals['import_schema']
         self._loaded[filepath] = attrdict(flocals)
         return self._loaded[filepath]
-
-class attrdict(dict):
-    """a dictionary whose keys are also accessible as attributes"""
-    def __getattr__(self, attr):
-        try:
-            return self[attr]
-        except KeyError:
-            raise AttributeError(attr)
     
 # the main schema loader ######################################################
 
-from yams.sqlschema import EsqlFileReader
+from yams.sqlreader import EsqlFileReader
 
 class SchemaLoader(object):
     """the schema loader is responsible to build a schema object from a
@@ -177,18 +170,9 @@ class SchemaLoader(object):
     def load(self, directories, name=None, default_handler=None):
         """return a schema from the schema definition readen from <directory>
         """
-        self.defined = set()
+        self.defined = {}
         self._instantiate_handlers(default_handler)
-        self._defobjects = []
-        #if self.lib_directory is not None: 
-        #    sys.path.insert(0, self.lib_directory)
-        #sys.path.insert(0, directory)
-        #try:
         self._load_definition_files(directories)
-        #finally:
-        #    sys.path.pop(0)
-        #    if self.lib_directory is not None: 
-        #        sys.path.pop(0)
         return self._build_schema(name)
     
     def _instantiate_handlers(self, default_handler=None):
@@ -205,19 +189,18 @@ class SchemaLoader(object):
     def _build_schema(self, name):
         """build actual schema from definition objects, and return it"""
         schema = self.schemacls(name or 'NoName')
+        for etype in BASE_TYPES:
+            edef = buildobjs.EntityType(name=etype, meta=True)
+            schema.add_entity_type(edef).set_default_groups()
         # register relation types and non final entity types
-        for definition in self._defobjects:
-            if isinstance(definition, builder.RelationType):
-                definition.rschema = schema.add_relation_type(definition)
-            elif isinstance(definition, builder.EntityType):
-                definition.eschema = schema.add_entity_type(definition)
+        for definition in self.defined.itervalues():
+            if isinstance(definition, buildobjs.RelationType):
+                schema.add_relation_type(definition)
+            elif isinstance(definition, buildobjs.EntityType):
+                schema.add_entity_type(definition)
         # register relation definitions
-        for definition in self._defobjects:
-            if isinstance(definition, builder.EntityType):
-                definition.register_relations(schema)
-        for definition in self._defobjects:
-            if not isinstance(definition, builder.EntityType):
-                definition.register_relations(schema)
+        for definition in self.defined.itervalues():
+            definition.expand_relation_definitions(self.defined, schema)
         # set permissions on entities and relations
         for erschema in schema.entities() + schema.relations():
             erschema.set_default_groups()
@@ -280,9 +263,13 @@ class SchemaLoader(object):
         pass
 
     def add_definition(self, hdlr, defobject):
-        """file handler callback to add a definition object"""
-        if not isinstance(defobject, builder.Definition):
+        """file handler callback to add a definition object
+
+        wildcard capability force to load schema in two steps : first register
+        all definition objects (here), then create actual schema objects (done in
+        `_build_schema`)
+        """
+        if not isinstance(defobject, buildobjs.Definition):
             hdlr.error('invalid definition object')
-        self.defined.add(defobject.name)
-        self._defobjects.append(defobject)
+        defobject.expand_type_definitions(self.defined)
             

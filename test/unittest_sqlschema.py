@@ -1,17 +1,13 @@
-"""
-unit tests for module yams.sqlschema
-
-Copyright Logilab 2003-2006, all rights reserved.
-"""
+"""unit tests for module yams.sqlschema"""
 
 from __future__ import generators
 
 from logilab.common.testlib import TestCase, unittest_main
 
+from yams import MARKER, BadSchemaDefinition
 from yams.constraints import SizeConstraint
-from yams.builder import EntityType
-from yams import BadSchemaDefinition
-from yams.sqlschema import EsqlFileReader
+from yams.buildobjs import EntityType
+from yams.sqlreader import EsqlFileReader
 
 import os.path as osp
 
@@ -63,47 +59,6 @@ class SQLSchemaReaderClassTest(TestCase):
             self.assertEquals(ex.args, ('bla bla bla', osp.join(DATADIR,'_bad_entity.sql'),
                                         "unknown type 'Bla'"))
         
-##     def test_bad_schema_stream(self):
-##         """tests stream schema_readers on a bad schema"""
-##         schema = Schema('Test')
-##         teststream = file('data/_missing_dynamicchoice_handler.sql')
-##         self.assertRaises(BadSchemaDefinition,
-##                           self.reader_from_stream, schema, 'etype', teststream)
-##         teststream = file('data/_missing_dynamicchoice_handler.sql')
-##         try:
-##             self.reader_from_stream('etype', teststream)
-##         except Exception, ex:
-##             msg = str(ex)
-##         self.assertEquals(msg, '(stream) etype: missing callback for dynamic choice relation yo')
-        
-##     def test_bad_esql_stream(self):
-##         """test stream schema_readers on a bad entity definition"""
-##         schema = Schema('Test')
-##         teststream = file('data/_bad_entity.sql')
-##         self.assertRaises(ESQLParseError,
-##                           self.reader_from_stream, schema, 'etype', teststream)
-##         teststream = file('data/_bad_entity.sql')
-##         try:
-##             self.reader_from_stream('etype', teststream)
-##         except Exception, ex:
-##             msg = str(ex)
-##         self.assertEquals(msg, '(stream) etype: unable to parse bla bla bla')
-        
-##     def test_read_base(self):
-##         """checks basic reading"""
-##         for schema, e_schema in try_every_way_to_read('data/Person.sql', 'Person'):
-##             self.assert_(isinstance(e_schema, EntitySchema))
-##             self.assertEqual(e_schema.type, 'Person')
-##             self.assertEqual(e_schema, schema.entity_schema('Person'))
-                         
-##     def test_read_relations(self):
-##         """checks how relations are read and stored"""
-##         for schema, e_schema in try_every_way_to_read('data/Person.sql', 'Person'):            
-##             nom_rel = e_schema.subject_relation_schema(r_type='nom')
-##             self.assert_(nom_rel)
-##             self.assert_(isinstance(nom_rel, RelationSchema))
-##             self.assertEqual(nom_rel.type, 'nom')
-
     def _get_result(self):
         self.assertEqual(len(self.result), 1)
         return self.result[0]
@@ -123,8 +78,8 @@ class SQLSchemaReaderClassTest(TestCase):
         """checks how default values are read and stored"""
         self.reader(osp.join(DATADIR,'Person.sql'))
         edef = self._get_result()
-        self.assertEqual(edef.nom.default, None)
-        self.assertEqual(edef.tel.default, None)
+        self.assertEqual(edef.nom.default, MARKER)
+        self.assertEqual(edef.tel.default, MARKER)
         self.assertEqual(edef.sexe.default, 'M')
 
     def test_read_types(self):

@@ -1,14 +1,12 @@
 # -*- coding: iso-8859-1 -*-
-"""unit tests for module yams.schema classes
-
-Copyright Logilab 2004-2006, all rights reserved.
-"""
+"""unit tests for module yams.schema classes"""
 
 from logilab.common.testlib import TestCase, unittest_main
 
 from tempfile import mktemp
-from yams.builder import EntityType, RelationType, RelationDefinition
 
+from yams import BASE_TYPES
+from yams.buildobjs import EntityType, RelationType, RelationDefinition
 from yams.schema import *
 from yams.constraints import *
 
@@ -21,6 +19,9 @@ class BaseSchemaTC(TestCase):
         global schema, enote, eaffaire, eperson, esociete, estring, eint
         global rconcerne, rnom
         schema = Schema('Test Schema')
+        for etype in BASE_TYPES:
+            edef = EntityType(name=etype, meta=True)
+            schema.add_entity_type(edef).set_default_groups()
         enote = schema.add_entity_type(EntityType('Note'))
         eaffaire = schema.add_entity_type(EntityType('Affaire'))
         eperson = schema.add_entity_type(EntityType('Person'))
@@ -142,10 +143,6 @@ class EntitySchemaTC(BaseSchemaTC):
 
     def test_base(self):
         self.assert_(repr(eperson))
-        
-#    def test_is_uid(self):
-#        eperson.set_uid('nom')
-#        self.assertEquals(eperson.is_uid('nom'), True)
 
     def test_cmp(self):
         self.failUnless(eperson == 'Person')
@@ -239,14 +236,6 @@ class EntitySchemaTC(BaseSchemaTC):
         self.assertEquals(eaffaire.object_relation('concerne').type,
                          'concerne')
 
-#     def test_destination_types(self):
-#         """check subject relations a returned in the same order as in the
-#         schema definition"""
-#         expected = ['Societe']
-#         self.assertEquals(eperson.destination_types('travaille'), expected)
-#         expected = ['String']
-#         self.assertEquals(eperson.destination_types('nom'), expected)
-        
     def test_destination_type(self):
         """check subject relations a returned in the same order as in the
         schema definition"""
@@ -449,8 +438,7 @@ class SymetricTC(TestCase):
 
     def test_wildcard_association_types(self):
         rdef = RelationDefinition('*', 'see_also', '*')
-        rdef.register_relations(schema)
-
+        rdef.expand_relation_definitions({'see_also':rdef}, schema)
         rsee_also = schema.rschema('see_also')
         subj_types = rsee_also.associations()
         subj_types.sort()

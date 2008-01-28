@@ -79,13 +79,6 @@ def eschema2sql(dbhelper, eschema, skip_relations=()):
         else: # inline relation
             # XXX integer is ginco specific
             sqltype = 'integer'
-            # XXX disabled since we may want to overrides this constraint
-            #for oschema in eschema.destination_types(rschema.type, schema=True):
-            #    card = rschema.rproperty(eschema.type, oschema.type, 'cardinality')
-            #    if card[0] != '1':
-            #        break
-            #else:
-            #    sqltype += ' NOT NULL'
         if i == len(attrs) - 1:
             w(' %s %s' % (rschema.type, sqltype))
         else:
@@ -147,9 +140,6 @@ CREATE TABLE %(table)s (
 
 CREATE INDEX %(table)s_from_idx ON %(table)s(eid_from);
 CREATE INDEX %(table)s_to_idx ON %(table)s(eid_to);"""
-
-#  CONSTRAINT %(table)s_fkey1 FOREIGN KEY (eid_from) REFERENCES entities (eid) ON DELETE CASCADE,
-#  CONSTRAINT %(table)s_fkey2 FOREIGN KEY (eid_to) REFERENCES entities (eid) ON DELETE CASCADE
 
 def rschema2sql(rschema):
     return _SQL_SCHEMA % {'table': '%s_relation' % rschema.type}
