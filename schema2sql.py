@@ -135,7 +135,7 @@ _SQL_SCHEMA = """
 CREATE TABLE %(table)s (
   eid_from INTEGER NOT NULL,
   eid_to INTEGER NOT NULL,
-  CONSTRAINT %(table)s_p_key PRIMARY KEY(eid_from, eid_to),
+  CONSTRAINT %(table)s_p_key PRIMARY KEY(eid_from, eid_to)
 );
 
 CREATE INDEX %(table)s_from_idx ON %(table)s(eid_from);
