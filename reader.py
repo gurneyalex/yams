@@ -16,7 +16,7 @@ from logilab.common import attrdict
 from logilab.common.fileutils import lines
 from logilab.common.textutils import get_csv
 
-from yams import BASE_TYPES, UnknownType, BadSchemaDefinition, FileReader
+from yams import UnknownType, BadSchemaDefinition, FileReader
 from yams import constraints, schema as schemamod
 from yams import buildobjs
 
@@ -167,13 +167,14 @@ class SchemaLoader(object):
         '.sql' : EsqlFileReader,
         }
     
-    def load(self, directories, name=None, default_handler=None):
+    def load(self, directories, name=None, default_handler=None,
+             register_base_types=True):
         """return a schema from the schema definition readen from <directory>
         """
         self.defined = {}
         self._instantiate_handlers(default_handler)
         self._load_definition_files(directories)
-        return self._build_schema(name)
+        return self._build_schema(name, register_base_types)
     
     def _instantiate_handlers(self, default_handler=None):
         self._live_handlers = {}
@@ -186,12 +187,11 @@ class SchemaLoader(object):
             for filepath in self.get_schema_files(directory):
                 self.handle_file(filepath)
         
-    def _build_schema(self, name):
+    def _build_schema(self, name, register_base_types=True):
         """build actual schema from definition objects, and return it"""
         schema = self.schemacls(name or 'NoName')
-        for etype in BASE_TYPES:
-            edef = buildobjs.EntityType(name=etype, meta=True)
-            schema.add_entity_type(edef).set_default_groups()
+        if register_base_types:
+            buildobjs.register_base_types(schema)
         # register relation types and non final entity types
         for definition in self.defined.itervalues():
             if isinstance(definition, buildobjs.RelationType):

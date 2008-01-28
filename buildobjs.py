@@ -23,13 +23,13 @@ __all__ = ('ObjectRelation', 'SubjectRelation', 'BothWayRelation',
            ) + tuple(BASE_TYPES)
 
 ETYPE_PROPERTIES = ('meta', 'description', 'permissions')
-RTYPE_PROPERTIES = ('meta', 'symetric', 'inlined', 'description', 'permissions')
+# don't put description inside, handled "manually"
+RTYPE_PROPERTIES = ('meta', 'symetric', 'inlined', 'permissions')
 RDEF_PROPERTIES = ('cardinality', 'constraints', 'composite',
-                   'order', 'description',
-                   'default', 'uid', 'indexed', 'uid', 
+                   'order',  'default', 'uid', 'indexed', 'uid', 
                    'fulltextindexed', 'internationalizable')
 
-REL_PROPERTIES = RTYPE_PROPERTIES+RDEF_PROPERTIES
+REL_PROPERTIES = RTYPE_PROPERTIES+RDEF_PROPERTIES + ('description',)
 
 
 def add_constraint(kwargs, constraint):
@@ -54,16 +54,22 @@ def check_kwargs(kwargs, attributes):
         if not key in attributes: 
             raise BadSchemaDefinition('no such property %r' % key)
     
-def copy_attributes(fromobj, toobj, attributes):    
+def copy_attributes(fromobj, toobj, attributes):
     for attr in attributes:
         value = getattr(fromobj, attr, MARKER)
         if value is MARKER:
             continue
         ovalue = getattr(toobj, attr, MARKER)
         if not ovalue is MARKER and value != ovalue:
-            raise BadSchemaDefinition('conflicting values %s/%s for property %s of %s'
+            raise BadSchemaDefinition('conflicting values %r/%r for property %s of %s'
                                       % (ovalue, value, attr, toobj))
         setattr(toobj, attr, value)
+        
+def register_base_types(schema):
+    for etype in BASE_TYPES:
+        edef = EntityType(name=etype, meta=True)
+        schema.add_entity_type(edef).set_default_groups()
+
 
 class Relation(object):
     """abstract class which have to be defined before the metadefinition
@@ -165,12 +171,12 @@ class EntityType(Definition):
             if isinstance(relation, SubjectRelation):
                 rdef = RelationDefinition(subject=self.name, name=relation.name,
                                           object=relation.etype, order=order)
-                copy_attributes(relation, rdef, RDEF_PROPERTIES)
+                copy_attributes(relation, rdef, RDEF_PROPERTIES + ('description',))
             elif isinstance(relation, ObjectRelation):
                 rdef = RelationDefinition(subject=relation.etype,
                                           name=relation.name,
                                           object=self.name, order=order)
-                copy_attributes(relation, rdef, RDEF_PROPERTIES)
+                copy_attributes(relation, rdef, RDEF_PROPERTIES + ('description',))
             else:
                 raise BadSchemaDefinition('dunno how to handle %s' % relation)
             order += 1
@@ -305,7 +311,7 @@ class RelationDefinition(Definition):
         for subj in self._actual_types(schema, self.subject):
             for obj in self._actual_types(schema, self.object):
                 rdef = RelationDefinition(subj, self.name, obj)
-                copy_attributes(self, rdef, RDEF_PROPERTIES)
+                copy_attributes(self, rdef, RDEF_PROPERTIES + ('description',))
                 schema.add_relation_def(rdef)
                     
     def _actual_types(self, schema, etype):
