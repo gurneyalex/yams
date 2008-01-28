@@ -143,12 +143,13 @@ CREATE TABLE %(table)s (
   eid_from INTEGER NOT NULL,
   eid_to INTEGER NOT NULL,
   CONSTRAINT %(table)s_p_key PRIMARY KEY(eid_from, eid_to),
-  CONSTRAINT %(table)s_fkey1 FOREIGN KEY (eid_from) REFERENCES entities (eid) ON DELETE CASCADE,
-  CONSTRAINT %(table)s_fkey2 FOREIGN KEY (eid_to) REFERENCES entities (eid) ON DELETE CASCADE
 );
 
 CREATE INDEX %(table)s_from_idx ON %(table)s (eid_from);
 CREATE INDEX %(table)s_to_idx ON %(table)s (eid_to);"""
+
+#  CONSTRAINT %(table)s_fkey1 FOREIGN KEY (eid_from) REFERENCES entities (eid) ON DELETE CASCADE,
+#  CONSTRAINT %(table)s_fkey2 FOREIGN KEY (eid_to) REFERENCES entities (eid) ON DELETE CASCADE
 
 def rschema2sql(rschema):
     return _SQL_SCHEMA % {'table': '%s_relation' % rschema.type}
