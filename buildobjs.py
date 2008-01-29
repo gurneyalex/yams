@@ -210,8 +210,8 @@ class RelationType(Definition):
     
     def __init__(self, name=None, **kwargs):
         super(RelationType, self).__init__(name)
-        check_kwargs(kwargs, RTYPE_PROPERTIES)
-        copy_attributes(attrdict(kwargs), self, RTYPE_PROPERTIES)
+        check_kwargs(kwargs, RTYPE_PROPERTIES + ('description',))
+        copy_attributes(attrdict(kwargs), self, RTYPE_PROPERTIES + ('description',))
 
     def __str__(self):
         return 'relation type %r' % self.name
@@ -258,8 +258,8 @@ class RelationDefinition(Definition):
         else:
             self.object = self.__class__.object
         super(RelationDefinition, self).__init__(name)
-        check_kwargs(kwargs, RDEF_PROPERTIES)
-        copy_attributes(attrdict(kwargs), self, RDEF_PROPERTIES)
+        check_kwargs(kwargs, RDEF_PROPERTIES + ('description',))
+        copy_attributes(attrdict(kwargs), self, RDEF_PROPERTIES + ('description',))
         if self.constraints:
             self.constraints = list(self.constraints)
         
@@ -279,8 +279,7 @@ class RelationDefinition(Definition):
             defined[self.name] = rtype
         key = (self.subject, self.name, self.object)
         if key in defined:
-            raise BadSchemaDefinition('duplicated relation definition %r'
-                                      % self)
+            raise BadSchemaDefinition('duplicated %s' % self)
         defined[key] = self
         
     def expand_relation_definitions(self, defined, schema):
