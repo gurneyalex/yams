@@ -7,6 +7,7 @@ ChangeLog for yams
     * use dbhelper to generate index sql
     * don't use ordered_relation when it's not necessary
     * removed deprecated code
+    * fix a bug on deletion of symetric relation definition
 
 2007-10-29  --  0.14.0
     * schema building refactoring to read schema from a bunch of directories

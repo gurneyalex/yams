@@ -607,6 +607,9 @@ class RelationSchema(ERSchema):
             pass
         try:
             del self._rproperties[(subjschema, objschema)]
+        except KeyError:
+            pass
+        try:
             if self.symetric and subjschema != objschema:
                 del self._rproperties[(objschema, subjschema)]
         except KeyError:
@@ -655,7 +658,12 @@ class RelationSchema(ERSchema):
     def iter_rdefs(self):
         """return an iterator on (subject, object) of this relation"""
         return self._rproperties.iterkeys()
-    rproperty_keys = deprecated_function(iter_rdefs)
+    
+    rproperty_keys = deprecated_function(iter_rdefs) # XXX bw compat
+
+    def rdefs(self):
+        """return a list of (subject, object) of this relation"""
+        return self._rproperties.keys()
 
     def has_rdef(self, subj, obj):
         return (subj, obj) in self._rproperties
@@ -876,6 +884,8 @@ class Schema(object):
         subjschema.del_subject_relation(rtype)
         if not rschema.symetric:
             objschema.del_object_relation(rtype)
+        else:
+            objschema.del_subject_relation(rtype)
         if rschema.del_relation_def(subjschema, objschema):
             del self._relations[rtype]
             
