@@ -201,6 +201,10 @@ class SchemaLoader(object):
         # register relation definitions
         for definition in self.defined.itervalues():
             definition.expand_relation_definitions(self.defined, schema)
+        # remove relation types without definitions
+        for rschema in schema.relations():
+            if not rschema.rdefs():
+                schema.del_relation_type(rschema)
         # set permissions on entities and relations
         for erschema in schema.entities() + schema.relations():
             erschema.set_default_groups()

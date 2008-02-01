@@ -71,9 +71,9 @@ def format_properties(props):
 
 
 class ERSchema(object):
-    """common base class to entity and relation schema
-    """
-    def __init__(self, schema=None, erdef=None):#, schema, erdef):
+    """common base class to entity and relation schema"""
+    
+    def __init__(self, schema=None, erdef=None):
         if erdef is None:
             return
         assert schema
