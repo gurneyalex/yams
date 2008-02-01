@@ -152,14 +152,19 @@ class EntityType(Definition):
         register definition objects by adding them to the `defined` dictionnary
         """
         assert not self.name in defined
+        self._defined = defined # XXX may be used later (eg .add_relation())
         defined[self.name] = self
         for relation in self.relations:
-            rtype = RelationType(relation.name)
-            copy_attributes(relation, rtype, RTYPE_PROPERTIES)
-            if relation.name in defined:
-                copy_attributes(rtype, defined[relation.name], RTYPE_PROPERTIES)
-            else:
-                defined[relation.name] = rtype
+            self._ensure_relation_type(relation)
+
+    def _ensure_relation_type(self, relation):
+        rtype = RelationType(relation.name)
+        copy_attributes(relation, rtype, RTYPE_PROPERTIES)
+        defined = self._defined
+        if relation.name in defined:
+            copy_attributes(rtype, defined[relation.name], RTYPE_PROPERTIES)
+        else:
+            defined[relation.name] = rtype
         
     def expand_relation_definitions(self, defined, schema):
         """schema building step 2:
@@ -189,6 +194,9 @@ class EntityType(Definition):
             self.add_relation(rdef)
             
     def add_relation(self, rdef, name=None):
+        if name:
+            rdef.name = name
+        self._ensure_relation_type(rdef)
         add_relation(self.relations, rdef, name)
             
     def remove_relation(self, name):
