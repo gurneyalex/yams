@@ -2,7 +2,7 @@
 
 
 :organization: Logilab
-:copyright: 2003-2007 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
+:copyright: 2003-2008 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
 :contact: http://www.logilab.fr/ -- mailto:contact@logilab.fr
 """
 
@@ -14,23 +14,44 @@ import os.path as osp
 
 from logilab.common.graph import DotBackend, GraphGenerator
 
-from yams.reader import SchemaLoader
-
-_ = getattr(__builtins__, '_', str)
-
+CARD_MAP = {'?': '0..1',
+            '1': '1',
+            '*': '0..n',
+            '+': '1..n'}
 
 class SchemaDotPropsHandler:
     def node_properties(self, eschema):
         """return default DOT drawing options for an entity schema"""
         return {'label' : eschema.type, 'shape' : "box",
                 'fontname' : "Courier", 'style' : "filled"}
-    def edge_properties(self, rschema):
+    
+    def edge_properties(self, rschema, subjnode, objnode):
         """return default DOT drawing options for a relation schema"""
         if rschema.symetric:
-            return {'label': rschema.type, 'dir': 'both',
-                    'color': '#887788', 'style': 'dashed'}
-        return {'label': rschema.type, 'dir': 'forward',
-                'color' : 'black', 'style' : 'filled'}
+            kwargs = {'label': rschema.type,
+                      'color': '#887788', 'style': 'dashed',
+                      'dir': 'both', 'arrowhead': 'open', 'arrowtail': 'open'}
+        else:
+            kwargs = {'label': rschema.type,
+                      'color' : 'black',  'style' : 'filled'}
+            composite = rschema.rproperty(subjnode, objnode, 'composite')
+            if composite == 'subject':
+                kwargs['arrowhead'] = 'none'
+                kwargs['arrowtail'] = 'diamond'
+            elif composite == 'object':
+                kwargs['arrowhead'] = 'diamond'
+                kwargs['arrowtail'] = 'none'
+            else:
+                kwargs['arrowhead'] = 'open'
+                kwargs['arrowtail'] = 'none'
+            cards = rschema.rproperty(subjnode, objnode, 'cardinality')
+            # UML like cardinalities notation, omitting 1..1
+            if cards[1] != '1':
+                kwargs['taillabel'] = CARD_MAP[cards[1]]
+            if cards[0] != '1':
+                kwargs['headlabel'] = CARD_MAP[cards[0]]
+        return kwargs
+
 
 class SchemaVisitor:
     def __init__(self, skipmeta=True):
@@ -87,6 +108,7 @@ class FullSchemaVisitor(SchemaVisitor):
                 if not self.display_rel(rschema, setype, tetype):
                     continue
                 yield str(setype), str(tetype), rschema
+
     
 class OneHopESchemaVisitor(SchemaVisitor):
     def __init__(self, eschema, skiprels=()):
@@ -113,6 +135,7 @@ class OneHopESchemaVisitor(SchemaVisitor):
         self._nodes = nodes
         self._edges = edges
 
+
 class OneHopRSchemaVisitor(SchemaVisitor):
     def __init__(self, rschema, skiprels=()):
         super(OneHopRSchemaVisitor, self).__init__(skipmeta=False)
@@ -132,7 +155,7 @@ class OneHopRSchemaVisitor(SchemaVisitor):
 
 def schema2dot(schema=None, outputfile=None, skipentities=(),
                skiprels=(), skipmeta=True, visitor=None,
-               prophdlr=None):
+               prophdlr=None, size=None):
     """write to the output stream a dot graph representing the given schema"""
     visitor = visitor or FullSchemaVisitor(schema, skipentities,
                                            skiprels, skipmeta)
@@ -142,78 +165,13 @@ def schema2dot(schema=None, outputfile=None, skipentities=(),
     else:
         schemaname = 'Schema'
     generator = GraphGenerator(DotBackend(schemaname, 'BT',
-                                          ratio='compress', size='12,30'))
+                                          ratio='compress', size=size))
     return generator.generate(visitor, prophdlr, outputfile)
-
-
-# XXX deprecated ##############################################################
-
-class SchemaVisitor(SchemaDotPropsHandler):
-    """used to dump a dot graph from a Schema instance
-    
-    NOTE: this is not a Visitor DP
-    Would be nice to provide control on node/edges properties
-    """
-    def __init__(self, generator=None):
-        self.generator = generator or DotBackend('Schema',  'BT',
-                                                 ratio='compress', size='12,30')
-        self._processed = set()
-        self._eindex = None
-        
-    get_props_for_eschema = SchemaDotPropsHandler.node_properties
-    get_props_for_rschema = SchemaDotPropsHandler.edge_properties
-
-    def visit(self, schema, skipped_entities=(), skipped_relations=()):
-        """browse schema nodes and generate dot instructions"""
-        entities = [eschema for eschema in schema.entities()
-                    if not (eschema.is_final() or eschema.type in skipped_entities)]
-        self._eindex = dict([(e.type, e) for e in entities])
-        for eschema in entities:
-            self.visit_entity_schema(eschema)
-        for rschema in schema.relations():
-            if rschema.is_final() or rschema.type in skipped_relations:
-                continue
-            self.visit_relation_schema(rschema)
-
-    def visit_entity_schema(self, eschema, hop=0):
-        """dumps a entity node in the graph
-
-        :param eschema: the entity's schema
-        :type eschema: EntitySchema
-        
-        :param skipped_entities: a list of entities that shouldn't be displayed
-        :param skipped_relations: a list of relations that shouldn't be
-                                  displayed
-        """
-        etype = eschema.type
-        if etype in self._processed:
-            return
-        self._processed.add(etype)
-        nodeprops = self.get_props_for_eschema(eschema)
-        self.generator.emit_node(str(etype), **nodeprops)
-
-    def visit_relation_schema(self, rschema, comingfrom=None):
-        """visit relations separately to handle easily symetric relations"""
-        rtype = rschema.type
-        if rtype in self._processed:
-            return
-        self._processed.add(rtype)
-        if comingfrom:
-            etype, target = comingfrom
-        for subjtype, objtypes in rschema.associations():
-            if self._eindex and not subjtype in self._eindex:
-                continue
-            for objtype in objtypes:
-                if self._eindex and not objtype in self._eindex:
-                    continue
-                edgeprops = self.get_props_for_rschema(rschema)
-                self.generator.emit_edge(str(subjtype), str(objtype), **edgeprops)
-
-
 
 
 def run():
     """main routine when schema2dot is used as a script"""
+    from yams.reader import SchemaLoader
     class DefaultHandler:
         """we need to handle constraints while loading schema"""
         def __getattr__(self, dummy):
