@@ -441,7 +441,7 @@ class EntitySchema(ERSchema):
                                  (rtype, self))
         return constraint.vocabulary()
     
-    def check(self, entity, creation=False):
+    def check(self, entity, creation=False, _=unicode):
         """check the entity and raises an ValidationError exception if it
         contains some invalid fields (ie some constraints failed)
         """
@@ -471,13 +471,12 @@ class EntitySchema(ERSchema):
                     errors[rschema] = _('required attribute')
                 continue
             if not aschema.check_value(value):
-                errors[rschema] = _('incorrect value %r for type %s') % (value,
-                                                                         aschema)
+                errors[rschema] = _('incorrect value for type %s') % _(aschema.type)
                 continue
             # check arbitrary constraints
             for constraint in rschema.rproperty(self, aschema, 'constraints'):
                 if not constraint.check(entity, rschema, value):
-                    errors[rschema] = '%s constraint failed on %r' % (constraint, value)
+                    errors[rschema] = _('%s constraint failed') % constraint
         if errors:
             raise ValidationError(entity, errors)
 
