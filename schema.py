@@ -471,7 +471,7 @@ class EntitySchema(ERSchema):
                     errors[rschema.type] = _('required attribute')
                 continue
             if not aschema.check_value(value):
-                errors[rschema.type] = _('incorrect value for type %s') % _(aschema.type)
+                errors[rschema.type] = _('incorrect value for type "%s"') % _(aschema.type)
                 continue
             # check arbitrary constraints
             for constraint in rschema.rproperty(self, aschema, 'constraints'):
