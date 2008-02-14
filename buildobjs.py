@@ -40,14 +40,17 @@ def add_constraint(kwargs, constraint):
             return
     constraints.append(constraint)
         
-def add_relation(relations, rdef, name=None):
+def add_relation(relations, rdef, name=None, insertidx=None):
     if isinstance(rdef, BothWayRelation):
-        add_relation(relations, rdef.subjectrel, name)
-        add_relation(relations, rdef.objectrel, name)
+        add_relation(relations, rdef.subjectrel, name, insertidx)
+        add_relation(relations, rdef.objectrel, name, insertidx)
     else:
         if name is not None:
             rdef.name = name
-        relations.append(rdef)
+        if insertidx is None:
+            relations.append(rdef)
+        else:
+            relations.insert(insertidx, rdef)
 
 def check_kwargs(kwargs, attributes):
     for key in kwargs:
@@ -199,11 +202,22 @@ class EntityType(Definition):
         self._ensure_relation_type(rdef)
         add_relation(self.relations, rdef, name)
             
+    def insert_relation_after(self, afterrelname, name, rdef):
+        rdef.name = name
+        self._ensure_relation_type(rdef)
+        for i, rel in enumerate(self.relations):
+            if rel.name == afterrelname:
+                break
+        else:
+            raise BadSchemaDefinition("can't find %s relation on %s" % (
+                afterrelname, self))
+        add_relation(self.relations, rdef, name, i)
+            
     def remove_relation(self, name):
-        for rdef in self._get_relations(name):
+        for rdef in self.get_relations(name):
             self.relations.remove(rdef)
             
-    def _get_relations(self, name):
+    def get_relations(self, name):
         """get relation definitions by name (may have multiple definitions with
         the same name if the relation is both a subject and object relation)
         """
