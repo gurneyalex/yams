@@ -1,10 +1,14 @@
 ChangeLog for yams 
 ------------------
 
-  --
+2008-02-15  --  0.16.0
     * nicer schema image view
+    * more methods to alter existing schema definition
+    * store string instead of schema types in the errors dict to be able to
+      serialize them
+    * eschema.check() now take an optional translation function as argument
 	
-2008-02-05 -- 0.15.0
+2008-02-05  --  0.15.0
     * heavy refactoring of the schema building process
     * rename rproperty_keys to iter_rdef, new has_rdef method
     * use dbhelper to generate index sql
