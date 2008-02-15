@@ -6,7 +6,7 @@ Uploaders: Sylvain Thenault <sylvain.thenault@logilab.fr>, Alexandre Fayolle <af
 Build-Depends: debhelper (>= 5.0.37.2), python (>=2.3.5-7), python-central (>=0.5)
 XS-Python-Version: current
 Homepage: http://www.logilab.org/project/yams
-Standards-Version: 3.7.2
+Standards-Version: 3.7.3
 
 Package: python-yams
 Architecture: all
