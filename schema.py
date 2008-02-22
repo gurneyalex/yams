@@ -16,8 +16,8 @@ from logilab.common.interface import implements
 from logilab.common.deprecation import deprecated_function
 
 from yams import BASE_TYPES, MARKER, ValidationError, BadSchemaDefinition
-from yams.interfaces import ISchema, IRelationSchema, IEntitySchema, \
-     IVocabularyConstraint
+from yams.interfaces import (ISchema, IRelationSchema, IEntitySchema, 
+                             IVocabularyConstraint)
 from yams.constraints import BASE_CHECKERS, UniqueConstraint
 
 KEYWORD_MAP = {'NOW' : now,
@@ -25,7 +25,7 @@ KEYWORD_MAP = {'NOW' : now,
                }
 
 DATE_FACTORY_MAP = {
-    'DateTime' : DateTimeFrom,
+    'Datetime' : DateTimeFrom,
     'Date' : DateFrom,
     'Time' : TimeFrom,
     }
