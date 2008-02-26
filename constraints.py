@@ -289,3 +289,9 @@ BASE_CHECKERS = {
     'Password' : check_password,
     'Bytes' :    check_file,
     }
+
+BASE_CONVERTERS = {
+    'Int' :      int,
+    'Float' :    float,
+    'Boolean' :  bool,
+    }

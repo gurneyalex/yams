@@ -18,7 +18,7 @@ from logilab.common.deprecation import deprecated_function
 from yams import BASE_TYPES, MARKER, ValidationError, BadSchemaDefinition
 from yams.interfaces import (ISchema, IRelationSchema, IEntitySchema, 
                              IVocabularyConstraint)
-from yams.constraints import BASE_CHECKERS, UniqueConstraint
+from yams.constraints import BASE_CHECKERS, BASE_CONVERTERS, UniqueConstraint
 
 KEYWORD_MAP = {'NOW' : now,
                'TODAY': today,
@@ -183,7 +183,7 @@ class EntitySchema(ERSchema):
     
     ACTIONS = ('read', 'add', 'update', 'delete')
     field_checkers = BASE_CHECKERS
-    
+    field_converters = BASE_CONVERTERS
     def __init__(self, schema=None, rdef=None, *args, **kwargs):
         super(EntitySchema, self).__init__(schema, rdef, *args, **kwargs)
         if rdef is not None:
@@ -473,6 +473,8 @@ class EntitySchema(ERSchema):
             if not aschema.check_value(value):
                 errors[rschema.type] = _('incorrect value for type "%s"') % _(aschema.type)
                 continue
+            # ensure value has the correct python type
+            value = aschema.convert_value(value)
             # check arbitrary constraints
             for constraint in rschema.rproperty(self, aschema, 'constraints'):
                 if not constraint.check(entity, rschema, value):
@@ -484,6 +486,14 @@ class EntitySchema(ERSchema):
         """check the value of a final entity (ie a const value)"""
         assert self.is_final()
         return self.field_checkers[self](self, value)
+
+    def convert_value(self, value):
+        """check the value of a final entity (ie a const value)"""
+        assert self.is_final()
+        try:
+            return self.field_converters[self](value)
+        except KeyError:
+            return value
     
     # bw compat
     subject_relation_schema = subject_relation
