@@ -1,6 +1,10 @@
 ChangeLog for yams 
 ------------------
 
+--
+    * fix a bug in entity validation : should convert value to the correct
+      python type before checking constraints
+	
 2008-02-15  --  0.16.0
     * nicer schema image view
     * more methods to alter existing schema definition
