@@ -945,7 +945,10 @@ class Schema(object):
         :rtype: `EntitySchema`
         :raise `KeyError`: if the type is not defined as an entity
         """
-        return self._entities[etype]
+        try:
+            return self._entities[etype]
+        except KeyError:
+            raise KeyError('No entity named %s in schema' % etype)
     
     def relations(self):
         """return the list of possible relation'types
@@ -972,7 +975,10 @@ class Schema(object):
         
         :rtype: `RelationSchema`
         """
-        return self._relations[rtype]
+        try:
+            return self._relations[rtype]
+        except KeyError:
+            raise KeyError('No relation named %s in schema'%rtype)
         
     def final_relations(self):
         """return the list of possible final relation'types
