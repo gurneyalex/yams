@@ -52,6 +52,11 @@ CREATE TABLE Division(
  name text
 );
 
+CREATE TABLE EPermission(
+ name varchar(100) NOT NULL
+);
+CREATE INDEX epermission_name_idx ON EPermission(name);
+
 CREATE TABLE Eetype(
  name varchar(64) UNIQUE NOT NULL,
  description text,
@@ -157,6 +162,15 @@ CREATE TABLE obj_wildcard_relation (
 
 CREATE INDEX obj_wildcard_relation_from_idx ON obj_wildcard_relation(eid_from);
 CREATE INDEX obj_wildcard_relation_to_idx ON obj_wildcard_relation(eid_to);
+
+CREATE TABLE require_permission_relation (
+  eid_from INTEGER NOT NULL,
+  eid_to INTEGER NOT NULL,
+  CONSTRAINT require_permission_relation_p_key PRIMARY KEY(eid_from, eid_to)
+);
+
+CREATE INDEX require_permission_relation_from_idx ON require_permission_relation(eid_from);
+CREATE INDEX require_permission_relation_to_idx ON require_permission_relation(eid_to);
 
 CREATE TABLE state_of_relation (
   eid_from INTEGER NOT NULL,

@@ -54,7 +54,7 @@ class SchemaLoaderTC(TestCase):
         self.assertEquals(schema.name, 'Test')
         self.assertListEquals(sorted(schema.entities()),
                               ['Affaire', 'Boolean', 'Bytes', 'Company', 'Date', 'Datetest', 'Datetime',
-                               'Division', 'Eetype',  'Employee', 'Float', 'Int', 'Interval',
+                               'Division', 'EPermission', 'Eetype',  'Employee', 'Float', 'Int', 'Interval',
                                'Note', 'Password', 'Person', 'Societe', 'State', 'String', 'Time',
                                'pkginfo'])
         self.assertListEquals(sorted(schema.relations()),
@@ -67,7 +67,7 @@ class SchemaLoaderTC(TestCase):
                                'mailinglist', 'meta', 'modname',
                                'name', 'next_state', 'nom', 'obj_wildcard',
                                'para', 'prenom', 'promo', 'pyversions',
-                               'ref', 'rncs',
+                               'ref', 'require_permission', 'rncs',
                                'salary', 'sexe', 'short_desc', 'state_of', 'subj_wildcard', 'sujet', 'sym_rel',
                                't1', 't2', 'tel', 'test', 'titre', 'travaille', 'type',
                                'version', 
@@ -178,7 +178,7 @@ class SchemaLoaderTC(TestCase):
         self.assertEquals(rschema.description, '')
         self.assertEquals(rschema.meta, False)
         self.assertEquals(rschema.is_final(), True)
-        self.assertListEquals(sorted(rschema.subjects()), ['Company', 'Division', 'Eetype', 'State'])
+        self.assertListEquals(sorted(rschema.subjects()), ['Company', 'Division', 'EPermission', 'Eetype', 'State'])
         self.assertListEquals(sorted(rschema.objects()), ['String'])
 
     def test_cardinality(self):
@@ -249,6 +249,11 @@ class SchemaLoaderTC(TestCase):
         self.assertEquals(rschema._groups, {'read': ('managers', 'users', 'guests'),
                                             'add': ('managers', 'users', 'guests'),
                                             'delete': ('managers', 'users', 'guests')})
+        
+        rschema = schema.rschema('require_permission')
+        self.assertEquals(rschema._groups, {'read': ('managers', 'users', 'guests'),
+                                            'add': ('managers', ),
+                                            'delete': ('managers',)})
         
     def test_entity_permissions(self):
         eschema = schema.eschema('State')
