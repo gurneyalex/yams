@@ -125,6 +125,23 @@ class SchemaLoaderTC(TestCase):
         self.assert_(not eschema.rproperty('sexe', 'fulltextindexed'))
         indexable = sorted(eschema.indexable_attributes())
         self.assertEquals(['nom', 'prenom', 'titre'], indexable)
+        self.assertEquals(schema.rschema('works_for').fulltext_container, None)
+        self.assertEquals(schema.rschema('require_permission').fulltext_container,
+                          'subject')
+        eschema = schema.eschema('Company')
+        indexable = sorted(eschema.indexable_attributes())
+        self.assertEquals([], indexable)
+        indexable = sorted(eschema.fulltext_relations())
+        self.assertEquals([('require_permission', 'subject')], indexable)
+        containers = sorted(eschema.fulltext_containers())
+        self.assertEquals([], containers)
+        eschema = schema.eschema('EPermission')
+        indexable = sorted(eschema.indexable_attributes())
+        self.assertEquals(['name'], indexable)
+        indexable = sorted(eschema.fulltext_relations())
+        self.assertEquals([], indexable)
+        containers = sorted(eschema.fulltext_containers())
+        self.assertEquals([('require_permission', 'subject')], containers)
         
     def test_internationalizable(self):
         eschema = schema.eschema('Eetype')

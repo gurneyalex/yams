@@ -356,24 +356,42 @@ class EntitySchema(ERSchema):
         for rschema in self.object_relations():
             yield rschema, rschema.subjects(self), 'object'
             
-    
     def main_attribute(self):
         """convenience method that returns the *main* (i.e. the first non meta)
         attribute defined in the entity schema
         """
         for rschema, _ in self.attribute_definitions():
             if not rschema.meta:
-                # XXX return rschema.type for bw compat ?
                 return rschema
     
     def indexable_attributes(self):
-        """return the name of relations to index"""
+        """return the (name, role) of relations to index"""
         assert not self.is_final()
         for rschema in self.subject_relations():
             if rschema.is_final():
                 if self.rproperty(rschema, 'fulltextindexed'):
-                    # XXX return rschema.type for bw compat ?
                     yield rschema
+                
+    def fulltext_relations(self):
+        """return the (name, role) of relations to index"""
+        assert not self.is_final()
+        for rschema in self.subject_relations():
+            if not rschema.is_final() and  rschema.fulltext_container == 'subject':
+                yield rschema, 'subject'
+        for rschema in self.object_relations():
+            if rschema.fulltext_container == 'object':
+                yield rschema, 'object'
+    
+    def fulltext_containers(self):
+        """return relations whose extremity points to an entity that should
+        contains the full text index content of entities of this type
+        """
+        for rschema in self.subject_relations():
+            if rschema.fulltext_container == 'object':
+                yield rschema, 'object'
+        for rschema in self.object_relations():
+            if rschema.fulltext_container == 'subject':
+                yield rschema, 'subject'
     
     def defaults(self):
         """return an iterator on (attribute name, default value)"""
@@ -382,7 +400,6 @@ class EntitySchema(ERSchema):
             if rschema.is_final():
                 value = self.default(rschema)
                 if value is not None:
-                    # XXX return rschema.type for bw compat ?
                     yield rschema, value   
         
     def default(self, rtype):
@@ -531,6 +548,9 @@ class RelationSchema(ERSchema):
             # if this relation is symetric/inlined
             self.symetric = rdef.symetric or False
             self.inlined = rdef.inlined or False
+            # if full text content of subject/object entity should be added
+            # to other side entity (the container)
+            self.fulltext_container = rdef.fulltext_container or None
             # if this relation is an attribute relation
             self.final = False
             # mapping to subject/object with schema as key
@@ -685,7 +705,7 @@ class RelationSchema(ERSchema):
             raise KeyError('%s %s %s' % (subject, self, object))
         
     def rproperty(self, subject, object, property):
-        """return the properties dictionary of a relation"""
+        """return the property for a relation definition"""
         return self.rproperties(subject, object).get(property)
 
     def set_rproperty(self, subject, object, pname, value):
@@ -696,7 +716,7 @@ class RelationSchema(ERSchema):
     def init_rproperties(self, subject, object, rdef):
         key = subject, object
         if key in self._rproperties:
-            msg = '%s already defined for %s' % (key, self)
+            msg = '(%s, %s) already defined for %s' % (subject, object, self)
             raise BadSchemaDefinition(msg)
         self._rproperties[key] = {}
         for prop, default in self.rproperty_defs(key[1]).iteritems():
