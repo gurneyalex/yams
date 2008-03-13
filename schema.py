@@ -877,12 +877,12 @@ class Schema(object):
         try:
             subjectschema = self.eschema(rdef.subject)
         except KeyError, ex:
-            msg = 'using unknown type %s in relation %s' % (str(ex), rtype)
+            msg = 'using unknown type %r in relation %s' % (rdef.subject, rtype)
             raise BadSchemaDefinition(msg)
         try:
             objectschema = self.eschema(rdef.object)
         except KeyError, ex:
-            msg = "using unknown type %s in relation %s" % (str(ex), rtype)
+            msg = "using unknown type %r in relation %s" % (rdef.object, rtype)
             raise BadSchemaDefinition(msg)
         rschema.update(subjectschema, objectschema, rdef)
 
