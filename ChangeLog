@@ -4,6 +4,9 @@ ChangeLog for yams
 --
     * fix a bug in entity validation : should convert value to the correct
       python type before checking constraints
+    * support for entities whose fulltext content should be indexed on a related
+      entity, using new fulltext_container attribute on RelationSchema instance
+      and new fulltext_relations and fulltext_containers methods on EntitySchema
 	
 2008-02-15  --  0.16.0
     * nicer schema image view

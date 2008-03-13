@@ -24,7 +24,7 @@ __all__ = ('ObjectRelation', 'SubjectRelation', 'BothWayRelation',
 
 ETYPE_PROPERTIES = ('meta', 'description', 'permissions')
 # don't put description inside, handled "manually"
-RTYPE_PROPERTIES = ('meta', 'symetric', 'inlined', 'permissions')
+RTYPE_PROPERTIES = ('meta', 'symetric', 'inlined', 'fulltext_container', 'permissions')
 RDEF_PROPERTIES = ('cardinality', 'constraints', 'composite',
                    'order',  'default', 'uid', 'indexed', 'uid', 
                    'fulltextindexed', 'internationalizable')
@@ -229,6 +229,7 @@ class EntityType(Definition):
 class RelationType(Definition):
     symetric = MARKER
     inlined = MARKER
+    fulltext_container = MARKER
     
     def __init__(self, name=None, **kwargs):
         super(RelationType, self).__init__(name)
