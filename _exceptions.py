@@ -9,16 +9,20 @@ __docformat__ = "restructuredtext en"
 
 class SchemaError(Exception):
     """base class for schema exceptions"""
+    def __str__(self):
+        return unicode(self).encode('utf8')
     
 class UnknownType(SchemaError):
     """using an unknown entity type"""
     msg = 'Unknown type %s'
+    def __unicode__(self):
+        return self.msg % self.args
 
 class BadSchemaDefinition(SchemaError):
     """error in the schema definition"""
     msg = '%s line %s: %s'
     args = ()
-    def __str__(self):
+    def __unicode__(self):
         if len(self.args) == 3:
             return self.msg % self.args
         return ' '.join(self.args)
@@ -40,5 +44,9 @@ class ValidationError(SchemaError):
         self.entity = entity
         self.errors = explanation
         
-    def __str__(self):
-        return '\n'.join('%s: %s' % (k, v) for k, v in self.errors.items())
+    def __unicode__(self):
+        if len(self.errors) == 1:
+            attr, error = self.errors.items()[0]
+            return u'%s (%s): %s' % (self.entity, attr, error)
+        errors = '\n'.join('* %s: %s' % (k, v) for k, v in self.errors.items())
+        return u'%s:\n%s' % (self.entity, errors)
