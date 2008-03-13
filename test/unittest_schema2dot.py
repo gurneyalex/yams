@@ -1,5 +1,7 @@
 """unittests for schema2dot"""
 
+import os
+
 from logilab.common.testlib import TestCase, unittest_main
 from logilab.common.compat import set
 
@@ -23,25 +25,16 @@ class DummyDefaultHandler:
 
 schema = SchemaLoader().load([DATADIR], default_handler=DummyDefaultHandler())
 
-DOT_SOURCE = """digraph "Schema" {
+DOT_SOURCE = """digraph "toto" {
 rankdir=BT
 ratio=compress
-size="12,30"
 charset="utf-8"
-"Person" [label="Person"];
-"Societe" [label="Societe"];
-edge [label="travaille"];
+"Person" [shape="box", fontname="Courier", style="filled", label="Person"];
+"Societe" [shape="box", fontname="Courier", style="filled", label="Societe"];
+edge [taillabel="0..n", style="filled", arrowhead="open", color="black", label="travaille", headlabel="0..n", arrowtail="none"];
 "Person" -> "Societe"
 }"""
 
-
-class MyVisitor(schema2dot.SchemaVisitor):
-    """customize drawing options for better control"""
-    def get_props_for_eschema(self, eschema):
-        return {'label' : eschema.type}
-
-    def get_props_for_rschema(self, rschema):
-        return {'label' : rschema.type}
 
 class DotTC(TestCase):
     
@@ -49,9 +42,10 @@ class DotTC(TestCase):
         """tests dot conversion without attributes information"""
         wanted_entities = set(('Person', 'Societe'))
         skipped_entities = set(schema.entities()) - wanted_entities
-        visitor = MyVisitor()
-        visitor.visit(schema, skipped_entities=skipped_entities)
-        self.assertTextEquals(DOT_SOURCE, visitor.generator.source)
+        schema2dot.schema2dot(schema, '/tmp/toto.dot', skipentities=skipped_entities)
+        generated = open('/tmp/toto.dot').read()
+        os.remove('/tmp/toto.dot')
+        self.assertTextEquals(DOT_SOURCE, generated)
         
 if __name__ == '__main__':
     unittest_main()
