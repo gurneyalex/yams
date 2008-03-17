@@ -7,6 +7,8 @@ ChangeLog for yams
     * support for entities whose fulltext content should be indexed on a related
       entity, using new fulltext_container attribute on RelationSchema instance
       and new fulltext_relations and fulltext_containers methods on EntitySchema
+    * backported subjrproperty/objrproperty ESchema methods
+    * new has_[subject|object]_relation methods on ESchema
 	
 2008-02-15  --  0.16.0
     * nicer schema image view

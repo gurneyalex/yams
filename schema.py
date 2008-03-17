@@ -253,6 +253,11 @@ class EntitySchema(ERSchema):
         """
         return self.type in BASE_TYPES
 
+    def subjrproperty(self, rschema, prop):
+        return rschema.rproperty(self.type, rschema.objects(self.type)[0], prop)
+    def objrproperty(self, rschema, prop):
+        return rschema.rproperty(rschema.subjects(self.type)[0], self.type, prop)
+
     def is_subobject(self):
         """return True if this entity type is contained by another"""
         for rschema in self.object_relations():
@@ -277,11 +282,20 @@ class EntitySchema(ERSchema):
         """
         return self._subj_relations.values()
     
+    def has_subject_relation(self, rtype):
+        """return True if this entity type as a `rtype` subject relation"""
+        return rtype in self._subj_relations
+    
     def object_relations(self):
         """return a list of relations that may have this type of entity as
         object
         """
         return self._obj_relations.values()
+    
+    def has_object_relation(self, rtype):
+        """return True if this entity type as a `rtype` object relation"""
+        return rtype in self._obj_relations
+    
 
     def subject_relation(self, rtype):
         """return the relation schema for the rtype subject relation
