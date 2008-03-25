@@ -1,7 +1,7 @@
 ChangeLog for yams 
 ------------------
 
---
+2008-03-05 --  0.16.1
     * fix a bug in entity validation : should convert value to the correct
       python type before checking constraints
     * support for entities whose fulltext content should be indexed on a related
