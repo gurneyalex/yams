@@ -59,5 +59,4 @@ class FileReader(object):
 
 from yams._exceptions import *
 from yams.schema import Schema, EntitySchema, RelationSchema
-from yams.reader import SchemaLoader
 
