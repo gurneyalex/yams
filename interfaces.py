@@ -49,14 +49,14 @@ class IRelationSchema(Interface):#(IRQLRelationSchema):
     """A relation is a named ordered link between two entities.
     A relation schema defines the possible types of both extremities.
     """
-    def association_types(self, schema=None):
+    def associations(self, schema=None):
         """return a list of (subject_type, [object_types]) defining between
         which types this relation may exists
         
         If schema is not None, return a list of schemas instead of type.
         """
         
-    def subject_types(self, e_type=None, schema=None):
+    def subjects(self, etype=None):
         """return a list of types which can be subject of this relation
         
         If e_type is not None, return a list of types which can be subject of
@@ -66,7 +66,7 @@ class IRelationSchema(Interface):#(IRQLRelationSchema):
         """
         
         
-    def object_types(self, e_type=None, schema=None):
+    def objects(self, etype=None):
         """return a list of types which can be object of this relation.
         
         If e_type is not None, return a list of types which can be object of
@@ -84,7 +84,7 @@ class IEntitySchema(Interface):#(IRQLEntitySchema):
     Attributes are defined with relations pointing to a 'final' entity
     """
      
-    def subject_relations(self, schema=True):
+    def subject_relations(self):
         """return a list of relations that may have this type of entity as
         subject
         
@@ -92,7 +92,7 @@ class IEntitySchema(Interface):#(IRQLEntitySchema):
         types.
         """
     
-    def object_relations(self, schema=True):
+    def object_relations(self):
         """return a list of relations that may have this type of entity as
         object
         
