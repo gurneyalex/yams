@@ -211,7 +211,7 @@ class EntityType(Definition):
         else:
             raise BadSchemaDefinition("can't find %s relation on %s" % (
                 afterrelname, self))
-        add_relation(self.relations, rdef, name, i)
+        add_relation(self.relations, rdef, name, i+1)
             
     def remove_relation(self, name):
         for rdef in self.get_relations(name):
