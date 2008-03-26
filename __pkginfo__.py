@@ -21,8 +21,8 @@
 modname = 'yams'
 
 # release version
-numversion = (0, 16, 1)
-version = '.'.join([str(num) for num in numversion])
+numversion = (0, 17, 0)
+version = '.'.join(str(num) for num in numversion)
 
 # license and copyright
 license = 'GPL'
@@ -42,7 +42,7 @@ author = "Logilab"
 author_email = "devel@logilab.fr"
 
 # home page
-web = "http://www.logilab.org/projects/%s" % modname
+web = "http://www.logilab.org/project/%s" % modname
 
 # mailing list
 mailinglist = 'mailto://python-projects@lists.logilab.org' 
