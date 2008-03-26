@@ -1,14 +1,14 @@
 ChangeLog for yams 
 ------------------
 
- --
+2008-03-26  --  0.17.0
     * support for entities whose fulltext content should be indexed on a related
       entity, using new fulltext_container attribute on RelationSchema instance
       and new fulltext_relations and fulltext_containers methods on EntitySchema
     * backported subjrproperty/objrproperty ESchema methods
     * new has_[subject|object]_relation methods on ESchema
 
-2008-03-05 --  0.16.1
+2008-03-05  --  0.16.1
     * fix a bug in entity validation : should convert value to the correct
       python type before checking constraints
 	
