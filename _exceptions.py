@@ -40,7 +40,8 @@ class ValidationError(SchemaError):
     """
 
     def __init__(self, entity, explanation):
-        # pylint: disable-msg=W0231
+        # set args so ValidationError are serializable through pyro
+        SchemaError.__init__(self, entity, explanation)
         self.entity = entity
         self.errors = explanation
         
