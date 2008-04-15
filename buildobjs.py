@@ -154,7 +154,7 @@ class EntityType(Definition):
 
         register definition objects by adding them to the `defined` dictionnary
         """
-        assert not self.name in defined
+        assert not self.name in defined, "'%s' is an already defined type" % self.name
         self._defined = defined # XXX may be used later (eg .add_relation())
         defined[self.name] = self
         for relation in self.relations:
