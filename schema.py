@@ -502,7 +502,7 @@ class EntitySchema(ERSchema):
                     errors[rschema.type] = _('required attribute')
                 continue
             if not aschema.check_value(value):
-                errors[rschema.type] = _('incorrect value (%s) for type "%s"') % (repr(value), _(aschema.type))
+                errors[rschema.type] = _('incorrect value (%r) for type "%s"') % (value, _(aschema.type))
                 continue
             # ensure value has the correct python type
             value = aschema.convert_value(value)
