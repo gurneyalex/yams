@@ -509,7 +509,7 @@ class EntitySchema(ERSchema):
             # check arbitrary constraints
             for constraint in rschema.rproperty(self, aschema, 'constraints'):
                 if not constraint.check(entity, rschema, value):
-                    errors[rschema.type] = _('%s constraint failed') % constraint
+                    errors[rschema.type] = _('%s constraint failed for value %r') % (constraint, value)
         if errors:
             raise ValidationError(entity, errors)
 
