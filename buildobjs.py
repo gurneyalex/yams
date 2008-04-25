@@ -55,7 +55,7 @@ def add_relation(relations, rdef, name=None, insertidx=None):
 def check_kwargs(kwargs, attributes):
     for key in kwargs:
         if not key in attributes: 
-            raise BadSchemaDefinition('no such property %r' % key)
+            raise BadSchemaDefinition('no such property %r in %r' % (key, attributes))
     
 def copy_attributes(fromobj, toobj, attributes):
     for attr in attributes:
@@ -435,7 +435,12 @@ class ObjectRelation(Relation):
         self.etype = etype
         if self.constraints:
             self.constraints = list(self.constraints)
-        check_kwargs(kwargs, REL_PROPERTIES)
+        try:
+            check_kwargs(kwargs, REL_PROPERTIES)
+        except BadSchemaDefinition, bad:
+            # XXX (auc) bad field name + required attribute can lead there instead of schema.py ~ 920
+            raise BadSchemaDefinition(('%s in relation to entity %r (also is %r defined ? (check two '
+                                       'lines above in the backtrace))') % (bad.args, etype, etype))
         copy_attributes(attrdict(kwargs), self, REL_PROPERTIES)
     
     def __repr__(self):
