@@ -503,7 +503,7 @@ class EntitySchema(ERSchema):
                 continue
             if not aschema.check_value(value):
                 errors[rschema.type] = _('incorrect value (%r) for type "%s"') % (value, _(aschema.type))
-                if isinstance(value, str) and not isinstance(value, unicode):
+                if isinstance(value, str):
                     errors[rschema.type] = '%s; you might want to try unicode'  % errors[rschema.type]
                 continue
             # ensure value has the correct python type
