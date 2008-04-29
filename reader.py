@@ -13,12 +13,20 @@ from os.path import exists, join, splitext
 from os import listdir
 
 from logilab.common import attrdict
-from logilab.common.fileutils import lines
 from logilab.common.textutils import get_csv
 
 from yams import UnknownType, BadSchemaDefinition, FileReader
 from yams import constraints, schema as schemamod
 from yams import buildobjs
+
+
+def lines(path, comments=None):
+    result = []
+    for line in open(path, 'U'):
+        line = line.strip()
+        if line and (comments is None or not line.startswith(comments)):
+            result.append(line)
+    return result
 
 # .rel and .py formats file readers ###########################################
         
