@@ -7,13 +7,19 @@ import os.path as osp
 import new
 from mx.DateTime import today
 
-from yams.gae import GaeSchemaLoader
+try:
+    from yams.gae import GaeSchemaLoader
+except ImportError:
+    GaeSchemaLoader = None
+
 from yams.schema import Schema
 from yams.constraints import SizeConstraint, StaticVocabularyConstraint
 
 class DbModelTC(TestCase):
 
     def setUp(self):
+        if GaeSchemaLoader is None:
+            self.skip('could not import appengine')
         self.loader = GaeSchemaLoader()
     
     def import_module(self, modname):
