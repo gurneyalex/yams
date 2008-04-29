@@ -94,7 +94,7 @@ class GaeSchemaLoader(SchemaLoader):
         for obj in vars(pymod).values():
             if isinstance(obj, type) and issubclass(obj, db.Model):
                 self._load_entity_type(obj)
-        return self._build_schema('google-appengine')
+        return self._build_schema('google-appengine', False)
 
     def _load_entity_type(self, dbmodel):
         clsdict = {}
