@@ -72,6 +72,8 @@ def format_properties(props):
 
 class ERSchema(object):
     """common base class to entity and relation schema"""
+
+    ACTIONS = ()
     
     def __init__(self, schema=None, erdef=None):
         if erdef is None:
@@ -111,8 +113,6 @@ class ERSchema(object):
     def __str__(self):
         return self.type
     
-    ACTIONS = ()
-
     def set_groups(self, action, groups):
         """set the groups allowed to perform <action> on entities of this type
         
@@ -122,8 +122,8 @@ class ERSchema(object):
         :type groups: tuple
         :param groups: the groups with the given permission
         """
-        assert type(groups) is tuple
-        assert action in self.ACTIONS, action
+        assert type(groups) is tuple, ('groups is expected to be a tuple not %s' % type(groups))
+        assert action in self.ACTIONS, ('%s not in %s' % (action, self.ACTIONS))
         self._groups[action] = groups
     
     def get_groups(self, action):
@@ -136,8 +136,7 @@ class ERSchema(object):
         :rtype: tuple
         :return: the groups with the given permission
         """
-        assert action in self.ACTIONS, action
-        #assert action in self._groups, '%s %s' % (self, action)
+        assert action in self.ACTIONS, ('%s not in %s' % (action, self.ACTIONS))
         try:
             return self._groups[action]
         except KeyError:
@@ -153,7 +152,7 @@ class ERSchema(object):
         :rtype: bool
         :return: flag indicating whether the group has the permission
         """
-        assert action in self.ACTIONS, action
+        assert action in self.ACTIONS, ('%s not in %s' % (action, self.ACTIONS))
         return group in self._groups[action]
 
     def has_access(self, user, action):
@@ -184,6 +183,7 @@ class EntitySchema(ERSchema):
     ACTIONS = ('read', 'add', 'update', 'delete')
     field_checkers = BASE_CHECKERS
     field_converters = BASE_CONVERTERS
+
     def __init__(self, schema=None, rdef=None, *args, **kwargs):
         super(EntitySchema, self).__init__(schema, rdef, *args, **kwargs)
         if rdef is not None:
