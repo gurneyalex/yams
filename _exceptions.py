@@ -21,7 +21,6 @@ class UnknownType(SchemaError):
 class BadSchemaDefinition(SchemaError):
     """error in the schema definition"""
     msg = '%s line %s: %s'
-    args = ()
     def __unicode__(self):
         if len(self.args) == 3:
             return self.msg % self.args
@@ -30,7 +29,6 @@ class BadSchemaDefinition(SchemaError):
 class ESQLParseError(Exception):
     """raised when a line is unparsable (end up by a warning)"""
     msg = '%s: unable to parse %s'
-    args = ()
     def __str__(self):
         return self.msg % self.args
 
