@@ -6,7 +6,7 @@ from cStringIO import StringIO
 from logilab.common.testlib import TestCase, unittest_main
 from logilab.common.adbh import get_adv_func_helper
 
-from yams import SchemaLoader
+from yams.reader import SchemaLoader
 from yams.schema2sql import schema2sql
 
 import os.path as osp
