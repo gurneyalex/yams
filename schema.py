@@ -6,6 +6,7 @@
 """
 __docformat__ = "restructuredtext en"
 
+import warnings
 from copy import deepcopy
 
 from mx.DateTime import today, now, DateTimeFrom, DateFrom, TimeFrom
@@ -202,12 +203,18 @@ class EntitySchema(ERSchema):
             
     # schema building methods #################################################
                 
-    def add_subject_relation(self, rschema, rdef):
+    def add_subject_relation(self, rschema, rdef=None):
         """register the relation schema as possible subject relation"""
+        if rdef is not None: # XXXFIXME
+            warnings.warn('rdef argument is deprecated',
+                          DeprecationWarning, stacklevel=2)
         self._subj_relations[rschema] = rschema
         
-    def add_object_relation(self, rschema, rdef):
+    def add_object_relation(self, rschema, rdef=None):
         """register the relation schema as possible object relation"""
+        if rdef is not None: # XXXFIXME
+            warnings.warn('rdef argument is deprecated',
+                          DeprecationWarning, stacklevel=2)
         self._obj_relations[rschema] = rschema
         
     def del_subject_relation(self, rtype):
@@ -623,11 +630,11 @@ class RelationSchema(ERSchema):
         else:
             self.init_rproperties(subjschema, objschema, rdef)
         # update extremities schema
-        subjschema.add_subject_relation(self, rdef)
+        subjschema.add_subject_relation(self)
         if self.symetric:
-            objschema.add_subject_relation(self, rdef)
+            objschema.add_subject_relation(self)
         else:
-            objschema.add_object_relation(self, rdef)
+            objschema.add_object_relation(self)
 
     def _update(self, subjectschema, objectschema):
         objtypes = self._subj_schemas.setdefault(subjectschema, [])
