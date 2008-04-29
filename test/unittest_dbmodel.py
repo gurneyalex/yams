@@ -30,7 +30,7 @@ class DbModelTC(TestCase):
 
     def test_entity_types(self):
         blog = self.import_module('blog')
-        schema = self.loader.load_module(blog)
+        schema = self.loader.load_module(blog, True)
         self.assert_(isinstance(schema, Schema))
         etypes = [eschema.type for eschema in schema.entities()
                   if not eschema.is_final()]
@@ -38,7 +38,7 @@ class DbModelTC(TestCase):
     
     def test_blog_conversion(self):
         blog = self.import_module('blog')
-        schema = self.loader.load_module(blog)
+        schema = self.loader.load_module(blog, True)
         blog = schema.eschema('Blog')
         attrs = [rschema.type for (rschema, _) in
                  blog.attribute_definitions()]
@@ -76,7 +76,7 @@ class DbModelTC(TestCase):
         
     def test_article_conversion(self):
         article = self.import_module('blog')
-        schema = self.loader.load_module(article)
+        schema = self.loader.load_module(article, True)
         article = schema.eschema('Article')
         attrs = [rschema.type for (rschema, _) in
                  article.attribute_definitions()]

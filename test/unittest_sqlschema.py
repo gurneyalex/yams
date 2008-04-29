@@ -14,9 +14,10 @@ import os.path as osp
 DATADIR = osp.abspath(osp.join(osp.dirname(__file__), 'data', 'schema'))
 
 def __getattr__(self, attr):
-    for e in self.relations:
-        if e.name == attr:
-            return e
+    if 'relations' in self.__dict__:
+        for e in self.relations:
+            if e.name == attr:
+                return e
     raise AttributeError(attr)
 EntityType.__getattr__ = __getattr__
 

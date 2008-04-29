@@ -86,7 +86,7 @@ FACTORIES = {
 class GaeSchemaLoader(SchemaLoader):
     """Google appengine schema loader class"""
 
-    def load_module(self, pymod):
+    def load_module(self, pymod, register_base_types=False):
         """return a `yams.schema.Schema` from the gae schema definition
         stored in `pymod`.
         """
@@ -94,7 +94,7 @@ class GaeSchemaLoader(SchemaLoader):
         for obj in vars(pymod).values():
             if isinstance(obj, type) and issubclass(obj, db.Model):
                 self._load_entity_type(obj)
-        return self._build_schema('google-appengine', False)
+        return self._build_schema('google-appengine', register_base_types)
 
     def _load_entity_type(self, dbmodel):
         clsdict = {}
