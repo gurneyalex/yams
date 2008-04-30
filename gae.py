@@ -90,13 +90,16 @@ class GaeSchemaLoader(SchemaLoader):
         """return a `yams.schema.Schema` from the gae schema definition
         stored in `pymod`.
         """
+        self.load_classes(vars(pymod).values(), register_base_types)
+                
+    def load_classes(self, objs, register_base_types=False):
         self.defined = {}
-        for obj in vars(pymod).values():
+        for obj in objs:
             if isinstance(obj, type) and issubclass(obj, db.Model):
-                self._load_entity_type(obj)
+                self.load_dbmodel(obj)
         return self._build_schema('google-appengine', register_base_types)
 
-    def _load_entity_type(self, dbmodel):
+    def load_dbmodel(self, dbmodel):
         clsdict = {}
         ordered_props = sorted(dbmodel.properties().values(),
                                key=lambda x: x.creation_counter)
