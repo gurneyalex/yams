@@ -64,11 +64,16 @@ def date_factory(prop):
     return default_factory(prop, **kwargs)
 
 
-def relation_factory(prop):
-    """called if `prop` is a `db.ReferenceProperty`
-    """
+def relation_factory(prop, multiple=False):
+    """called if `prop` is a `db.ReferenceProperty`"""
     # XXX deal with potential kwargs of ReferenceProperty.__init__()
-    return SubjectRelation(prop.data_type.kind())
+    if multiple:
+        cardinality = '**'
+    elif prop.required:
+        cardinality = '1*'
+    else:
+        cardinality = '?*'
+    return SubjectRelation(prop.data_type.kind(), cardinality=cardinality)
     
     
 FACTORIES = {
@@ -104,19 +109,26 @@ class GaeSchemaLoader(SchemaLoader):
         ordered_props = sorted(dbmodel.properties().values(),
                                key=lambda x: x.creation_counter)
         for prop in ordered_props:
-            try:
-                if isinstance(prop, db.ReferenceProperty):
-                    rdef = relation_factory(prop)
-                else:
-                    rdef = FACTORIES[prop.data_type](prop)
-            except KeyError, exc:
-                print 'ERROR: ignoring property', prop.name, \
-                    ' (keyerror on %s)' % exc
-                continue
+            if isinstance(prop, db.ListProperty):
+                if not issubclass(prop.item_type, db.Model):
+                    self.error('ignoring list property with %s item type'
+                               % prop.item_type)
+                    continue
+                rdef = relation_factory(prop, multiple=True)
+            else:
+                try:
+                    if isinstance(prop, db.ReferenceProperty):
+                        rdef = relation_factory(prop)
+                    else:
+                        rdef = FACTORIES[prop.data_type](prop)
+                except KeyError, exc:
+                    self.error('ignoring property %s (keyerror on %s)'
+                               % (prop.name, exc))
+                    continue
             clsdict[prop.name] = rdef
         edef = metadefinition(dbmodel.kind(), (EntityType,), clsdict)
         self.add_definition(self, edef())
 
 
     def error(self, msg):
-        print msg
+        print 'ERROR:', msg
