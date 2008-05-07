@@ -136,15 +136,13 @@ class GaeSchemaLoader(SchemaLoader):
     def error(self, msg):
         print 'ERROR:', msg
 
+
 # yams -> db.Model ############################################################
 
-
-
-
 Y2DBM_TYPESMAP = {
-    'Int'      : 'IntegerPropery',
+    'Int'      : 'IntegerProperty',
     'Float'    : 'FloatProperty',
-    'Boolean'  : 'BooleanProeperty',
+    'Boolean'  : 'BooleanProperty',
     'Datetime' : 'DateTimeProperty',
     'Date'     : 'DateProperty',
     'Time'     : 'TimeProperty',
@@ -170,8 +168,9 @@ Y2DBM_FACTORY = {
 
 
 
-def build_gae_model(schema, db):
-    raise NotImplementedError('this is a big entry point')
+def schema2dbmodel(schema, db, skip_relations=()):
+    for eschema in schema.entities():
+        eschema2dbmodel(eschema, db, skip_relations)
 
 def eschema2dbmodel(eschema, db, skip_relations=()):
     classdict = {}

@@ -9,7 +9,7 @@ from google.appengine.ext import db
 from google.appengine.api import datastore_types as dtypes
 
 from yams.reader import SchemaLoader
-from yams.gae import eschema2dbmodel
+from yams.gae import eschema2dbmodel, schema2dbmodel
 
 class DummyDefaultHandler:
 
@@ -88,7 +88,11 @@ class Yams2GaeModel(TestCase):
             else:
                 self.assertEquals(default, pdefault)
 
-
+    def test_full_schema_conversion(self):
+        schema2dbmodel(self.schema, db)
+        self.failUnless('Datetest' in db._kind_map)
+        self.failUnless('Company' in db._kind_map)
+        self.failUnless('EPermission' in db._kind_map)
 
 ##     def test_entity_types(self):
 ##         """make sure we have a kind_map entry for each entity type
