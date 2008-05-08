@@ -13,7 +13,6 @@ except ImportError:
     GaeSchemaLoader = None
 
 from yams.schema import Schema
-from yams.constraints import SizeConstraint, StaticVocabularyConstraint
 
 class DbModelTC(TestCase):
 
