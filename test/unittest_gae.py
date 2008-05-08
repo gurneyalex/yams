@@ -5,11 +5,15 @@ from datetime import datetime, date, time
 
 from mx.DateTime import today
 
-from google.appengine.ext import db
-from google.appengine.api import datastore_types as dtypes
+try:
+    from google.appengine.ext import db
+    from google.appengine.api import datastore_types as dtypes
+    from yams.gae import eschema2dbmodel, schema2dbmodel
+    IMPORT_APPENGINE = True
+except ImportError:
+    IMPORT_APPENGINE = False
 
 from yams.reader import SchemaLoader
-from yams.gae import eschema2dbmodel, schema2dbmodel
 
 class DummyDefaultHandler:
 
@@ -28,6 +32,8 @@ class Yams2GaeModel(TestCase):
     schema = SchemaLoader().load([DATADIR], 'Test', DummyDefaultHandler())
 
     def setUp(self):
+        if not IMPORT_APPENGINE:
+            self.skip('could not import appengine')
         self.clean_kind_map = dict(db._kind_map)
 
     def tearDown(self):
