@@ -98,7 +98,7 @@ class GaeSchemaLoader(SchemaLoader):
         """return a `yams.schema.Schema` from the gae schema definition
         stored in `pymod`.
         """
-        self.load_classes(vars(pymod).values(), register_base_types)
+        return self.load_classes(vars(pymod).values(), register_base_types)
                 
     def load_classes(self, objs, register_base_types=False):
         self.defined = {}
