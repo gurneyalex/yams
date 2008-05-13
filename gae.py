@@ -8,13 +8,14 @@ MISING FEATURES:
 from datetime import datetime, date, time
 
 from google.appengine.ext import db
-from google.appengine.api import datastore_types
+from google.appengine.api import datastore_types, users
 
 from yams.schema2sql import eschema_attrs
 from yams.constraints import SizeConstraint
-from yams.reader import SchemaLoader
+from yams.reader import SchemaLoader, PyFileReader
 from yams.buildobjs import (String, Int, Float, Boolean, Date, Time, Datetime,
-                            Interval, Password, Bytes, SubjectRelation)
+                            Interval, Password, Bytes, SubjectRelation,
+                            RestrictedEntityType)
 from yams.buildobjs import metadefinition, EntityType
 
 # db.Model -> yams ############################################################
@@ -93,7 +94,19 @@ DBM2Y_FACTORY = {
 
 class GaeSchemaLoader(SchemaLoader):
     """Google appengine schema loader class"""
+    def __init__(self, *args, **kwargs):
+        self.use_gauthservice = kwargs.pop('use_gauthservice', False)
+        super(GaeSchemaLoader, self).__init__(*args, **kwargs)
+        self.defined = {}
+        if self.use_gauthservice:
+            self.defined['EUser'] = RestrictedEntityType(name='EUser')
+            
 
+    def dbclass_for_kind(self, kind):
+        if kind == 'EUser' and self.use_gauthservice:
+            return users.User
+        return db.class_for_kind(kind)
+    
     def load_module(self, pymod, register_base_types=False):
         """return a `yams.schema.Schema` from the gae schema definition
         stored in `pymod`.
@@ -101,12 +114,29 @@ class GaeSchemaLoader(SchemaLoader):
         return self.load_classes(vars(pymod).values(), register_base_types)
                 
     def load_classes(self, objs, register_base_types=False):
-        self.defined = {}
         for obj in objs:
             if isinstance(obj, type) and issubclass(obj, db.Model):
                 self.load_dbmodel(obj)
-        return self._build_schema('google-appengine', register_base_types)
-
+        schema = self._build_schema('google-appengine', register_base_types)
+        for eschema in schema.entities():
+            if eschema.is_final():
+                continue
+            try:
+                dbcls = self.dbclass_for_kind(str(eschema))
+            except db.KindError:
+                # not defined as a db model (eg yams import), define it
+                eschema2dbmodel(eschema, db, dbclass_for_kind=self.dbclass_for_kind)
+#             else:
+#                 dbprops = dbcls.properties()
+#                 for rschema in eschema.subject_relations():
+#                     if not str(rschema) in dbprops:
+#                         if rschema.is_final():
+#                             attrschema = eschema.destination(rschema)
+#                             aschema2dbproperty(eschema, rschema, attrschema, db)
+#                         else:
+                            
+        return schema
+    
     def load_dbmodel(self, dbmodel):
         clsdict = {}
         ordered_props = sorted(dbmodel.properties().values(),
@@ -132,11 +162,15 @@ class GaeSchemaLoader(SchemaLoader):
         edef = metadefinition(dbmodel.kind(), (EntityType,), clsdict)
         self.add_definition(self, edef())
 
-
     def error(self, msg):
         print 'ERROR:', msg
 
-
+    def import_yams_schema(self, ertype, schemamod):
+        reader = PyFileReader(self, None, False)
+        erdef = reader.import_erschema(ertype, schemamod)
+        #self.add_definition(reader, erdef)
+        
+        
 # yams -> db.Model ############################################################
 
 Y2DBM_TYPESMAP = {
@@ -172,12 +206,32 @@ def schema2dbmodel(schema, db, skip_relations=()):
     for eschema in schema.entities():
         eschema2dbmodel(eschema, db, skip_relations)
 
-def eschema2dbmodel(eschema, db, skip_relations=()):
+def eschema2dbmodel(eschema, db, skip_relations=(), dbclass_for_kind=None):
+    if dbclass_for_kind is None:
+        dbclass_for_kind = db.class_for_kind
     classdict = {}
     for rschema, attrschema in eschema_attrs(eschema, skip_relations):
         if attrschema is not None:
             prop = aschema2dbproperty(eschema, rschema, attrschema, db)
             classdict[rschema.type] = prop
+    for rschema in eschema.subject_relations():
+        if rschema.is_final() or rschema == 'identity':
+            continue
+        targets = rschema.objects(eschema)
+        if len(targets) > 1:
+            raise NotImplementedError('relation with different target types '
+                                      'are not currently supported')
+        tschema = targets[0]
+        card = rschema.rproperty(eschema, tschema, 'cardinality')[0]
+        tdbcls = dbclass_for_kind(str(tschema))
+        if tdbcls is users.User:
+            assert card in '1?'
+            classdict[rschema.type] = db.UserProperty()
+            continue
+        if card in '1?':
+            classdict[rschema.type] = db.ReferenceProperty(tdbcls)
+        else:
+            classdict[rschema.type] = db.ListProperty(tdbcls)
     # db.PropertiedClass is the db.Model's metaclass
     return db.PropertiedClass(eschema.type, (db.Model,), classdict)
 
