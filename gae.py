@@ -96,8 +96,10 @@ class GaeSchemaLoader(SchemaLoader):
     """Google appengine schema loader class"""
     def __init__(self, *args, **kwargs):
         self.use_gauthservice = kwargs.pop('use_gauthservice', False)
+        self._db = kwargs.pop('db', db)
         super(GaeSchemaLoader, self).__init__(*args, **kwargs)
         self.defined = {}
+        self.created = []
         if self.use_gauthservice:
             self.defined['EUser'] = RestrictedEntityType(name='EUser')
             
@@ -125,7 +127,8 @@ class GaeSchemaLoader(SchemaLoader):
                 dbcls = self.dbclass_for_kind(str(eschema))
             except db.KindError:
                 # not defined as a db model (eg yams import), define it
-                eschema2dbmodel(eschema, db, dbclass_for_kind=self.dbclass_for_kind)
+                dbcls = eschema2dbmodel(eschema, self._db, dbclass_for_kind=self.dbclass_for_kind)
+                self.created.append(dbcls)
 #             else:
 #                 dbprops = dbcls.properties()
 #                 for rschema in eschema.subject_relations():
@@ -233,7 +236,8 @@ def eschema2dbmodel(eschema, db, skip_relations=(), dbclass_for_kind=None):
         else:
             classdict[rschema.type] = db.ListProperty(tdbcls)
     # db.PropertiedClass is the db.Model's metaclass
-    return db.PropertiedClass(eschema.type, (db.Model,), classdict)
+    cls = db.Model
+    return cls.__metaclass__(eschema.type, (cls,), classdict)
 
 def aschema2dbproperty(eschema, rschema, attrschema, db):
     attr = rschema.type
