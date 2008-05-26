@@ -554,7 +554,7 @@ class RelationSchema(ERSchema):
     ACTIONS = ('read', 'add', 'delete')    
     _RPROPERTIES = {'cardinality': None,
                     'constraints': (),
-                    'order': 0,
+                    'order': 9999,
                     'description': ''}
     _NONFINAL_RPROPERTIES = {'composite': None}
     _FINAL_RPROPERTIES = {'default': None,
