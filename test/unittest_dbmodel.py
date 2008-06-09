@@ -1,7 +1,7 @@
 """tests for db.Model => yams schema conversion
 """
 
-from logilab.common.testlib import TestCase
+from logilab.common.testlib import TestCase, unittest_main
 
 import os.path as osp
 import new
@@ -100,3 +100,5 @@ class DbModelTC(TestCase):
         self.assertEquals(article.default('image'), None)
         self.assertEquals(article.rproperty('image', 'cardinality')[0], '1')
         self.assertEquals(article.rproperty('image', 'constraints'), ())
+if __name__ == '__main__':
+    unittest_main()
