@@ -1,4 +1,4 @@
-from logilab.common.testlib import TestCase
+from logilab.common.testlib import TestCase, unittest_main
 
 import os.path as osp
 from datetime import datetime, date, time
@@ -109,3 +109,5 @@ class Yams2GaeModel(TestCase):
 ##                                'Division', 'EPermission', 'Eetype',  'Employee', 'Float', 'Int', 'Interval',
 ##                                'Note', 'Password', 'Person', 'Societe', 'State', 'String', 'Time',
 ##                                'pkginfo']))
+if __name__ == '__main__':
+    unittest_main();
