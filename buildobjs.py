@@ -310,7 +310,7 @@ class RelationDefinition(Definition):
 
         register all relations definition, expanding wildcard if necessary
         """
-        assert self.subject and self.object
+        assert self.subject and self.object, '%s; check the schema' % self
         self._add_relations(defined, schema)
     
     def _add_relations(self, defined, schema):
