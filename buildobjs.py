@@ -285,7 +285,7 @@ class RelationDefinition(Definition):
         copy_attributes(attrdict(kwargs), self, RDEF_PROPERTIES + ('description',))
         if self.constraints:
             self.constraints = list(self.constraints)
-        
+            
     def __str__(self):
         return 'relation definition (%(subject)s %(name)s %(object)s)' % self.__dict__
 
