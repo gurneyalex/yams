@@ -514,7 +514,7 @@ class EntitySchema(ERSchema):
                     errors[rschema.type] = '%s; you might want to try unicode'  % errors[rschema.type]
                 continue
             # ensure value has the correct python type
-            value = aschema.convert_value(value)
+            entity[rschema] = value = aschema.convert_value(value)
             # check arbitrary constraints
             for constraint in rschema.rproperty(self, aschema, 'constraints'):
                 if not constraint.check(entity, rschema, value):
