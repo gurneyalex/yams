@@ -181,8 +181,12 @@ class SchemaLoader(object):
         """
         self.defined = {}
         self._instantiate_handlers(default_handler)
-        self._load_definition_files(directories)
-        return self._build_schema(name, register_base_types)
+        files = self._load_definition_files(directories)
+        try:
+            return self._build_schema(name, register_base_types)
+        except Exception, ex:
+            setattr(ex,'schema_files',files)
+            raise ex
     
     def _instantiate_handlers(self, default_handler=None):
         self._live_handlers = {}
@@ -191,9 +195,13 @@ class SchemaLoader(object):
                                                self.read_deprecated_relations)
 
     def _load_definition_files(self, directories):
+        files_paths = []
         for directory in directories:
             for filepath in self.get_schema_files(directory):
                 self.handle_file(filepath)
+                files_paths.append(filepath)
+        return files_paths
+
         
     def _build_schema(self, name, register_base_types=True):
         """build actual schema from definition objects, and return it"""

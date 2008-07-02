@@ -9,6 +9,7 @@ __docformat__ = "restructuredtext en"
 
 class SchemaError(Exception):
     """base class for schema exceptions"""
+    
     def __str__(self):
         return unicode(self).encode('utf8')
     
@@ -21,11 +22,32 @@ class UnknownType(SchemaError):
 class BadSchemaDefinition(SchemaError):
     """error in the schema definition"""
     msg = '%s line %s: %s'
-    def __unicode__(self):
-        if len(self.args) == 3:
-            return self.msg % self.args
-        return ' '.join(self.args)
 
+
+    def __init__(self, *args):
+        if len(args) > 1:
+            self.filename = args[0]
+            args = args[1:]
+        else:
+            self.filename = None
+        if len(args) > 1:
+            self.lineno = args[0]
+            args = args[1:]
+        else:
+            self.lineno = None
+        super(BadSchemaDefinition,self).__init__(*args)
+
+
+
+    def __unicode__(self):
+        msgs = []
+        if self.filename is not None:
+            msgs.append(self.filename)
+            if self.lineno is not None:
+                msgs.append(" line %s" % self.lineno)
+            msgs.append(': ')
+        msgs.append(' '.join(self.args))
+        return ''.join(msgs)
 class ESQLParseError(Exception):
     """raised when a line is unparsable (end up by a warning)"""
     msg = '%s: unable to parse %s'
