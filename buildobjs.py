@@ -439,8 +439,10 @@ class ObjectRelation(Relation):
             check_kwargs(kwargs, REL_PROPERTIES)
         except BadSchemaDefinition, bad:
             # XXX (auc) bad field name + required attribute can lead there instead of schema.py ~ 920
-            raise BadSchemaDefinition(('%s in relation to entity %r (also is %r defined ? (check two '
+             bsd_ex = BadSchemaDefinition(('%s in relation to entity %r (also is %r defined ? (check two '
                                        'lines above in the backtrace))') % (bad.args, etype, etype))
+             setattr(bsd_ex,'tb_offset',2)
+             raise bsd_ex
         copy_attributes(attrdict(kwargs), self, REL_PROPERTIES)
     
     def __repr__(self):
