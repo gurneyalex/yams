@@ -24,29 +24,42 @@ class BadSchemaDefinition(SchemaError):
     msg = '%s line %s: %s'
 
 
-    def __init__(self, *args):
-        if len(args) > 1:
-            self.filename = args[0]
-            args = args[1:]
-        else:
-            self.filename = None
-        if len(args) > 1:
-            self.lineno = args[0]
-            args = args[1:]
-        else:
-            self.lineno = None
-        super(BadSchemaDefinition,self).__init__(*args)
 
-
+    def __get_filename(self):
+        if len(self.args) > 1:
+            return self.args[0]
+        else:
+            return None
+    filename = property(__get_filename)
+    
+    def __get_lineno(self):
+        if len(self.args) > 2:
+            return self.args[1]
+        else:
+            return None
+    lineno = property(__get_lineno)
+    
+    def __get_line(self):
+        if len(self.args) > 3:
+            return self.args[2]
+        else:
+            return None
+    line = property(__get_line)
 
     def __unicode__(self):
         msgs = []
+        args_offset = 0
         if self.filename is not None:
             msgs.append(self.filename)
+            args_offset += 1
             if self.lineno is not None:
                 msgs.append(" line %s" % self.lineno)
+                args_offset += 1
+                if self.line is not None:
+                    msgs.append(' "%s"' % self.line)
+                    args_offset += 1
             msgs.append(': ')
-        msgs.append(' '.join(self.args))
+        msgs.append(' '.join(self.args[args_offset:]))
         return ''.join(msgs)
 class ESQLParseError(Exception):
     """raised when a line is unparsable (end up by a warning)"""

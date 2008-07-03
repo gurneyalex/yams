@@ -34,7 +34,8 @@ class FileReader(object):
         
     def error(self, msg=None):
         """raise a contextual exception"""
-        raise BadSchemaDefinition(self._current_line, self._current_file, msg)
+        raise BadSchemaDefinition(self._current_file, self._current_lineno,
+            self._current_line, msg)
     
     def read_file(self, filepath):
         """default implementation, calling .read_line method for each
