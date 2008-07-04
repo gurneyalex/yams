@@ -395,13 +395,13 @@ class SchemaTC(BaseSchemaTC):
         affaire = schema.eschema('Affaire')
         orig_rprops = affaire.rproperties('concerne')
         schema.rename_entity_type('Affaire', 'Workcase')
-        self.assertSetEquals(schema._entities.keys(),
+        self.assertUnorderedIterableEquals(schema._entities.keys(),
                              ['Boolean', 'Bytes', 'Date', 'Datetime', 'Float',
                               'Int', 'Interval', 'Note', 'Password', 'Person',
                               'Societe', 'String', 'Time', 'Workcase'])
         rconcerne = schema.rschema('concerne')
-        self.assertSetEquals(rconcerne.subjects(), ['Workcase', 'Person'])
-        self.assertSetEquals(rconcerne.objects(), ['Workcase', 'Societe'])
+        self.assertUnorderedIterableEquals(rconcerne.subjects(), ['Workcase', 'Person'])
+        self.assertUnorderedIterableEquals(rconcerne.objects(), ['Workcase', 'Societe'])
         self.assertRaises(KeyError, schema.eschema, 'Affaire')
         workcase = schema.eschema('Workcase')
         schema.__test__ = True
