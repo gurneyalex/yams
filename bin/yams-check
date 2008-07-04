@@ -27,10 +27,9 @@ def _error(file=None, line=None, msg=''):
     else:
         line = str(line)
     print >> sys.stderr, ':'.join(('E', file, line, msg))
-result = config.load_command_line_configuration()
-try:
-    _, dirnames = result
-except:
+dirnames = config.load_command_line_configuration()
+
+if not dirnames:
     print >> sys.stderr, config.help()
     sys.exit(return_code)
 
