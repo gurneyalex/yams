@@ -53,4 +53,8 @@ ftp = "ftp://ftp.logilab.org/pub/%s" % modname
 # is there some directories to include with the source installation
 include_dirs = []
 
+# executable
+
+scripts= ['bin/yams-check', 'bin/yams-view']
+
 pyversions = ['2.4']
