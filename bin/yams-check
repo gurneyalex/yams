@@ -4,10 +4,18 @@ from os.path import exists
 from itertools import chain
 from traceback import extract_tb
 
+from logilab.common.configuration import Configuration
 from yams.reader import SchemaLoader
 from yams._exceptions import *
+from yams.__pkginfo__ import version
 
 schm_ldr = SchemaLoader()
+
+config = Configuration(
+            usage="yams-check [[[...] deps] deps] apps",
+            doc="Check the schema of an application.",
+            version=version)
+
 
 return_code = 1
 
@@ -19,10 +27,16 @@ def _error(file=None, line=None, msg=''):
     else:
         line = str(line)
     print >> sys.stderr, ':'.join(('E', file, line, msg))
+result = config.load_command_line_configuration()
+try:
+    _, dirnames = result
+except:
+    print >> sys.stderr, config.help()
+    sys.exit(return_code)
 
-dirnames = sys.argv[1:]
 for dir in dirnames:
     assert exists(dir), dir
+
 try:
     schm_ldr.load(dirnames)
     return_code = 0

@@ -9,13 +9,17 @@ from subprocess import Popen
 
 from logilab.common.configuration import Configuration
 
+from yams.__pkginfo__ import version
+
 options = [('output-file', {'type':'file', 'default': None,
              'metavar': '<file>', 'short':'o', 'help':'output image file'}),
            ('viewer', {'type': 'string', 'default':"rsvg-view", 'short': "w", 'metavar':'<cmd>',
              'help':'command use to view the generated file (empty for none)'}),
           ]
 
-config = Configuration(options=options, name='My config')
+config = Configuration(options=options,
+    usage="yams-view [[[...] deps] deps] apps",
+    version=version)
 config.load_command_line_configuration()
 dirnames = sys.argv[1:]
 for dir in dirnames:
