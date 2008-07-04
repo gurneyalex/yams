@@ -1,5 +1,5 @@
 include ChangeLog
 include DEPENDS
 recursive-include test/data/ *.sql *.rel *.esql *.py toignore
-include test/data/toignore
+recursive-include bin yams-*
 
