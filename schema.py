@@ -3,6 +3,7 @@
 :organization: Logilab
 :copyright: 2003-2008 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
 :contact: http://www.logilab.fr/ -- mailto:contact@logilab.fr
+:license: General Public License version 2 - http://www.gnu.org/gpl
 """
 __docformat__ = "restructuredtext en"
 
@@ -63,16 +64,13 @@ def rehash(dictionary):
     """
     return dict(item for item in dictionary.items())
 
-def format_properties(props):
-    res = []
-    for prop, value in props.items():
-        if value:
-            res.append('%s=%s' % (prop, value))
+def _format_properties(props):
+    res = [('%s=%s' % item) for item in props.items() if item[1]]
     return ','.join(res)
 
 
 class ERSchema(object):
-    """common base class to entity and relation schema"""
+    """base class shared by entity and relation schema"""
 
     ACTIONS = ()
     
@@ -585,7 +583,7 @@ class RelationSchema(ERSchema):
         
     def __repr__(self):
         return '<%s [%s]>' % (self.type,
-                              '; '.join('%s,%s:%s'%(s.type, o.type, format_properties(props))
+                              '; '.join('%s,%s:%s'%(s.type, o.type, _format_properties(props))
                                         for (s, o), props in self._rproperties.items()))
 
     def _rehash(self):

@@ -3,6 +3,7 @@
 :organization: Logilab
 :copyright: 2004-2007 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
 :contact: http://www.logilab.fr/ -- mailto:contact@logilab.fr
+:license: General Public License version 2 - http://www.gnu.org/glp
 """
 
 __docformat__ = "restructuredtext en"
@@ -35,10 +36,12 @@ class BaseConstraint(object):
 # possible constraints ########################################################
 
 class UniqueConstraint(BaseConstraint):
-    
+    """object of relation must be unique"""
+
     def check(self, entity, rtype, values):
         """return true if the value satisfy the constraint, else false"""
         return True
+
     def __str__(self):
         return 'unique'
     
@@ -46,10 +49,11 @@ class SizeConstraint(BaseConstraint):
     """the string size constraint :
     
     if max is not None the string length must not be greater than max
-    if in is not None the string length must not be shorter than min
+    if min is not None the string length must not be shorter than min
     """
     
     def __init__(self, max=None, min=None):
+        assert (max is not None or min is not None), "No max or min"
         self.max = max
         self.min = min
         
@@ -59,11 +63,11 @@ class SizeConstraint(BaseConstraint):
         """
         if self.max is not None:
             if len(value) > self.max:
-                return 0
+                return False
         if self.min is not None:
             if len(value) < self.min:
-                return 0
-        return 1
+                return False
+        return True
     
     def __str__(self):
         res = 'size'
@@ -93,6 +97,12 @@ class SizeConstraint(BaseConstraint):
             
 class RegexpConstraint(BaseConstraint):
     """specifies a set of allowed patterns for a string value
+
+    :type regexp: str
+    :param regexp: regular expression that strings must match
+
+    :type flags: int 
+    :param flags: flags that are passed to re.compile()
     """
     __implements__ = IConstraint
 
@@ -102,7 +112,7 @@ class RegexpConstraint(BaseConstraint):
         self._rgx = re.compile(regexp, flags)
         
     def check(self, entity, rtype, value):
-        """return true if the value satisfy the constraint, else false"""
+        """return true if the value maches the regular expression"""
         return self._rgx.match(value, self.flags)
 
     def __str__(self):
@@ -125,6 +135,7 @@ class BoundConstraint(BaseConstraint):
     set a minimal or maximal value to a numerical value
     This class is DEPRECATED, use IntervalBoundConstraint instead
     """
+    # FIXME add DeprecationWarning
     __implements__ = IConstraint
     
     def __init__(self, operator, bound=None):
@@ -157,7 +168,7 @@ class IntervalBoundConstraint(BaseConstraint):
     """an int/float bound constraint :
 
     sets a minimal and / or a maximal value to a numerical value
-    This class aims to replace the BoundConstraint class
+    This class replaces the BoundConstraint class
     """
     __implements__ = IConstraint
     
@@ -195,7 +206,7 @@ class IntervalBoundConstraint(BaseConstraint):
 class StaticVocabularyConstraint(BaseConstraint):
     """the static vocabulary constraint :
 
-    enforce the value to be in a predefined set vocabulary
+    enforces a predefined vocabulary set for the value
     """
     __implements__ = IVocabularyConstraint
     
@@ -207,8 +218,7 @@ class StaticVocabularyConstraint(BaseConstraint):
         return value in self.vocabulary(entity)
 
     def vocabulary(self, entity=None):
-        """return a list of possible values for the attribute
-        """
+        """return a list of possible values for the attribute"""
         return self.values
     
     def __str__(self):
@@ -255,16 +265,16 @@ def check_int(eschema, value):
     try:
         int(value)
     except ValueError:
-        return 0
-    return 1
+        return False
+    return True
     
 def check_float(eschema, value):
     """check value is a float"""
     try:
         float(value)
     except ValueError:
-        return 0
-    return 1
+        return False
+    return True
     
 def check_boolean(eschema, value):
     """check value is a boolean"""
@@ -276,7 +286,7 @@ def check_file(eschema, value):
     
 def yes(*args, **kwargs):
     """dunno how to check"""
-    return 1
+    return True
 
 BASE_CHECKERS = {
     'Date' :     yes,

@@ -3,6 +3,7 @@
 :organization: Logilab
 :copyright: 2004-2008 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
 :contact: http://www.logilab.fr/ -- mailto:contact@logilab.fr
+:license: General Public License version 2 - http://www.gnu.org/gpl
 """
 
 # set _ builtin to unicode by default, should be overriden if necessary
@@ -38,8 +39,8 @@ class FileReader(object):
             self._current_line, msg)
     
     def read_file(self, filepath):
-        """default implementation, calling .read_line method for each
-        non blank lines, and ignoring lines starting by '#' which are
+        """default implementation, calling read_line() method for each
+        non-blank lines, and ignoring lines starting by '#' which are
         considered as comment lines
         """
         for i, line in enumerate(file(filepath)):
@@ -60,4 +61,3 @@ class FileReader(object):
 
 from yams._exceptions import *
 from yams.schema import Schema, EntitySchema, RelationSchema
-

@@ -1,10 +1,10 @@
 """ER schema loader (use either a sql derivated language for entities and
 relation definitions files or a direct python definition file)
 
-
 :organization: Logilab
 :copyright: 2004-2008 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
 :contact: http://www.logilab.fr/ -- mailto:contact@logilab.fr
+:license: General Public License version 2 - http://www.gnu.org/gpl
 """
 __docformat__ = "restructuredtext en"
 
@@ -20,7 +20,7 @@ from yams import constraints, schema as schemamod
 from yams import buildobjs
 
 
-def lines(path, comments=None):
+def _lines(path, comments=None):
     result = []
     for line in open(path, 'U'):
         line = line.strip()
@@ -30,14 +30,14 @@ def lines(path, comments=None):
 
 # .rel and .py formats file readers ###########################################
         
-class RelationFileReader(FileReader):
+class RelationFileReader(FileReader): # XXX deprecate this ?
     """read simple relation definitions files"""
     rdefcls = buildobjs.RelationDefinition
     
     def read_line(self, line):
         """read a relation definition:
         
-        a 3-uple, as in 'User in_groups Group', optionaly followed by the
+        a 3-uple, as in 'User in_groups Group', optionally followed by the
         "symetric" keyword and/or by the "constraint" keyword followed by an arbitrary
         expression (should be handled in a derivated class
         
@@ -243,7 +243,7 @@ class SchemaLoader(object):
                 if filename[0] == '_':
                     continue
                 if filename.lower() == 'include':
-                    for etype in lines(join(directory, filename)):
+                    for etype in _lines(join(directory, filename)):
                         if etype.startswith('#'):
                             continue
                         for filepath in self.include_schema_files(etype):
