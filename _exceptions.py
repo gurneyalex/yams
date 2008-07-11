@@ -3,6 +3,7 @@
 :organization: Logilab
 :copyright: 2004-2008 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
 :contact: http://www.logilab.fr/ -- mailto:contact@logilab.fr
+:license: General Public License version 2 - http://www.gnu.org/glp
 """
 
 __docformat__ = "restructuredtext en"
@@ -15,15 +16,22 @@ class SchemaError(Exception):
     
 class UnknownType(SchemaError):
     """using an unknown entity type"""
+
     msg = 'Unknown type %s'
+
     def __unicode__(self):
         return self.msg % self.args
 
 class BadSchemaDefinition(SchemaError):
-    """error in the schema definition"""
+    """error in the schema definition
+
+    instance attributes:
+    * filename is the source file where the exception was raised
+    * lineno is the line number where the exception was raised
+    * line is the actual line in text form
+    """
+
     msg = '%s line %s: %s'
-
-
 
     def __get_filename(self):
         if len(self.args) > 1:
@@ -61,15 +69,23 @@ class BadSchemaDefinition(SchemaError):
             msgs.append(': ')
         msgs.append(' '.join(self.args[args_offset:]))
         return ''.join(msgs)
+
 class ESQLParseError(Exception):
-    """raised when a line is unparsable (end up by a warning)"""
+    """raised when a line can not be parsed (end up by a warning)"""
+
     msg = '%s: unable to parse %s'
+
     def __str__(self):
         return self.msg % self.args
 
 class ValidationError(SchemaError):
-    """validation error are used when some validation failed and precisily
-    explain why using a dictionary describing each error
+    """validation error details the reason(s) why the validation failed
+
+    :type entity: EntityType
+    :param entity: the entity that could not be validated
+
+    :type explanation: dict
+    :param explanation: pairs of (attribute, error)
     """
 
     def __init__(self, entity, explanation):
