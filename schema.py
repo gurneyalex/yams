@@ -1,9 +1,9 @@
-"""classes to define generic Entities/Relations schemas
+"""Classes to define generic Entities/Relations schemas.
 
 :organization: Logilab
 :copyright: 2003-2008 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
 :contact: http://www.logilab.fr/ -- mailto:contact@logilab.fr
-:license: General Public License version 2 - http://www.gnu.org/gpl
+:license: General Public License version 2 - http://www.gnu.org/licenses
 """
 __docformat__ = "restructuredtext en"
 
@@ -70,11 +70,18 @@ def _format_properties(props):
 
 
 class ERSchema(object):
-    """base class shared by entity and relation schema"""
+    """Base class shared by entity and relation schema."""
 
     ACTIONS = ()
     
     def __init__(self, schema=None, erdef=None):
+        """
+        Construct an ERSchema instance.
+
+        :Parameters:
+        - `schema`: (??)
+        - `erdef`: (??)
+        """
         if erdef is None:
             return
         assert schema
@@ -114,12 +121,10 @@ class ERSchema(object):
     
     def set_groups(self, action, groups):
         """set the groups allowed to perform <action> on entities of this type
-        
-        :type action: str
-        :param action: the name of a permission
 
-        :type groups: tuple
-        :param groups: the groups with the given permission
+        :Parameters:
+        - `action`: (str) the name of a permission
+        - `groups`: (tuple) the groups with the given permission
         """
         assert type(groups) is tuple, ('groups is expected to be a tuple not %s' % type(groups))
         assert action in self.ACTIONS, ('%s not in %s' % (action, self.ACTIONS))
@@ -173,9 +178,9 @@ class ERSchema(object):
 # Schema objects definition ###################################################
 
 class EntitySchema(ERSchema):
-    """a entity has a type, a set of subject and or object relations
+    """An entity has a type, a set of subject and or object relations
     the entity schema defines the possible relations for a given type and some
-    constraints on those relations
+    constraints on those relations.
     """
     __implements__ = IEntitySchema    
     
@@ -542,12 +547,12 @@ class RelationSchema(ERSchema):
     """A relation is a named ordered link between two entities.
     A relation schema defines the possible types of both extremities.
 
-    cardinality between the two given entity's type is defined
+    Cardinality between the two given entity's type is defined
     as a 2 characters string where each character is one of:
-        - 1 <-> 1..1
-        - ? <-> 0..1
-        - + <-> 1..n
-        - * <-> 0..n
+     - 1 <-> 1..1
+     - ? <-> 0..1
+     - + <-> 1..n
+     - * <-> 0..n
     """
     ACTIONS = ('read', 'add', 'delete')    
     _RPROPERTIES = {'cardinality': None,
@@ -767,12 +772,12 @@ class RelationSchema(ERSchema):
         return self._subj_schemas.items()
         
     def subjects(self, etype=None):
-        """return a list of entity schemas which can be subject of this relation
+        """Return a list of entity schemas which can be subject of this relation.
         
         If etype is not None, return a list of schemas which can be subject of
         this relation with etype as object.
         
-        :raise: `KeyError` if etype is not a subject entity type.
+        :raise `KeyError`: if etype is not a subject entity type.
         """
         if etype is None:
             return self._subj_schemas.keys()
@@ -782,12 +787,12 @@ class RelationSchema(ERSchema):
             raise KeyError("%s don't have %s as object" % (self, etype))
     
     def objects(self, etype=None):
-        """return a list of entity schema which can be object of this relation.
+        """Return a list of entity schema which can be object of this relation.
         
         If etype is not None, return a list of schemas which can be object of
         this relation with etype as subject.
         
-        :raise: `KeyError` if etype is not an object entity type.
+        :raise `KeyError`: if etype is not an object entity type.
         """
         if etype is None:
             return self._obj_schemas.keys()
@@ -865,10 +870,10 @@ class Schema(object):
     # schema building methods #################################################
     
     def add_entity_type(self, edef):
-        """add a entity schema definition for an entity's type
+        """Add an entity schema definition for an entity's type.
 
-        :type etype: str
-        :param etype: the name of the entity type to define
+        :type edef: str
+        :param edef: the name of the entity type to define
 
         :raise `BadSchemaDefinition`: if the entity type is already defined
         :rtype: `EntitySchema`

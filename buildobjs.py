@@ -1,9 +1,9 @@
-"""Classes used to build a schema
+"""Classes used to build a schema.
 
 :organization: Logilab
 :copyright: 2003-2008 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
 :contact: http://www.logilab.fr/ -- mailto:contact@logilab.fr
-:license: General Public License version 2 - http://www.gnu.org/gpl
+:license: General Public License version 2 - http://www.gnu.org/licenses
 """
 __docformat__ = "restructuredtext en"
 
@@ -34,7 +34,7 @@ REL_PROPERTIES = RTYPE_PROPERTIES+RDEF_PROPERTIES + ('description',)
 
 
 def _add_constraint(kwargs, constraint):
-    """add constraint to param kwargs"""
+    """Add constraint to param kwargs."""
     constraints = kwargs.setdefault('constraints', [])
     for i, existingconstraint in enumerate(constraints):
         if existingconstraint.__class__ is constraint.__class__:
@@ -43,7 +43,7 @@ def _add_constraint(kwargs, constraint):
     constraints.append(constraint)
         
 def _add_relation(relations, rdef, name=None, insertidx=None):
-    """add relation (param rdef) to list of relations (param relations)"""
+    """Add relation (param rdef) to list of relations (param relations)."""
     if isinstance(rdef, BothWayRelation):
         _add_relation(relations, rdef.subjectrel, name, insertidx)
         _add_relation(relations, rdef.objectrel, name, insertidx)
@@ -56,7 +56,7 @@ def _add_relation(relations, rdef, name=None, insertidx=None):
             relations.insert(insertidx, rdef)
 
 def _check_kwargs(kwargs, attributes):
-    """check that all keys of kwargs are actual attributes"""
+    """Check that all keys of kwargs are actual attributes."""
     for key in kwargs:
         if not key in attributes: 
             raise BadSchemaDefinition('no such property %r in %r' % (key, attributes))
@@ -79,14 +79,14 @@ def register_base_types(schema):
 
 
 class Relation(object):
-    """abstract class which have to be defined before the metadefinition
-    meta-class
+    """Abstract class which have to be defined before the metadefinition
+    meta-class.
     """
 
 # first class schema definition objects #######################################
 
 class Definition(object):
-    """abstract class for entity / relation definition classes"""
+    """Abstract class for entity / relation definition classes."""
 
     meta = MARKER
     description = MARKER
@@ -101,23 +101,21 @@ class Definition(object):
         return '<%s %r @%x>' % (self.__class__.__name__, self.name, id(self))
 
     def expand_type_definitions(self, defined):
-        """schema building step 1:
-
-        register definition objects by adding them to the `defined` dictionnary
+        """Schema building step 1: register definition objects by adding them
+        to the `defined` dictionnary.
         """
         raise NotImplementedError()
     
     def expand_relation_definitions(self, defined, schema):
-        """schema building step 2:
-
-        register all relations definition, expanding wildcard if necessary
+        """Schema building step 2: register all relations definition,
+        expanding wildcard if necessary.
         """
         raise NotImplementedError()
 
 
 class metadefinition(type):
-    """metaclass that builds the __relations__ attribute
-    of EntityType's subclasses
+    """Metaclass that builds the __relations__ attribute of
+    EntityType's subclasses.
     """
     def __new__(mcs, name, bases, classdict):
         classdict['__relations__'] = rels = []
@@ -167,9 +165,8 @@ class EntityType(Definition):
         return 'entity type %r' % self.name
     
     def expand_type_definitions(self, defined):
-        """schema building step 1:
-
-        register definition objects by adding them to the `defined` dictionnary
+        """Schema building step 1: register definition objects by adding
+        them to the `defined` dictionnary.
         """
         assert self.name not in defined, "type '%s' was already defined" % self.name
         self._defined = defined # XXX may be used later (eg .add_relation())

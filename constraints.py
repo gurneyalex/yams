@@ -1,9 +1,9 @@
-"""some default constraint classes
+"""Some common constraint classes.
 
 :organization: Logilab
 :copyright: 2004-2007 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
 :contact: http://www.logilab.fr/ -- mailto:contact@logilab.fr
-:license: General Public License version 2 - http://www.gnu.org/glp
+:license: General Public License version 2 - http://www.gnu.org/licenses
 """
 
 __docformat__ = "restructuredtext en"
@@ -96,17 +96,17 @@ class SizeConstraint(BaseConstraint):
     deserialize = classmethod(deserialize)
             
 class RegexpConstraint(BaseConstraint):
-    """specifies a set of allowed patterns for a string value
-
-    :type regexp: str
-    :param regexp: regular expression that strings must match
-
-    :type flags: int 
-    :param flags: flags that are passed to re.compile()
-    """
+    """specifies a set of allowed patterns for a string value"""
     __implements__ = IConstraint
 
     def __init__(self, regexp, flags=0):
+        """
+        Construct a new RegexpConstraint.
+        
+        :Parameters:
+         - `regexp`: (str) regular expression that strings must match
+         - `flags`: (int) flags that are passed to re.compile()
+        """
         self.regexp = regexp
         self.flags = flags
         self._rgx = re.compile(regexp, flags)
@@ -204,10 +204,7 @@ class IntervalBoundConstraint(BaseConstraint):
         
 
 class StaticVocabularyConstraint(BaseConstraint):
-    """the static vocabulary constraint :
-
-    enforces a predefined vocabulary set for the value
-    """
+    """Enforces a predefined vocabulary set for the value."""
     __implements__ = IVocabularyConstraint
     
     def __init__(self, values):
@@ -235,12 +232,8 @@ class StaticVocabularyConstraint(BaseConstraint):
 
 
 class MultipleStaticVocabularyConstraint(StaticVocabularyConstraint):
-    """the multiple static vocabulary constraint :
-
-    enforce a list of values to be in a predefined set vocabulary
-
-    XXX never used
-    """    
+    """Enforce a list of values to be in a predefined set vocabulary."""    
+    # XXX never used
     def check(self, entity, rtype, values):
         """return true if the values satisfy the constraint, else false"""
         vocab = self.vocabulary(entity)

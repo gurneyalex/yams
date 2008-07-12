@@ -1,9 +1,9 @@
-"""Entity Schema reader, read EntitySchema from Pseudo SQL
-
+"""Entity Schema reader, read EntitySchema from Pseudo SQL.
 
 :organization: Logilab
 :copyright: 2003-2008 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
 :contact: http://www.logilab.fr/ -- mailto:contact@logilab.fr
+:license: General Public License version 2 - http://www.gnu.org/licenses
 """
 __docformat__ = "restructuredtext en"
 
