@@ -1,10 +1,12 @@
-"""ER schema loader (use either a sql derivated language for entities and
-relation definitions files or a direct python definition file)
+"""ER schema loader.
+
+Use either a sql derivated language for entities and relation definitions
+files or a direct python definition file.
 
 :organization: Logilab
 :copyright: 2004-2008 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
 :contact: http://www.logilab.fr/ -- mailto:contact@logilab.fr
-:license: General Public License version 2 - http://www.gnu.org/gpl
+:license: General Public License version 2 - http://www.gnu.org/licenses
 """
 __docformat__ = "restructuredtext en"
 
@@ -185,7 +187,7 @@ class SchemaLoader(object):
         try:
             return self._build_schema(name, register_base_types)
         except Exception, ex:
-            setattr(ex,'schema_files',files)
+            setattr(ex, 'schema_files', files)
             raise ex
     
     def _instantiate_handlers(self, default_handler=None):

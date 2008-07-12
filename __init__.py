@@ -1,16 +1,18 @@
-"""model object and utilities to define generic Entities/Relations schemas
+"""Object model and utilities to define generic Entities/Relations schemas.
 
 :organization: Logilab
 :copyright: 2004-2008 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
 :contact: http://www.logilab.fr/ -- mailto:contact@logilab.fr
-:license: General Public License version 2 - http://www.gnu.org/gpl
+:license: General Public License version 2 - http://www.gnu.org/licenses
 """
+__docformat__ = "restructuredtext en"
 
 # set _ builtin to unicode by default, should be overriden if necessary
 import __builtin__
 __builtin__._ = unicode
 
 from logilab.common.compat import set
+    
 BASE_TYPES = set(('String', 'Int', 'Float', 'Boolean', 'Date',
                   'Time', 'Datetime', 'Interval', 'Password', 'Bytes'))
 
@@ -19,7 +21,7 @@ MARKER = nullobject()
 
 
 class FileReader(object):
-    """abstract class for file readers"""
+    """Abstract class for file readers."""
     
     def __init__(self, loader, defaulthandler=None, readdeprecated=False):
         self.loader = loader
@@ -61,3 +63,4 @@ class FileReader(object):
 
 from yams._exceptions import *
 from yams.schema import Schema, EntitySchema, RelationSchema
+from yams.__pkginfo__ import version as __version__

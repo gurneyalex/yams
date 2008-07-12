@@ -1,21 +1,13 @@
-# pylint: disable-msg=W0622
-# Copyright (c) 2003-2008 LOGILAB S.A. (Paris, FRANCE).
-# http://www.logilab.fr/ -- mailto:contact@logilab.fr
+"""Yams packaging information.
 
-# This program is free software; you can redistribute it and/or modify it under
-# the terms of the GNU General Public License as published by the Free Software
-# Foundation; either version 2 of the License, or (at your option) any later
-# version.
-
-# This program is distributed in the hope that it will be useful, but WITHOUT
-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-# FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
-
-# You should have received a copy of the GNU General Public License along with
-# this program; if not, write to the Free Software Foundation, Inc.,
-# 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-"""yams packaging information
+:organization: Logilab
+:copyright: 2003-2008 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
+:contact: http://www.logilab.fr/ -- mailto:contact@logilab.fr
+:license: General Public License version 2 - http://www.gnu.org/licenses
 """
+__docformat__ = "restructuredtext en"
+
+# pylint: disable-msg=W0622
 
 # package name
 modname = 'yams'
@@ -26,8 +18,7 @@ version = '.'.join(str(num) for num in numversion)
 
 # license and copyright
 license = 'GPL'
-copyright = '''Copyright (c) 2004-2008 LOGILAB S.A. (Paris, FRANCE).
-http://www.logilab.fr/ -- mailto:contact@logilab.fr'''
+copyright = 'Copyright (c) '+' '.join([line.split(': ')[-1]for line in __doc__.splitlines()[3:5]])
 
 # short and long description
 short_desc = "entity / relation schema"
@@ -55,6 +46,6 @@ include_dirs = []
 
 # executable
 
-scripts= ['bin/yams-check', 'bin/yams-view']
+scripts = ['bin/yams-check', 'bin/yams-view']
 
 pyversions = ['2.4']
