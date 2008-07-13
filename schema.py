@@ -79,8 +79,8 @@ class ERSchema(object):
         Construct an ERSchema instance.
 
         :Parameters:
-        - `schema`: (??)
-        - `erdef`: (??)
+         - `schema`: (??)
+         - `erdef`: (??)
         """
         if erdef is None:
             return
@@ -123,8 +123,8 @@ class ERSchema(object):
         """set the groups allowed to perform <action> on entities of this type
 
         :Parameters:
-        - `action`: (str) the name of a permission
-        - `groups`: (tuple) the groups with the given permission
+         - `action`: (str) the name of a permission
+         - `groups`: (tuple) the groups with the given permission
         """
         assert type(groups) is tuple, ('groups is expected to be a tuple not %s' % type(groups))
         assert action in self.ACTIONS, ('%s not in %s' % (action, self.ACTIONS))
@@ -544,15 +544,15 @@ class EntitySchema(ERSchema):
 
 
 class RelationSchema(ERSchema):
-    """A relation is a named ordered link between two entities.
+    """A relation is a named and oriented link between two entities.
     A relation schema defines the possible types of both extremities.
 
     Cardinality between the two given entity's type is defined
     as a 2 characters string where each character is one of:
-     - 1 <-> 1..1
-     - ? <-> 0..1
-     - + <-> 1..n
-     - * <-> 0..n
+     - 1 <-> 1..1 <-> one and only one
+     - ? <-> 0..1 <-> zero or one
+     - + <-> 1..n <-> one or more
+     - * <-> 0..n <-> zero or more
     """
     ACTIONS = ('read', 'add', 'delete')    
     _RPROPERTIES = {'cardinality': None,
@@ -567,7 +567,7 @@ class RelationSchema(ERSchema):
                            'internationalizable': False}
     _BYTES_RPROPERTIES = {'fulltextindexed': False}
     
-    __implements__ = IRelationSchema    
+    __implements__ = IRelationSchema
     
     def __init__(self, schema=None, rdef=None, **kwargs):
         if rdef is not None:
