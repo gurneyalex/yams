@@ -206,18 +206,12 @@ class EntitySchema(ERSchema):
             
     # schema building methods #################################################
                 
-    def add_subject_relation(self, rschema, rdef=None):
+    def add_subject_relation(self, rschema):
         """register the relation schema as possible subject relation"""
-        if rdef is not None: # XXXFIXME
-            warnings.warn('rdef argument is deprecated',
-                          DeprecationWarning, stacklevel=2)
         self._subj_relations[rschema] = rschema
         
-    def add_object_relation(self, rschema, rdef=None):
+    def add_object_relation(self, rschema):
         """register the relation schema as possible object relation"""
-        if rdef is not None: # XXXFIXME
-            warnings.warn('rdef argument is deprecated',
-                          DeprecationWarning, stacklevel=2)
         self._obj_relations[rschema] = rschema
         
     def del_subject_relation(self, rtype):
