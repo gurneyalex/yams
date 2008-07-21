@@ -1,11 +1,19 @@
 """Object model and utilities to define generic Entities/Relations schemas.
 
-:organization: Logilab
-:copyright: 2004-2008 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
-:contact: http://www.logilab.fr/ -- mailto:contact@logilab.fr
-:license: General Public License version 2 - http://www.gnu.org/licenses
+:copyright:
+  2004-2008 `LOGILAB S.A. <http://www.logilab.fr>`_ (Paris, FRANCE),
+  all rights reserved.
+
+:contact:
+  http://www.logilab.org/project/yams --
+  mailto:python-projects@logilab.org
+
+:license:
+  `General Public License version 2
+  <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>`_
 """
 __docformat__ = "restructuredtext en"
+from yams.__pkginfo__ import version as __version__
 
 # set _ builtin to unicode by default, should be overriden if necessary
 import __builtin__
@@ -63,4 +71,3 @@ class FileReader(object):
 
 from yams._exceptions import *
 from yams.schema import Schema, EntitySchema, RelationSchema
-from yams.__pkginfo__ import version as __version__
