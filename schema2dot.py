@@ -22,7 +22,13 @@ CARD_MAP = {'?': '0..1',
 class SchemaDotPropsHandler:
     def node_properties(self, eschema):
         """return default DOT drawing options for an entity schema"""
-        return {'label' : eschema.type, 'shape' : "box",
+        label = ['{',eschema.type,'|']
+        from pprint import pprint
+        label.append('\l'.join(rel.type for rel in eschema.subject_relations() if rel.final and not rel.meta))
+        label.append('\l}')
+        
+        
+        return {'label' : ''.join(label), 'shape' : "record",
                 'fontname' : "Courier", 'style' : "filled"}
     
     def edge_properties(self, rschema, subjnode, objnode):
