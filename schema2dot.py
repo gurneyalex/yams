@@ -36,7 +36,7 @@ class SchemaDotPropsHandler:
         if rschema.symetric:
             kwargs = {'label': rschema.type,
                       'color': '#887788', 'style': 'dashed',
-                      'dir': 'both', 'arrowhead': 'open', 'arrowtail': 'open'}
+                      'dir': 'both', 'arrowhead': 'normal', 'arrowtail': 'normal'}
         else:
             kwargs = {'label': rschema.type,
                       'color' : 'black',  'style' : 'filled'}
@@ -48,7 +48,7 @@ class SchemaDotPropsHandler:
                 kwargs['arrowhead'] = 'diamond'
                 kwargs['arrowtail'] = 'none'
             else:
-                kwargs['arrowhead'] = 'open'
+                kwargs['arrowhead'] = 'normal'
                 kwargs['arrowtail'] = 'none'
             cards = rschema.rproperty(subjnode, objnode, 'cardinality')
             # UML like cardinalities notation, omitting 1..1
