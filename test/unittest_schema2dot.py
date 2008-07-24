@@ -25,7 +25,7 @@ class DummyDefaultHandler:
 
 schema = SchemaLoader().load([DATADIR], default_handler=DummyDefaultHandler())
 
-DOT_SOURCE = """digraph "toto" {
+DOT_SOURCE = r'''digraph "toto" {
 rankdir=BT
 ratio=compress
 charset="utf-8"
@@ -33,7 +33,7 @@ charset="utf-8"
 "Societe" [shape="record", fontname="Courier", style="filled", label="{Societe|nom\lfax\lville\ltel\lad3\lweb\lad1\lrncs\lad2\lcp}"];
 edge [taillabel="0..n", style="filled", arrowhead="normal", color="black", label="travaille", headlabel="0..n", arrowtail="none"];
 "Person" -> "Societe"
-}"""
+}'''
 
 
 class DotTC(TestCase):
@@ -42,9 +42,9 @@ class DotTC(TestCase):
         """tests dot conversion without attributes information"""
         wanted_entities = set(('Person', 'Societe'))
         skipped_entities = set(schema.entities()) - wanted_entities
-        schema2dot.schema2dot(schema, '/tmp/toto.dot', skipentities=skipped_entities)
-        generated = open('/tmp/toto.dot').read()
-        os.remove('/tmp/toto.dot')
+        schema2dot.schema2dot(schema, 'toto.dot', skipentities=skipped_entities)
+        generated = open('toto.dot').read()
+        os.remove('toto.dot')
         self.assertTextEquals(DOT_SOURCE, generated)
         
 if __name__ == '__main__':
