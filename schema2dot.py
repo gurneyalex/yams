@@ -24,7 +24,7 @@ class SchemaDotPropsHandler:
         """return default DOT drawing options for an entity schema"""
         label = ['{',eschema.type,'|']
         from pprint import pprint
-        label.append('\l'.join(rel.type for rel in eschema.subject_relations() if rel.final and not rel.meta))
+        label.append(r'\l'.join(rel.type for rel in eschema.subject_relations() if rel.final and not rel.meta))
         label.append('}')
         
         
