@@ -25,7 +25,7 @@ class SchemaDotPropsHandler:
         label = ['{',eschema.type,'|']
         from pprint import pprint
         label.append(r'\l'.join(rel.type for rel in eschema.subject_relations() if rel.final and not rel.meta))
-        label.append('}')
+        label.append(r'\l}') # trailing \l ensure alignement of the last one
         
         
         return {'label' : ''.join(label), 'shape' : "record",
