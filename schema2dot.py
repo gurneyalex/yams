@@ -56,6 +56,7 @@ class SchemaDotPropsHandler:
                 kwargs['taillabel'] = CARD_MAP[cards[1]]
             if cards[0] != '1':
                 kwargs['headlabel'] = CARD_MAP[cards[0]]
+                kwargs['decorate'] = 'true'
         return kwargs
 
 
@@ -171,7 +172,14 @@ def schema2dot(schema=None, outputfile=None, skipentities=(),
     else:
         schemaname = 'Schema'
     generator = GraphGenerator(DotBackend(schemaname, 'BT',
-                                          ratio='compress', size=size))
+                                          ratio='compress', size=size,
+                                          renderer='fdp',
+                                          additionnal_param={
+                                              'overlap':'false',
+                                              'splines':'true',
+                                              #'polylines':'true',
+                                              'sep':'0.5'
+                                          }))
     return generator.generate(visitor, prophdlr, outputfile)
 
 

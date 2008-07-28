@@ -10,7 +10,7 @@ Standards-Version: 3.7.3
 
 Package: python-yams
 Architecture: all
-Depends: ${python:Depends}, python-logilab-common (>= 0.31.0)
+Depends: ${python:Depends}, python-logilab-common (> 0.33.0)
 Conflicts: python-yams (<= 0.5.2)
 XB-Python-Version: ${python:Versions}
 Description: entity / relation schema
