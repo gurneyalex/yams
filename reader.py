@@ -129,7 +129,11 @@ class PyFileReader(FileReader):
         try:
             return self._loaded[filepath]
         except KeyError:
-            return self.exec_file(filepath)
+            try:
+                return self.exec_file(filepath)
+            except Exception, ex:
+                setattr(ex,'schema_files',filepath)
+                raise
 
     def import_erschema(self, ertype, schemamod=None, instantiate=True):
         try:
@@ -153,7 +157,8 @@ class PyFileReader(FileReader):
         flocals['defined_types'] = self.loader.defined
         execfile(filepath, flocals)
         for key in self.context:
-            del flocals[key]
+            if key in flocals:
+                del flocals[key]
         del flocals['import_schema']
         self._loaded[filepath] = attrdict(flocals)
         return self._loaded[filepath]
@@ -187,7 +192,8 @@ class SchemaLoader(object):
         try:
             return self._build_schema(name, register_base_types)
         except Exception, ex:
-            setattr(ex, 'schema_files', files)
+            if not hasattr(ex, 'schema_files'):
+                setattr(ex,'schema_files',files)
             raise ex
     
     def _instantiate_handlers(self, default_handler=None):

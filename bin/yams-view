@@ -1,9 +1,10 @@
 #!/usr/bin/python
 
 import sys
-from os.path import exists
+from os.path import exists, join, dirname
 from yams import schema2dot
 from yams.reader import SchemaLoader
+from ginco.common.schema import ErudiSchemaLoader as SchemaLoader
 from tempfile import NamedTemporaryFile
 from subprocess import Popen
 
@@ -11,21 +12,73 @@ from logilab.common.configuration import Configuration
 
 from yams.__pkginfo__ import version
 
+
+
+    
+
+
 options = [('output-file', {'type':'file', 'default': None,
              'metavar': '<file>', 'short':'o', 'help':'output image file'}),
            ('viewer', {'type': 'string', 'default':"rsvg-view", 'short': "w", 'metavar':'<cmd>',
              'help':'command use to view the generated file (empty for none)'}),
+           ('lib-dir', {'type': 'string', 'short': "L", 'metavar':'<dir>',
+             'help':'directory to look for schema dependancies'}),
           ]
 
 config = Configuration(options=options,
-    usage="yams-view [[[...] deps] deps] apps",
+    usage="yams-view [-L <lib_dir> | [[[...] deps] deps]] apps",
     version=version)
-config.load_command_line_configuration()
-dirnames = sys.argv[1:]
+dirnames = config.load_command_line_configuration()
+
+lib_dir = config['lib-dir']
+assert lib_dir is not None
+if lib_dir is not None:
+    app_dir = dirnames[-1]
+    from ginco.erudiconfig import ErudiConfiguration as ErudiConfig
+    import ginco.erudiconfig
+    print ginco.erudiconfig.__file__
+    packages = ErudiConfig.expand_packages(dirnames)
+    packages = ErudiConfig.reorder_packages(packages)
+    print packages
+    packages = [ pkg for pkg in packages if pkg != app_dir]
+elif False:
+    glob = globals().copy()
+    execfile(join(app_dir,"__pkginfo__.py"), glob)
+    #dirnames = [ join(lib_dir,dep) for dep in glob['__use__']]+dirnames
+    packages = [ dep for dep in glob['__use__']]
+
+
 for dir in dirnames:
     assert exists(dir), dir
+
+import ginco
+ginco_dir = dirname(ginco.__file__)
+
 schm_ldr = SchemaLoader()
-schema = schm_ldr.load(dirnames)
+#schm_ldr.load(join(ginco_dir,"common"))
+#schm_ldr._instantiate_handlers()
+#schm_ldr.defined = {}
+#schm_ldr.load([])
+#import ginco.common.schema
+#for schema in ("base","Bookmark","bootstrap","Card"):
+#    schm_ldr.handle_file(join(ginco_dir,"schemas",schema+".py"))
+
+class MockConfig():
+    def packages(self):
+        return packages
+    def packages_path(self):
+        return packages
+    def schemas_lib_dir(self):
+        return join(ginco_dir,"schemas")
+    #def apphome(self):
+    #    return lib_dir
+    apphome = dirnames[0]
+    def appid(self):
+        "bob"
+
+print MockConfig().packages()
+
+schema = schm_ldr.load(MockConfig())
 
 
 out, viewer = config['output-file'], config['viewer']
@@ -33,7 +86,7 @@ if out is None:
     tmp_file = NamedTemporaryFile(suffix=".svg")
     out = tmp_file.name
 schema2dot.schema2dot(schema, out, #size=size,
-    skiprels=(), skipmeta=True)
+    skiprels=("identity",), skipentities=("Person","AbstractPerson","Card","AbstractCompany","Company","Division"))
 if viewer:
     p = Popen((viewer, out))
     p.wait()
