@@ -56,7 +56,9 @@ class SchemaDotPropsHandler:
                 kwargs['taillabel'] = CARD_MAP[cards[1]]
             if cards[0] != '1':
                 kwargs['headlabel'] = CARD_MAP[cards[0]]
-                kwargs['decorate'] = 'true'
+        
+        kwargs['decorate'] = 'true'
+        kwargs['labelfloat'] = 'true'
         return kwargs
 
 
