@@ -194,7 +194,7 @@ class SchemaLoader(object):
         except Exception, ex:
             if not hasattr(ex, 'schema_files'):
                 setattr(ex,'schema_files',files)
-            raise ex
+            raise ex, None, sys.exc_info()[-1]
     
     def _instantiate_handlers(self, default_handler=None):
         self._live_handlers = {}
