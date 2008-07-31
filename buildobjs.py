@@ -271,8 +271,7 @@ class RelationType(Definition):
 
         register all relations definition, expanding wildcard if necessary
         """
-        if getattr(self, 'subject', None) or getattr(self, 'object', None):
-            assert self.subject and self.object
+        if getattr(self, 'subject', None) and getattr(self, 'object', None):
             rdef = RelationDefinition(subject=self.subject, name=self.name,
                                       object=self.object)
             _copy_attributes(self, rdef, RDEF_PROPERTIES)
