@@ -53,10 +53,10 @@ class SchemaLoaderTC(TestCase):
         self.assert_(isinstance(schema, Schema))
         self.assertEquals(schema.name, 'Test')
         self.assertListEquals(sorted(schema.entities()),
-                              ['Affaire', 'Boolean', 'Bytes', 'Company', 'Date', 'Datetest', 'Datetime',
-                               'Division', 'EPermission', 'Eetype',  'Employee', 'Float', 'Int', 'Interval',
-                               'Note', 'Password', 'Person', 'Societe', 'State', 'String', 'Time',
-                               'pkginfo'])
+              ['Affaire', 'Boolean', 'Bytes', 'Company', 'Date', 'Datetest',
+               'Datetime', 'Decimal', 'Division', 'EPermission', 'Eetype',
+               'Employee', 'Float', 'Int', 'Interval', 'Note', 'Password',
+               'Person', 'Societe', 'State', 'String', 'Time', 'pkginfo'])
         self.assertListEquals(sorted(schema.relations()),
                               ['ad1', 'ad2', 'ad3', 'adel', 'ass', 'author', 'author_email',
                                'concerne', 'copyright', 'cp',

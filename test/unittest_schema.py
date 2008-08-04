@@ -317,6 +317,7 @@ class SchemaTC(BaseSchemaTC):
         """test base schema methods
         """
         all_types = ['Affaire', 'Boolean', 'Bytes', 'Date', 'Datetime',
+                     'Decimal',
                      'Float', 'Int', 'Interval', 'Note', 'Password',
                      'Person', 'Societe', 'String', 'Time']
         types = schema.entities()
@@ -397,6 +398,7 @@ class SchemaTC(BaseSchemaTC):
         schema.rename_entity_type('Affaire', 'Workcase')
         self.assertUnorderedIterableEquals(schema._entities.keys(),
                              ['Boolean', 'Bytes', 'Date', 'Datetime', 'Float',
+                              'Decimal',
                               'Int', 'Interval', 'Note', 'Password', 'Person',
                               'Societe', 'String', 'Time', 'Workcase'])
         rconcerne = schema.rschema('concerne')
