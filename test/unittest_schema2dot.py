@@ -29,9 +29,12 @@ DOT_SOURCE = r'''digraph "toto" {
 rankdir=BT
 ratio=compress
 charset="utf-8"
-"Person" [shape="record", fontname="Courier", style="filled", label="{Person|ass\lnom\lsexe\ltel\lweb\ldatenaiss\lfax\lsalary\lpromo\ltest\ladel\ltitre\lprenom}"];
-"Societe" [shape="record", fontname="Courier", style="filled", label="{Societe|nom\lfax\lville\ltel\lad3\lweb\lad1\lrncs\lad2\lcp}"];
-edge [taillabel="0..n", style="filled", arrowhead="normal", color="black", label="travaille", headlabel="0..n", arrowtail="none"];
+splines=true
+overlap=false
+sep=0.5
+"Person" [shape="record", fontname="Courier", style="filled", label="{Person|ass\lnom\lsexe\ltel\lweb\ldatenaiss\lfax\lsalary\lpromo\ltest\ladel\ltitre\lprenom\l}"];
+"Societe" [shape="record", fontname="Courier", style="filled", label="{Societe|nom\lfax\lville\ltel\lad3\lweb\lad1\lrncs\lad2\lcp\l}"];
+edge [taillabel="0..n", style="filled", arrowhead="normal", color="grey", label="travaille", headlabel="0..n", arrowtail="none", decorate="true"];
 "Person" -> "Societe"
 }'''
 
