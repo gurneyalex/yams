@@ -8,6 +8,7 @@
 
 __docformat__ = "restructuredtext en"
 
+import decimal
 from decimal import Decimal
 
 import warnings
@@ -276,7 +277,7 @@ def check_decimal(eschema, value):
     """check value is a Decimal"""
     try:
         Decimal(value)
-    except ValueError:
+    except (TypeError, decimal.IntervalidOperation):
         return False
     return True
     
