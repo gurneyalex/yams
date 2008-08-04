@@ -11,6 +11,7 @@ import warnings
 from copy import deepcopy
 
 from mx.DateTime import today, now, DateTimeFrom, DateFrom, TimeFrom
+from decimal import Decimal
 
 from logilab.common.decorators import cached
 from logilab.common.compat import sorted
@@ -438,6 +439,9 @@ class EntitySchema(ERSchema):
             elif attrtype == 'Float':
                 if not isinstance(default, float):
                     default = float(default)
+            elif attrtype == 'Decimal':
+                if not isinstance(default, Decimal):
+                    default = Decimal(default)
             elif attrtype in ('Date', 'Datetime', 'Time'):
                 try:
                     default = KEYWORD_MAP[default.upper()]()

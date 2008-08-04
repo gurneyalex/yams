@@ -21,7 +21,7 @@ __builtin__._ = unicode
 
 from logilab.common.compat import set
     
-BASE_TYPES = set(('String', 'Int', 'Float', 'Boolean', 'Date',
+BASE_TYPES = set(('String', 'Int', 'Float', 'Boolean', 'Date', 'Decimal',
                   'Time', 'Datetime', 'Interval', 'Password', 'Bytes'))
 
 from logilab.common import nullobject

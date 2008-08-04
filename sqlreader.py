@@ -72,10 +72,12 @@ class EsqlFileReader(FileReader):
         int...)
         """
         sqltype = sqltype.capitalize()
-        if sqltype in ('Integer', 'Numeric'):
+        if sqltype in ('Integer',):
             return 'Int', [], 0
         if sqltype == 'Float':
             return 'Float', [], 0
+        if sqltype == ('Numeric', 'Decimal'):
+            return 'Decimal', [], 0
         elif sqltype in ('Date', 'Time', 'Datetime', 'Boolean'):
             return sqltype, [], 0
         elif sqltype == 'Password':
