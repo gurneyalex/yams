@@ -58,7 +58,8 @@ class SchemaDotPropsHandler:
                 kwargs['headlabel'] = CARD_MAP[cards[0]]
         
         kwargs['decorate'] = 'true'
-        kwargs['labelfloat'] = 'true'
+        kwargs['color'] = 'grey'
+        #kwargs['labelfloat'] = 'true'
         return kwargs
 
 
