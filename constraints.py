@@ -8,9 +8,12 @@
 
 __docformat__ = "restructuredtext en"
 
+from decimal import Decimal
+
 import warnings
 import re
 from StringIO import StringIO
+
 
 from yams.interfaces import IConstraint, IVocabularyConstraint
         
@@ -268,6 +271,14 @@ def check_float(eschema, value):
     except ValueError:
         return False
     return True
+
+def check_decimal(eschema, value):
+    """check value is a Decimal"""
+    try:
+        Decimal(value)
+    except ValueError:
+        return False
+    return True
     
 def check_boolean(eschema, value):
     """check value is a boolean"""
@@ -288,6 +299,7 @@ BASE_CHECKERS = {
     'String' :   check_string,
     'Int' :      check_int,
     'Float' :    check_float,
+    'Decimal' :  check_decimal,
     'Boolean' :  check_boolean,
     'Password' : check_password,
     'Bytes' :    check_file,
@@ -297,4 +309,5 @@ BASE_CONVERTERS = {
     'Int' :      int,
     'Float' :    float,
     'Boolean' :  bool,
+    'Decimal' : Decimal,
     }
