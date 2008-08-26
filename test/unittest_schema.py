@@ -171,6 +171,16 @@ class EntitySchemaTC(BaseSchemaTC):
         self.failUnlessEqual(d[copy(eperson)], 'Person')
         self.failUnlessEqual(d[copy(enote)], 'Note')
         
+    def test_deepcopy_with_regexp_constraints(self):
+        from copy import deepcopy
+        eaffaire.set_rproperty('ref', 'constraints', [RegexpConstraint(r'[A-Z]+\d+')])
+        rgx_cstr, = eaffaire.constraints('ref')
+        eaffaire2 = deepcopy(schema).eschema('Affaire')
+        rgx_cstr2, = eaffaire2.constraints('ref')
+        self.assertEquals(rgx_cstr2.regexp, rgx_cstr.regexp)
+        self.assertEquals(rgx_cstr2.flags, rgx_cstr.flags)
+        self.assertEquals(rgx_cstr2._rgx, rgx_cstr._rgx)
+
     def test_deepcopy(self):
         from copy import deepcopy
         global schema

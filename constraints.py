@@ -132,6 +132,8 @@ class RegexpConstraint(BaseConstraint):
         return cls(regexp, int(flags))
     deserialize = classmethod(deserialize)
 
+    def __deepcopy__(self, memo):
+        return RegexpConstraint(self.regexp, self.flags)
     
 class BoundConstraint(BaseConstraint):
     """the int/float bound constraint :
