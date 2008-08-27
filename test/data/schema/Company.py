@@ -1,11 +1,20 @@
 class Company(EntityType):
     name = String()
 
-class Division(EntityType):
-    name = String()
+class Subcompany(Company):
+    __specializes_schema__ = True
+    subcompany_of = SubjectRelation('Company')
+
+class Division(Company):
+    __specializes_schema__ = True
+    division_of = SubjectRelation('Company')
+
+class Subdivision(Division):
+    __specializes_schema__ = True
+    subdivision_of = SubjectRelation('Company')
 
 class Employee(EntityType):
-    works_for = SubjectRelation(('Company', 'Division'))
+    works_for = SubjectRelation('Company')
 
 class require_permission(RelationType):
     """link a permission to the entity. This permission should be used in the
@@ -21,7 +30,7 @@ class require_permission(RelationType):
 
 class missing_require_permission(RelationDefinition):
     name = 'require_permission'
-    subject = ('Company', 'Division')
+    subject = 'Company'
     object = 'EPermission'
 
 class EPermission(MetaEntityType):

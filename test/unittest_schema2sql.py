@@ -112,6 +112,14 @@ CREATE TABLE State(
 );
 CREATE INDEX state_name_idx ON State(name);
 
+CREATE TABLE Subcompany(
+ name text
+);
+
+CREATE TABLE Subdivision(
+ name text
+);
+
 CREATE TABLE pkginfo(
  modname varchar(30) DEFAULT 'yo' NOT NULL,
  version varchar(10) NOT NULL,
@@ -135,6 +143,15 @@ CREATE TABLE concerne_relation (
 
 CREATE INDEX concerne_relation_from_idx ON concerne_relation(eid_from);
 CREATE INDEX concerne_relation_to_idx ON concerne_relation(eid_to);
+
+CREATE TABLE division_of_relation (
+  eid_from INTEGER NOT NULL,
+  eid_to INTEGER NOT NULL,
+  CONSTRAINT division_of_relation_p_key PRIMARY KEY(eid_from, eid_to)
+);
+
+CREATE INDEX division_of_relation_from_idx ON division_of_relation(eid_from);
+CREATE INDEX division_of_relation_to_idx ON division_of_relation(eid_to);
 
 CREATE TABLE evaluee_relation (
   eid_from INTEGER NOT NULL,
@@ -180,6 +197,24 @@ CREATE TABLE state_of_relation (
 
 CREATE INDEX state_of_relation_from_idx ON state_of_relation(eid_from);
 CREATE INDEX state_of_relation_to_idx ON state_of_relation(eid_to);
+
+CREATE TABLE subcompany_of_relation (
+  eid_from INTEGER NOT NULL,
+  eid_to INTEGER NOT NULL,
+  CONSTRAINT subcompany_of_relation_p_key PRIMARY KEY(eid_from, eid_to)
+);
+
+CREATE INDEX subcompany_of_relation_from_idx ON subcompany_of_relation(eid_from);
+CREATE INDEX subcompany_of_relation_to_idx ON subcompany_of_relation(eid_to);
+
+CREATE TABLE subdivision_of_relation (
+  eid_from INTEGER NOT NULL,
+  eid_to INTEGER NOT NULL,
+  CONSTRAINT subdivision_of_relation_p_key PRIMARY KEY(eid_from, eid_to)
+);
+
+CREATE INDEX subdivision_of_relation_from_idx ON subdivision_of_relation(eid_from);
+CREATE INDEX subdivision_of_relation_to_idx ON subdivision_of_relation(eid_to);
 
 CREATE TABLE subj_wildcard_relation (
   eid_from INTEGER NOT NULL,
