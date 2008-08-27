@@ -126,6 +126,12 @@ class metadefinition(type):
                 # to avoid conflicts with instance's potential attributes
                 del classdict[rname]
                 relations[rname] = rdef
+        if '__specializes_schema__' in classdict:
+            specialized = bases[0]
+            classdict['__specializes__'] = specialized.__name__
+            if '__specialized_by__' not in specialized.__dict__:
+                specialized.__specialized_by__ = []
+            specialized.__specialized_by__.append(name)
         defclass = super(metadefinition, mcs).__new__(mcs, name, bases, classdict)
         for rname, rdef in relations.items():
             _add_relation(defclass.__relations__, rdef, rname)
@@ -135,8 +141,8 @@ class metadefinition(type):
         # sort relations by creation rank
         defclass.__relations__ = sorted(rels, key=lambda r: r.creation_rank)
         return defclass
-    
         
+
 class EntityType(Definition):
     # FIXME reader magic forbids to define a docstring...
     #"""an entity has attributes and can be linked to other entities by
@@ -160,6 +166,11 @@ class EntityType(Definition):
         _copy_attributes(attrdict(kwargs), self, ETYPE_PROPERTIES)
         # if not hasattr(self, 'relations'):
         self.relations = list(self.__relations__)
+        self.specialized_type = self.__class__.__dict__.get('__specializes__')
+
+    @property
+    def specialized_by(self):
+        return self.__class__.__dict__.get('__specialized_by__', [])
 
     def __str__(self):
         return 'entity type %r' % self.name
@@ -239,8 +250,7 @@ class EntityType(Definition):
         for rdef in self.relations[:]:
             if rdef.name == name:
                 yield rdef
-
-    
+                    
 class RelationType(Definition):
     symetric = MARKER
     inlined = MARKER

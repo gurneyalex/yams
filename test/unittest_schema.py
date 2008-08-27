@@ -8,6 +8,7 @@ from tempfile import mktemp
 from yams.buildobjs import register_base_types, EntityType, RelationType, RelationDefinition
 from yams.schema import *
 from yams.constraints import *
+from yams.reader import SchemaLoader
 
 
 # build a dummy schema ########################################################
@@ -191,6 +192,11 @@ class EntitySchemaTC(BaseSchemaTC):
         self.failUnlessEqual(eperson.subject_relations(), schema['Person'].subject_relations())
         self.failUnlessEqual(eperson.object_relations(), schema['Person'].object_relations())
 
+    def test_deepcopy_specialization(self):
+        schema2 = deepcopy(SchemaLoader().load([self.datadir], 'Test'))
+        edivision = schema2.eschema('Division')
+        self.assertEquals(edivision.specializes(), 'Company')
+        self.assertEquals(edivision.specialized_by(), ['Subdivision'])
         
     def test_is_final(self):        
         self.assertEquals(eperson.is_final(), False)
@@ -248,6 +254,7 @@ class EntitySchemaTC(BaseSchemaTC):
         schema definition"""
         self.assertEquals(eperson.destination('nom'), 'String')
         self.assertRaises(AssertionError, eperson.destination, 'travaille')
+        
         
 class RelationSchemaTC(BaseSchemaTC):
 

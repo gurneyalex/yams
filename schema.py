@@ -195,7 +195,12 @@ class EntitySchema(ERSchema):
             # quick access to bounded relation schemas
             self._subj_relations = {}
             self._obj_relations = {}
-        
+            self._specialized_type = rdef.specialized_type
+            self._specialized_by = rdef.specialized_by
+        else:
+            self._specialized_type = None
+            self._specialized_by = []
+            
     def __repr__(self):
         return '<%s %s - %s>' % (self.type,
                                  [rs.type for rs in self.subject_relations()],
@@ -535,7 +540,24 @@ class EntitySchema(ERSchema):
             return self.field_converters[self](value)
         except KeyError:
             return value
-    
+
+    def specializes(self):
+        if self._specialized_type:
+            return self.schema.eschema(self._specialized_type)
+        return None
+
+    def ancestors(self):
+        specializes = self.specializes()
+        ancestors = []
+        while specializes:
+            ancestors.append(specializes)
+            specializes = specializes.specializes()
+        return ancestors
+
+    def specialized_by(self):
+        eschema = self.schema.eschema
+        return [eschema(etype) for etype in self._specialized_by]
+        
     # bw compat
     subject_relation_schema = subject_relation
     object_relation_schema = object_relation
@@ -556,7 +578,8 @@ class RelationSchema(ERSchema):
     _RPROPERTIES = {'cardinality': None,
                     'constraints': (),
                     'order': 9999,
-                    'description': ''}
+                    'description': '',
+                    'infered': False,}
     _NONFINAL_RPROPERTIES = {'composite': None}
     _FINAL_RPROPERTIES = {'default': None,
                           'uid': False,
@@ -960,7 +983,18 @@ class Schema(object):
                 self.del_relation_def(subjtype, rschema, eschema)
         del self._entities[etype]
         
-            
+    def infer_specialization_rules(self):
+        # XXX
+        class XXXRelationDef(object):
+            infered = True
+        for rschema in self.relations():
+            for subject, object in rschema.iter_rdefs():
+                subjeschemas = subject.specialized_by()
+                objeschemas = object.specialized_by()
+                for subjschema in subjeschemas:
+                    for objschema in objeschemas:
+                        rschema.update(subjschema, objschema, XXXRelationDef)
+    
     # ISchema interface #######################################################
     
     def entities(self):
