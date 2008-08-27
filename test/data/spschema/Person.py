@@ -12,10 +12,6 @@ class Company(EntityType):
 class SubCompany(Company):
     __specializes_schema__ = True
 
-# This class doesn't extend the schema
-class SubSubCompany(SubCompany):
-    pass 
-    
 class Division(Company):
     __specializes_schema__ = True
     division_of = SubjectRelation('Company')
@@ -23,3 +19,7 @@ class Division(Company):
 class SubDivision(Division):
     __specializes_schema__ = True
 
+# This class doesn't extend the schema
+class SubSubDivision(SubDivision):
+    pass 
+    

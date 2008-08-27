@@ -105,25 +105,6 @@ class SchemaLoaderTC(TestCase):
         self.assertListEquals(sorted(eschema.object_relations()),
                               ['final', 'meta', 'test'])
 
-    def test_schema_specialization(self):
-        # company
-        company = schema.eschema('Company')
-        self.assertEquals(company.specializes(), None)
-        self.assertEquals(sorted(x.type for x in company.specialized_by()),
-                          ['Division', 'Subcompany'])
-        self.assertEquals([x.type for x in company.ancestors()], [])
-        # division
-        division = schema.eschema('Division')
-        self.assertEquals(division.specializes().type, 'Company')
-        self.assertEquals([x.type for x in division.specialized_by()], ['Subdivision'])
-        self.assertEquals([x.type for x in division.ancestors()], ['Company'])
-        # subdivision
-        subdivision = schema.eschema('Subdivision')
-        self.assertEquals(subdivision.specializes().type, 'Division')
-        self.assertEquals([x.type for x in subdivision.specialized_by()], [])
-        self.assertEquals(sorted(x.type for x in subdivision.ancestors()),
-                          ['Company', 'Division'])
-        
     # test base entity type's subject relation properties #####################
 
     def test_indexed(self):
