@@ -1004,7 +1004,23 @@ class Schema(object):
                         if subjobj in rschema.rdefs():
                             continue
                         rschema.update(subjschema, objschema, XXXRelationDef)
-    
+
+    def remove_infered_definitions(self):
+	"""remove any infered definitions added by
+	`infer_specialization_rules`
+	"""
+	for rschema in self.relations():
+	    if rschema.is_final():
+		continue
+	    for subject, object in rschema.rdefs():
+		if rschema.rproperty(subject, object, 'infered'):
+		    self.del_relation_def(subject, rschema, object)
+	
+    def rebuild_infered_relations(self):
+	"""remove any infered definitions and rebuild them"""
+	self.remove_infered_definitions()
+	self.infer_specialization_rules()
+		    
     # ISchema interface #######################################################
     
     def entities(self):
