@@ -15,7 +15,7 @@ class SpecializationTC(TestCase):
         SchemaLoader.main_schema_directory = 'schema'
 
     def test_schema_specialization(self):
-	schema = self.schema
+        schema = self.schema
         # company
         company = schema.eschema('Company')
         self.assertEquals(company.specializes(), None)
@@ -25,12 +25,12 @@ class SpecializationTC(TestCase):
         # subdivision
         subdivision = schema.eschema('SubDivision')
         self.assertEquals(subdivision.specializes().type, 'Division')
-	# subsubdivision
-	subsubdivision = schema.eschema('SubSubDivision')
-	self.assertEquals(subsubdivision.specializes(), None)
+        # subsubdivision
+        subsubdivision = schema.eschema('SubSubDivision')
+        self.assertEquals(subsubdivision.specializes(), None)
 
     def test_ancestors(self):
-	schema = self.schema
+        schema = self.schema
         # company
         company = schema.eschema('Company')
         self.assertEquals(company.ancestors(), [])
@@ -40,12 +40,12 @@ class SpecializationTC(TestCase):
         # subdivision
         subdivision = schema.eschema('SubDivision')
         self.assertEquals(sorted(subdivision.ancestors()), ['Company', 'Division'])
-	# subsubdivision
-	subsubdivision = schema.eschema('SubSubDivision')
-	self.assertEquals(subsubdivision.ancestors(), [])
-	
+        # subsubdivision
+        subsubdivision = schema.eschema('SubSubDivision')
+        self.assertEquals(subsubdivision.ancestors(), [])
+        
     def test_specialized_by(self):
-	schema = self.schema
+        schema = self.schema
         # company
         company = schema.eschema('Company')
         self.assertEquals(sorted(company.specialized_by(False)), ['Division', 'SubCompany'])
@@ -57,9 +57,9 @@ class SpecializationTC(TestCase):
         # subdivision
         subdivision = schema.eschema('SubDivision')
         self.assertEquals(sorted(subdivision.specialized_by(False)), [])
-	# subsubdivision
-	subsubdivision = schema.eschema('SubSubDivision')
-	self.assertEquals(subsubdivision.specialized_by(False), [])
+        # subsubdivision
+        subsubdivision = schema.eschema('SubSubDivision')
+        self.assertEquals(subsubdivision.specialized_by(False), [])
         
     def test_relations_infered(self):
         entities = [str(e) for e in self.schema.entities() if not e.is_final()]
@@ -101,7 +101,7 @@ class SpecializationTC(TestCase):
         self.assertEquals(len(set(expected) - done), 0, 'missing %s' % (set(expected) - done))
 
     def test_remove_infered_relations(self):
-	self.schema.remove_infered_definitions()
+        self.schema.remove_infered_definitions()
         relations = sorted([r for r in self.schema.relations() if not r.final])
         self.assertListEquals(relations, ['division_of', 'knows', 'works_for'])
         expected = {('Person', 'Person'): False,
@@ -128,7 +128,7 @@ class SpecializationTC(TestCase):
             self.assertEquals(wrschema.rproperty(subject, object, 'infered'),
                               expected[subjobj])
         self.assertEquals(len(set(expected) - done), 0, 'missing %s' % (set(expected) - done))
-	    
+            
 
 if __name__ == '__main__':
     unittest_main()
