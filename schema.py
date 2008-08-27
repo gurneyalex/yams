@@ -554,9 +554,13 @@ class EntitySchema(ERSchema):
             specializes = specializes.specializes()
         return ancestors
 
-    def specialized_by(self):
+    def specialized_by(self, recursive=True):
         eschema = self.schema.eschema
-        return [eschema(etype) for etype in self._specialized_by]
+        subschemas = [eschema(etype) for etype in self._specialized_by]
+        if recursive:
+            for subschema in subschemas[:]:
+                subschemas.extend(subschema.specialized_by(recursive=True))
+        return subschemas
         
     # bw compat
     subject_relation_schema = subject_relation
@@ -985,14 +989,20 @@ class Schema(object):
         
     def infer_specialization_rules(self):
         # XXX
-        class XXXRelationDef(object):
+        class XXXRelationDef:
             infered = True
         for rschema in self.relations():
-            for subject, object in rschema.iter_rdefs():
-                subjeschemas = subject.specialized_by()
-                objeschemas = object.specialized_by()
+            if rschema.is_final():
+                continue
+            for subject, object in rschema.rdefs():
+                subjeschemas = [subject] + subject.specialized_by(recursive=True)
+                objeschemas = [object] + object.specialized_by(recursive=True)
                 for subjschema in subjeschemas:
                     for objschema in objeschemas:
+                        subjobj = (subjschema, objschema)
+                        # don't try to add an already defined relation
+                        if subjobj in rschema.rdefs():
+                            continue
                         rschema.update(subjschema, objschema, XXXRelationDef)
     
     # ISchema interface #######################################################

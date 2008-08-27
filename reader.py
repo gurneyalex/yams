@@ -232,6 +232,7 @@ class SchemaLoader(object):
         # set permissions on entities and relations
         for erschema in schema.entities() + schema.relations():
             erschema.set_default_groups()
+        schema.infer_specialization_rules()
         return schema
 
     # has to be overideable sometimes (usually for test purpose)
