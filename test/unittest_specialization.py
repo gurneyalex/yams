@@ -100,6 +100,35 @@ class SpecializationTC(TestCase):
                               expected[subjobj])
         self.assertEquals(len(set(expected) - done), 0, 'missing %s' % (set(expected) - done))
 
+    def test_remove_infered_relations(self):
+	self.schema.remove_infered_definitions()
+        relations = sorted([r for r in self.schema.relations() if not r.final])
+        self.assertListEquals(relations, ['division_of', 'knows', 'works_for'])
+        expected = {('Person', 'Person'): False,
+                    # as Student extends Person, it already has the `knows` relation
+                    ('Student', 'Person'): False,
+                    }
+        done = set()
+        drschema, krschema, wrschema = relations
+        for subjobj in krschema.rdefs():
+            subject, object = subjobj
+            done.add(subjobj)
+            self.failUnless(subjobj in expected)
+            self.assertEquals(krschema.rproperty(subject, object, 'infered'),
+                              expected[subjobj])
+        self.assertEquals(len(set(expected) - done), 0, 'missing %s' % (set(expected) - done))
+        expected = {('Person', 'Company'): False,
+                    ('Student', 'Company'): False,
+                   }
+        done = set()
+        for subjobj in wrschema.rdefs():
+            subject, object = subjobj
+            done.add(subjobj)
+            self.failUnless(subjobj in expected)
+            self.assertEquals(wrschema.rproperty(subject, object, 'infered'),
+                              expected[subjobj])
+        self.assertEquals(len(set(expected) - done), 0, 'missing %s' % (set(expected) - done))
+	    
 
 if __name__ == '__main__':
     unittest_main()
