@@ -283,11 +283,9 @@ class RelationSchemaTC(BaseSchemaTC):
         self.assert_(repr(rnom))
 
     def test_star_types(self):
-        types = rconcerne.subjects()
-        types.sort()
+        types = sorted(rconcerne.subjects())
         self.assertEquals(types, ['Affaire', 'Person'])
-        types = rconcerne.objects()
-        types.sort()
+        types = sorted(rconcerne.objects())
         self.assertEquals(types, ['Affaire', 'Societe'])
         
     def test_raise_update(self):
