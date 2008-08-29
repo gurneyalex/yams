@@ -805,9 +805,9 @@ class RelationSchema(ERSchema):
         :raise `KeyError`: if etype is not a subject entity type.
         """
         if etype is None:
-            return self._subj_schemas.keys()
+            return tuple(self._subj_schemas.keys())
         try:
-            return self._obj_schemas[etype]
+            return tuple(self._obj_schemas[etype])
         except KeyError:
             raise KeyError("%s don't have %s as object" % (self, etype))
     
@@ -820,9 +820,9 @@ class RelationSchema(ERSchema):
         :raise `KeyError`: if etype is not an object entity type.
         """
         if etype is None:
-            return self._obj_schemas.keys()
+            return tuple(self._obj_schemas.keys())
         try:
-            return self._subj_schemas[etype]
+            return tuple(self._subj_schemas[etype])
         except KeyError:
             raise KeyError("%s don't have %s as subject" % (self, etype))
     
