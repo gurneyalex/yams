@@ -389,7 +389,7 @@ class EntitySchema(ERSchema):
                 return rschema
     
     def indexable_attributes(self):
-        """return the (name, role) of relations to index"""
+        """return the relation schema of attribtues to index"""
         assert not self.is_final()
         for rschema in self.subject_relations():
             if rschema.is_final():
