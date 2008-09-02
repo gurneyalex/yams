@@ -295,6 +295,7 @@ def yes(*args, **kwargs):
     """dunno how to check"""
     return True
 
+
 BASE_CHECKERS = {
     'Date' :     yes,
     'Time' :     yes,
@@ -312,5 +313,28 @@ BASE_CONVERTERS = {
     'Int' :      int,
     'Float' :    float,
     'Boolean' :  bool,
-    'Decimal' : Decimal,
+    'Decimal' :  Decimal,
     }
+
+def patch_sqlite_decimal():
+    """patch Decimal checker and converter to bipass SQLITE Bug
+    (SUM of Decimal return float in SQLITE)"""
+    def convert_decimal(value):
+        # XXX issue a warning
+        if isinstance(value, float):
+            value = str(value)
+        return Decimal(value)
+    def check_decimal(eschema, value):
+        """check value is a Decimal"""
+        try:
+            if isinstance(value, float):
+                return True
+            Decimal(value)
+        except (TypeError, decimal.InvalidOperation):
+            return False
+        return True
+
+    global BASE_CONVERTERS
+    BASE_CONVERTERS['Decimal'] = convert_decimal
+    global BASE_CHECKERS
+    BASE_CHECKERS["Decimal"] = check_decimal
