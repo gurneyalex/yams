@@ -34,9 +34,9 @@ overlap=false
 sep=0.5
 "Person" [shape="record", fontname="Courier", style="filled", label="{Person|ass\lnom\lsexe\ltel\lweb\ldatenaiss\lfax\lsalary\lpromo\ltest\ladel\ltitre\lprenom\l}"];
 "Societe" [shape="record", fontname="Courier", style="filled", label="{Societe|nom\lfax\lville\ltel\lad3\lweb\lad1\lrncs\lad2\lcp\l}"];
-edge [taillabel="0..n", style="filled", arrowhead="normal", color="grey", label="travaille", headlabel="0..n", arrowtail="none", decorate="true"];
-"Person" -> "Societe"
-}'''
+"Person" -> "Societe" edge [taillabel="0..n", style="filled", arrowhead="normal", color="grey", label="travaille", headlabel="0..n", arrowtail="none", decorate="true"];
+}
+'''
 
 
 class DotTC(TestCase):
