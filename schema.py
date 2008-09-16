@@ -389,7 +389,7 @@ class EntitySchema(ERSchema):
                 return rschema
     
     def indexable_attributes(self):
-        """return the (name, role) of relations to index"""
+        """return the relation schema of attribtues to index"""
         assert not self.is_final()
         for rschema in self.subject_relations():
             if rschema.is_final():
@@ -672,17 +672,19 @@ class RelationSchema(ERSchema):
         if not subjectschema in subjtypes:
             subjtypes.append(subjectschema)
     
-    def del_relation_def(self, subjschema, objschema):
+    def del_relation_def(self, subjschema, objschema, _recursing=False):
         try:
             self._subj_schemas[subjschema].remove(objschema)
             if len(self._subj_schemas[subjschema]) == 0:
                 del self._subj_schemas[subjschema]
+                subjschema.del_subject_relation(self)
         except (ValueError, KeyError):
             pass
         try:
             self._obj_schemas[objschema].remove(subjschema)
             if len(self._obj_schemas[objschema]) == 0:
                 del self._obj_schemas[objschema]
+                objschema.del_object_relation(self)
         except (ValueError, KeyError):
             pass
         try:
@@ -690,8 +692,8 @@ class RelationSchema(ERSchema):
         except KeyError:
             pass
         try:
-            if self.symetric and subjschema != objschema:
-                del self._rproperties[(objschema, subjschema)]
+            if self.symetric and subjschema != objschema and not _recursing:
+                self.del_relation_def(objschema, subjschema, True)
         except KeyError:
             pass
         if not self._obj_schemas or not self._subj_schemas:
@@ -805,9 +807,9 @@ class RelationSchema(ERSchema):
         :raise `KeyError`: if etype is not a subject entity type.
         """
         if etype is None:
-            return self._subj_schemas.keys()
+            return tuple(self._subj_schemas.keys())
         try:
-            return self._obj_schemas[etype]
+            return tuple(self._obj_schemas[etype])
         except KeyError:
             raise KeyError("%s don't have %s as object" % (self, etype))
     
@@ -820,9 +822,9 @@ class RelationSchema(ERSchema):
         :raise `KeyError`: if etype is not an object entity type.
         """
         if etype is None:
-            return self._obj_schemas.keys()
+            return tuple(self._obj_schemas.keys())
         try:
-            return self._subj_schemas[etype]
+            return tuple(self._subj_schemas[etype])
         except KeyError:
             raise KeyError("%s don't have %s as subject" % (self, etype))
     
@@ -961,11 +963,6 @@ class Schema(object):
         subjschema = self.eschema(subjtype)
         objschema = self.eschema(objtype)
         rschema = self.rschema(rtype)
-        subjschema.del_subject_relation(rtype)
-        if not rschema.symetric:
-            objschema.del_object_relation(rtype)
-        else:
-            objschema.del_subject_relation(rtype)
         if rschema.del_relation_def(subjschema, objschema):
             del self._relations[rtype]
             
