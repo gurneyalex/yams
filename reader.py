@@ -184,7 +184,7 @@ class SchemaLoader(object):
     
     def load(self, directories, name=None, default_handler=None,
              register_base_types=True):
-        """return a schema from the schema definition readen from <directory>
+        """return a schema from the schema definition read from <directory>
         """
         self.defined = {}
         self._instantiate_handlers(default_handler)

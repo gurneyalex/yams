@@ -47,7 +47,7 @@ class SchemaLoaderTC(TestCase):
         files = SchemaLoader().include_schema_files('pkginfo', osp.join(DATADIR, 'schema'))
         self.assertEquals(files, [osp.join(DATADIR, 'schema', 'pkginfo.esql')])
 
-    # test load_schema readen entity and relation types #######################
+    # test load_schema read entity and relation types #######################
     
     def test_load_schema(self):
         self.assert_(isinstance(schema, Schema))
