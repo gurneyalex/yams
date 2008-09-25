@@ -1,6 +1,9 @@
 ChangeLog for yams 
 ------------------
 
+2008-09-24  --  0.20.0
+    * support for inheritance
+	
 2008-08-07  --  0.19.0
     * add attributs to dots view
 

@@ -1,3 +1,9 @@
+yams (0.20.0-1) unstable; urgency=low
+
+  * new upstream release
+
+ -- Adrien Di Mascio <Adrien.DiMascio@logilab.fr>  Wed, 24 Sep 2008 10:44:29 +0200
+
 yams (0.19.0-1) unstable; urgency=low
 
   * new upstream release
