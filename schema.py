@@ -189,6 +189,10 @@ class EntitySchema(ERSchema):
     field_checkers = BASE_CHECKERS
     field_converters = BASE_CONVERTERS
 
+    # XXX set default values for those attributes on the class level since
+    # they may be missing from schemas obtained by pyro
+    _specialized_type = None
+    _specialized_by = []
     def __init__(self, schema=None, rdef=None, *args, **kwargs):
         super(EntitySchema, self).__init__(schema, rdef, *args, **kwargs)
         if rdef is not None:
