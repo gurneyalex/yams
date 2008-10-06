@@ -519,7 +519,8 @@ class EntitySchema(ERSchema):
                     errors[rschema.type] = _('required attribute')
                 continue
             if not aschema.check_value(value):
-                errors[rschema.type] = _('incorrect value (%r) for type "%s"') % (value, _(aschema.type))
+                errors[rschema.type] = _('incorrect value (%(value)s) for type "%(type)s"') %
+                {'value':value, 'type': _(aschema.type)})
                 if isinstance(value, str):
                     errors[rschema.type] = '%s; you might want to try unicode'  % errors[rschema.type]
                 continue
@@ -949,7 +950,7 @@ class Schema(object):
         try:
             rschema = self.rschema(rtype)
         except KeyError, ex:
-            msg = 'using unknown relation type %s' % rtype
+            msg = 'using unknown relation type in %s' % rdef
             raise BadSchemaDefinition(msg)
         try:
             subjectschema = self.eschema(rdef.subject)
