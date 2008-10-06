@@ -519,8 +519,8 @@ class EntitySchema(ERSchema):
                     errors[rschema.type] = _('required attribute')
                 continue
             if not aschema.check_value(value):
-                errors[rschema.type] = _('incorrect value (%(value)s) for type "%(type)s"') %
-                {'value':value, 'type': _(aschema.type)})
+                errors[rschema.type] = _('incorrect value (%(value)s) for type "%(type)s"') % {
+                    'value':value, 'type': _(aschema.type)}
                 if isinstance(value, str):
                     errors[rschema.type] = '%s; you might want to try unicode'  % errors[rschema.type]
                 continue
