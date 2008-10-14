@@ -19,15 +19,16 @@ CARD_MAP = {'?': '0..1',
             '*': '0..n',
             '+': '1..n'}
 
-class SchemaDotPropsHandler:
+class SchemaDotPropsHandler(object):
+    def display_attr(self, rschema):
+        return not rschema.meta
+    
     def node_properties(self, eschema):
         """return default DOT drawing options for an entity schema"""
         label = ['{',eschema.type,'|']
-        from pprint import pprint
-        label.append(r'\l'.join(rel.type for rel in eschema.subject_relations() if rel.final and not rel.meta))
+        label.append(r'\l'.join(rel.type for rel in eschema.subject_relations()
+                                if rel.final and self.display_attr(rel)))
         label.append(r'\l}') # trailing \l ensure alignement of the last one
-        
-        
         return {'label' : ''.join(label), 'shape' : "record",
                 'fontname' : "Courier", 'style' : "filled"}
     
@@ -63,7 +64,7 @@ class SchemaDotPropsHandler:
         return kwargs
 
 
-class SchemaVisitor:
+class SchemaVisitor(object):
     def __init__(self, skipmeta=True):
         self._done = set()
         self.skipmeta = skipmeta
