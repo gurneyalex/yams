@@ -242,6 +242,7 @@ class EntityType(Definition):
     def remove_relation(self, name):
         for rdef in self.get_relations(name):
             self.relations.remove(rdef)
+            self.__relations__.remove(rdef)
             
     def get_relations(self, name):
         """get relation definitions by name (may have multiple definitions with
