@@ -177,12 +177,12 @@ def schema2dot(schema=None, outputfile=None, skipentities=(),
         schemaname = 'Schema'
     generator = GraphGenerator(DotBackend(schemaname, 'BT',
                                           ratio='compress', size=size,
-                                          renderer='fdp',
+                                          renderer='dot',
                                           additionnal_param={
                                               'overlap':'false',
                                               'splines':'true',
                                               #'polylines':'true',
-                                              'sep':'0.5'
+                                              'sep':'0.2'
                                           }))
     return generator.generate(visitor, prophdlr, outputfile)
 
