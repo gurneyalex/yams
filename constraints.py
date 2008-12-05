@@ -206,7 +206,6 @@ class IntervalBoundConstraint(BaseConstraint):
         minvalue, maxvalue = value.split(';')
         return cls(eval(minvalue), eval(maxvalue))
     deserialize = classmethod(deserialize)
-
         
 
 class StaticVocabularyConstraint(BaseConstraint):
@@ -229,7 +228,13 @@ class StaticVocabularyConstraint(BaseConstraint):
     
     def serialize(self):
         """serialize possible values as a csv list of evaluable strings"""
-        return u', '.join([repr(unicode(word)) for word in self.vocabulary()])
+        try:
+            sample = iter(self.vocabulary()).next()
+        except:
+            sample = unicode()
+        if not isinstance(sample, basestring):
+            return u', '.join(repr(word) for word in self.vocabulary())
+        return u', '.join(repr(unicode(word)) for word in self.vocabulary())
     
     def deserialize(cls, value):
         """deserialize possible values from a csv list of evaluable strings"""
