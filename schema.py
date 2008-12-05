@@ -272,13 +272,22 @@ class EntitySchema(ERSchema):
     def objrproperty(self, rschema, prop):
         return rschema.rproperty(rschema.subjects(self.type)[0], self.type, prop)
 
-    def is_subobject(self):
-        """return True if this entity type is contained by another"""
+    def is_subobject(self, strict=False):
+        """return True if this entity type is contained by another. If strict,
+        return True if this entity type *must* be contained by another.
+        """
         for rschema in self.object_relations():
             if self.objrproperty(rschema, 'composite') == 'subject':
-                return True
+                if not strict:
+                    return True
+                if self.objrproperty(rschema, 'cardinality')[1] in '1+':
+                    return True
         for rschema in self.subject_relations():
             if self.subjrproperty(rschema, 'composite') == 'object':
+                if not strict:
+                    return True
+                if self.subjrproperty(rschema, 'cardinality')[0] in '1+':
+                    return True
                 return True
         return False
     
