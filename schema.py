@@ -922,7 +922,7 @@ class Schema(object):
         :return: the newly created entity schema instance
         """
         etype = edef.name
-        if self._entities.has_key(etype):
+        if etype in self._entities:
             msg = "entity type %s is already defined" % etype
             raise BadSchemaDefinition(msg)
         eschema = self.entity_class(self, edef)
@@ -942,7 +942,7 @@ class Schema(object):
 
     def add_relation_type(self, rtypedef):
         rtype = rtypedef.name
-        if self._relations.has_key(rtype):
+        if rtype in self._relations:
             msg = "relation type %s is already defined" % rtype
             raise BadSchemaDefinition(msg)
         rschema = self.relation_class(self, rtypedef)
@@ -1041,7 +1041,7 @@ class Schema(object):
         :rtype: list
         :return: defined entity's types (str) or schemas (`EntitySchema`)
         """
-        return sorted(self._entities.values())
+        return self._entities.values()
         
     def has_entity(self, etype):
         """return true the type is defined in the schema
@@ -1053,7 +1053,7 @@ class Schema(object):
         :return:
           a boolean indicating whether this type is defined in this schema
         """
-        return self._entities.has_key(etype)
+        return etype in self._entities
     
     def eschema(self, etype):
         """return the entity's schema for the given type
@@ -1072,7 +1072,7 @@ class Schema(object):
         :rtype: list
         :return: defined relation's types (str) or schemas (`RelationSchema`)
         """
-        return sorted(self._relations.values())
+        return self._relations.values()
     
     def has_relation(self, rtype):
         """return true the relation is defined in the schema
