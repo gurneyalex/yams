@@ -36,10 +36,10 @@ class SpecializationTC(TestCase):
         self.assertEquals(company.ancestors(), [])
         # division
         division = schema.eschema('Division')
-        self.assertEquals(sorted(division.ancestors()), ['Company'])
+        self.assertEquals(division.ancestors(), ['Company'])
         # subdivision
         subdivision = schema.eschema('SubDivision')
-        self.assertEquals(sorted(subdivision.ancestors()), ['Company', 'Division'])
+        self.assertEquals(subdivision.ancestors(), ['Division', 'Company'])
         # subsubdivision
         subsubdivision = schema.eschema('SubSubDivision')
         self.assertEquals(subsubdivision.ancestors(), [])
