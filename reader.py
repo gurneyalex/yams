@@ -187,14 +187,17 @@ class SchemaLoader(object):
         """return a schema from the schema definition read from <directory>
         """
         self.defined = {}
+        self.loaded_files = []
         self._instantiate_handlers(default_handler)
         files = self._load_definition_files(directories)
         try:
-            return self._build_schema(name, register_base_types)
+            schema = self._build_schema(name, register_base_types)
         except Exception, ex:
             if not hasattr(ex, 'schema_files'):
-                setattr(ex,'schema_files',files)
+                ex.schema_files = self.loaded_files
             raise ex, None, sys.exc_info()[-1]
+        schema.loaded_files = self.loaded_files
+        return schema
     
     def _instantiate_handlers(self, default_handler=None):
         self._live_handlers = {}
@@ -203,13 +206,9 @@ class SchemaLoader(object):
                                                self.read_deprecated_relations)
 
     def _load_definition_files(self, directories):
-        files_paths = []
         for directory in directories:
             for filepath in self.get_schema_files(directory):
                 self.handle_file(filepath)
-                files_paths.append(filepath)
-        return files_paths
-
         
     def _build_schema(self, name, register_base_types=True):
         """build actual schema from definition objects, and return it"""
@@ -282,9 +281,10 @@ class SchemaLoader(object):
     def handle_file(self, filepath):
         """handle a partial schema definition file according to its extension
         """
-        self._current_file = filepath
+        self._current_file = filepath        
         self._live_handlers[splitext(filepath)[1]](filepath)
-
+        self.loaded_files.append(filepath)
+        
     def unhandled_file(self, filepath):
         """called when a file without handler associated has been found,
         does nothing by default.
