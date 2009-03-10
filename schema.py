@@ -1,7 +1,7 @@
 """Classes to define generic Entities/Relations schemas.
 
 :organization: Logilab
-:copyright: 2003-2008 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
+:copyright: 2003-2009 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
 :contact: http://www.logilab.fr/ -- mailto:contact@logilab.fr
 :license: General Public License version 2 - http://www.gnu.org/licenses
 """
@@ -9,8 +9,6 @@ __docformat__ = "restructuredtext en"
 
 import warnings
 from copy import deepcopy
-
-from mx.DateTime import today, now, DateTimeFrom, DateFrom, TimeFrom
 from decimal import Decimal
 
 from logilab.common.decorators import cached
@@ -23,15 +21,43 @@ from yams.interfaces import (ISchema, IRelationSchema, IEntitySchema,
                              IVocabularyConstraint)
 from yams.constraints import BASE_CHECKERS, BASE_CONVERTERS, UniqueConstraint
 
-KEYWORD_MAP = {'NOW' : now,
-               'TODAY': today,
-               }
 
-DATE_FACTORY_MAP = {
-    'Datetime' : DateTimeFrom,
-    'Date' : DateFrom,
-    'Time' : TimeFrom,
-    }
+from mx.DateTime import today, now, DateTimeFrom, DateFrom, TimeFrom
+
+def use_py_datetime():
+    global DATE_FACTORY_MAP, KEYWORD_MAP
+    
+    from datetime import datetime, date, time
+    from time import strptime as time_strptime
+    
+    try:
+        strptime = datetime.strptime
+    except AttributeError: # py < 2.5
+        def strptime(value, format):
+            return datetime(*time_strptime(value, format)[:6])
+
+    def strptime_time(value, format='%H:%M'):
+        return time(*time_strptime(value, format)[3:6])
+
+    KEYWORD_MAP = {'Datetime.NOW' : datetime.now,
+                   'Datetime.TODAY': datetime.today,
+                   'Date.TODAY': date.today}
+    DATE_FACTORY_MAP = {
+        'Datetime' : lambda x: ':' in x and strptime(x, '%Y/%m/%d %H:%M') or strptime(x, '%Y/%m/%d'),
+        'Date' : lambda x : strptime(x, '%Y/%m/%d'),
+        'Time' : strptime_time
+        }
+
+try:
+    from mx.DateTime import today, now, DateTimeFrom, DateFrom, TimeFrom
+    KEYWORD_MAP = {'Datetime.NOW' : now,
+                   'Datetime.TODAY' : today,
+                   'Date.TODAY': today}
+    DATE_FACTORY_MAP = {'Datetime' : DateTimeFrom,
+                        'Date' : DateFrom,
+                        'Time' : TimeFrom}
+except:
+    use_py_datetime()
 
 def rehash(dictionary):
     """this function manually builds a copy of `dictionary` but forces
@@ -462,7 +488,7 @@ class EntitySchema(ERSchema):
                     default = Decimal(default)
             elif attrtype in ('Date', 'Datetime', 'Time'):
                 try:
-                    default = KEYWORD_MAP[default.upper()]()
+                    default = KEYWORD_MAP['%s.%s' % (attrtype, default.upper())]()
                 except KeyError:
                     default = DATE_FACTORY_MAP[attrtype](default)
             else:

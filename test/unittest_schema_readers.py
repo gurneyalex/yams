@@ -1,21 +1,21 @@
-"""unit tests for module yams.reader
-
-Copyright Logilab 2003-2008, all rights reserved.
-"""
+"""unit tests for module yams.reader"""
 
 from logilab.common.testlib import TestCase, unittest_main
 from logilab.common.compat import sorted
 
-from mx.DateTime import now, today, Date, DateTimeType, Time, DateTimeDeltaType
+from datetime import datetime, date, time
 
 from yams import BadSchemaDefinition
 from yams.schema import Schema, EntitySchema
 from yams.reader import SchemaLoader, RelationFileReader
 from yams.constraints import StaticVocabularyConstraint, SizeConstraint
 
+from yams import schema
+schema.use_py_datetime()
+
 import os.path as osp
 
-DATADIR = osp.abspath(osp.join(osp.dirname(__file__),'data'))
+DATADIR = osp.abspath(osp.join(osp.dirname(__file__), 'data'))
 
 class DummyDefaultHandler:
 
@@ -368,8 +368,8 @@ class PySchemaTC(TestCase):
         self.assertEquals(maxsize(emp.relations[3]), 7)
 
     def test_date_defaults(self):
-        _today = today()
-        _now = now()
+        _today = date.today()
+        _now = datetime.now()
         datetest = schema.eschema('Datetest')
         dt1 = datetest.default('dt1')
         dt2 = datetest.default('dt2')
@@ -378,22 +378,22 @@ class PySchemaTC(TestCase):
         t1 = datetest.default('t1')
         t2 = datetest.default('t2')
         # datetimes
-        self.failUnless(isinstance(dt1, DateTimeType))
+        self.assertIsInstance(dt1, datetime)
         # there's no easy way to test NOW (except monkey patching now() itself)
         delta = dt1 - _now
         self.failUnless(abs(delta.seconds) < 5)
-        self.assertEquals(dt2, _today)
-        self.failUnless(isinstance(dt2, DateTimeType))
+        self.assertEquals(date(dt2.year, dt2.month, dt2.day), _today)
+        self.assertIsInstance(dt2, datetime)
         # dates
         self.assertEquals(d1, _today)
-        self.failUnless(isinstance(d1, DateTimeType))
-        self.assertEquals(d2, Date(2007, 12, 11))
-        self.failUnless(isinstance(d2, DateTimeType))
+        self.assertIsInstance(d1, date)
+        self.assertEquals(d2, datetime(2007, 12, 11, 0, 0))
+        self.assertIsInstance(d2, datetime)
         # times
-        self.assertEquals(t1, Time(8, 40))
-        self.failUnless(isinstance(t1, DateTimeDeltaType))
-        self.assertEquals(t2, Time(9, 45))
-        self.failUnless(isinstance(t2, DateTimeDeltaType))
+        self.assertEquals(t1, time(8, 40))
+        self.assertIsInstance(t1, time)
+        self.assertEquals(t2, time(9, 45))
+        self.assertIsInstance(t2, time)
 
 
 class SchemaLoaderTC2(TestCase):

@@ -71,3 +71,38 @@ class FileReader(object):
 
 from yams._exceptions import *
 from yams.schema import Schema, EntitySchema, RelationSchema
+
+class _RelationRole(int):
+    def __eq__(self, other):
+        if isinstance(other, _RelationRole):
+            return other is self
+        if self:
+            return other == 'object'
+        return other == 'subject'
+    def __nonzero__(self):
+        print 'oyop'
+        if self is SUBJECT:
+            return OBJECT
+        return SUBJECT
+
+    
+SUBJECT = _RelationRole(0)
+OBJECT  = _RelationRole(1)
+
+from warnings import warn
+
+def ensure_new_subjobj(val, cls=None, attr=None):
+    if isinstance(val, int):
+        return val
+    if val == 'subject':
+        msg = 'using string instead of cubicweb.SUBJECT'
+        if cls:
+            msg += ' for attribute %s of class %s' % (attr, cls.__name__)
+        warn(DeprecationWarning, msg)
+        return SUBJECT
+    if val == 'object':
+        msg = 'using string instead of cubicweb.OBJECT'
+        if cls:
+            msg += ' for attribute %s of class %s' % (attr, cls.__name__)
+        warn(DeprecationWarning, msg)
+        return SUBJECT    
