@@ -183,7 +183,7 @@ class SchemaLoader(object):
         }
     
     def load(self, directories, name=None, default_handler=None,
-             register_base_types=True):
+             register_base_types=True, construction_mode='strict'):
         """return a schema from the schema definition read from <directory>
         """
         self.defined = {}
@@ -191,7 +191,7 @@ class SchemaLoader(object):
         self._instantiate_handlers(default_handler)
         files = self._load_definition_files(directories)
         try:
-            schema = self._build_schema(name, register_base_types)
+            schema = self._build_schema(name, register_base_types, construction_mode)
         except Exception, ex:
             if not hasattr(ex, 'schema_files'):
                 ex.schema_files = self.loaded_files
@@ -210,9 +210,9 @@ class SchemaLoader(object):
             for filepath in self.get_schema_files(directory):
                 self.handle_file(filepath)
         
-    def _build_schema(self, name, register_base_types=True):
+    def _build_schema(self, name, register_base_types=True, construction_mode='strict'):
         """build actual schema from definition objects, and return it"""
-        schema = self.schemacls(name or 'NoName')
+        schema = self.schemacls(name or 'NoName', construction_mode=construction_mode)
         if register_base_types:
             buildobjs.register_base_types(schema)
         # register relation types and non final entity types

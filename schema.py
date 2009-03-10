@@ -902,10 +902,13 @@ class Schema(object):
     # once it's done
     __hashmode__ = 'pickle' # None | 'pickle'
     
-    def __init__(self, name):
+    def __init__(self, name, construction_mode='strict'):
         super(Schema, self).__init__()
         self.__hashmode__ = None
         self.name = name
+        # with construction_mode != 'strict', no error when trying to add a
+        # relation using an undefined entity type, simply log the error
+        self.construction_mode = construction_mode
         self._entities = {}
         self._relations = {}
 
@@ -985,21 +988,27 @@ class Schema(object):
         rtype = rdef.name
         try:
             rschema = self.rschema(rtype)
-        except KeyError, ex:
-            msg = 'using unknown relation type in %s' % rdef
-            raise BadSchemaDefinition(msg)
+        except KeyError:
+            return self._building_error('using unknown relation type in %s',
+                                        rdef)
         try:
             subjectschema = self.eschema(rdef.subject)
-        except KeyError, ex:
-            msg = 'using unknown type %r in relation %s' % (rdef.subject, rtype)
-            raise BadSchemaDefinition(msg)
+        except KeyError:
+            return self._building_error('using unknown type %r in relation %s',
+                                        rdef.subject, rtype)
         try:
             objectschema = self.eschema(rdef.object)
-        except KeyError, ex:
-            msg = "using unknown type %r in relation %s" % (rdef.object, rtype)
-            raise BadSchemaDefinition(msg)
+        except KeyError:
+            return self._building_error("using unknown type %r in relation %s",
+                                        rdef.object, rtype)
         rschema.update(subjectschema, objectschema, rdef)
-
+        return True
+    
+    def _building_error(self, msg, *args):
+        if self.construction_mode == 'strict':
+            raise BadSchemaDefinition(msg % args)
+        self.critical(msg, *args)
+        
     def del_relation_def(self, subjtype, rtype, objtype):
         subjschema = self.eschema(subjtype)
         objschema = self.eschema(objtype)
@@ -1152,3 +1161,8 @@ class Schema(object):
     relation_schema = rschema
     entity_schema = eschema
 
+
+import logging
+from logilab.common.logging_ext import set_log_methods
+LOGGER = logging.getLogger('yams')
+set_log_methods(Schema, LOGGER)
