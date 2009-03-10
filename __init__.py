@@ -69,6 +69,7 @@ class FileReader(object):
         """need overriding !"""
         raise NotImplementedError()
 
+# work in progress
 from yams._exceptions import *
 from yams.schema import Schema, EntitySchema, RelationSchema
 
