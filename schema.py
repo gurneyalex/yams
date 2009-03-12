@@ -418,6 +418,35 @@ class EntitySchema(ERSchema):
                 yield rschema, rschema.objects(self), 'subject'
         for rschema in self.object_relations():
             yield rschema, rschema.subjects(self), 'object'
+
+    def has_metadata(self, attr, metadata):
+        """return true if this entity's schema has an encoding field for the given
+        attribute
+        """
+        return self.has_subject_relation('%s_%s' % (attr, metadata)
+
+    @cached
+    def meta_attributes(self):
+        """return a dictionnary defining meta-attributes:
+        * key is an attribute schema
+        * value is a 2-uple (metadata name, described attribute name)
+
+        a metadata attribute is expected to be named using the following scheme:
+        
+          <described attribute name>_<metadata name>
+
+        for instance content_format is the format metadata of the content
+        attribute (if it exists).
+        """
+        metaattrs = {}
+        for rschema, _ in self.attribute_definitions():
+            try:
+                attr, meta = rschema.type.rsplit('_', -1)
+            except ValueError:
+                continue
+            if self.has_subject_relation(attr):
+                metaattrs[rschema] = (meta, attr)
+        return metattrs
             
     def main_attribute(self):
         """convenience method that returns the *main* (i.e. the first non meta)
