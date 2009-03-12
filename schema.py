@@ -332,8 +332,10 @@ class EntitySchema(ERSchema):
         return self._subj_relations.values()
     
     def has_subject_relation(self, rtype):
-        """return True if this entity type as a `rtype` subject relation"""
-        return rtype in self._subj_relations
+        """if this entity type as a `rtype` subject relation, return its schema
+        else return None
+        """
+        return self._subj_relations.get(rtype)
     
     def object_relations(self):
         """return a list of relations that may have this type of entity as
@@ -342,9 +344,10 @@ class EntitySchema(ERSchema):
         return self._obj_relations.values()
     
     def has_object_relation(self, rtype):
-        """return True if this entity type as a `rtype` object relation"""
-        return rtype in self._obj_relations
-    
+        """if this entity type as a `rtype` object relation, return its schema
+        else return None
+        """
+        return self._obj_relations.get(rtype)    
 
     def subject_relation(self, rtype):
         """return the relation schema for the rtype subject relation
