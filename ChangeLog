@@ -6,6 +6,7 @@ ChangeLog for yams
     * new construction_mode argument to load() which allow to silently ignore some error
     * new has_metadata and meta_attributes methods on entity schema dealing with 
       attributes which are describing another attribute
+    * has_[subject|object]_relation now return the associated relation schema or None
 	
 2008-12-09 -- 0.20.2
     * add a strict argument to ESchema.is_subobject to return True only if the
