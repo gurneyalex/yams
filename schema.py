@@ -423,7 +423,7 @@ class EntitySchema(ERSchema):
         """return true if this entity's schema has an encoding field for the given
         attribute
         """
-        return self.has_subject_relation('%s_%s' % (attr, metadata)
+        return self.has_subject_relation('%s_%s' % (attr, metadata))
 
     @cached
     def meta_attributes(self):
@@ -446,7 +446,7 @@ class EntitySchema(ERSchema):
                 continue
             if self.has_subject_relation(attr):
                 metaattrs[rschema] = (meta, attr)
-        return metattrs
+        return metaattrs
             
     def main_attribute(self):
         """convenience method that returns the *main* (i.e. the first non meta)
