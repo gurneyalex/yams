@@ -1,7 +1,7 @@
 """Some common constraint classes.
 
 :organization: Logilab
-:copyright: 2004-2007 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
+:copyright: 2004-2009 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
 :contact: http://www.logilab.fr/ -- mailto:contact@logilab.fr
 :license: General Public License version 2 - http://www.gnu.org/licenses
 """
@@ -217,9 +217,9 @@ class StaticVocabularyConstraint(BaseConstraint):
         
     def check(self, entity, rtype, value):
         """return true if the value is in the specific vocabulary"""
-        return value in self.vocabulary(entity)
+        return value in self.vocabulary(entity=entity)
 
-    def vocabulary(self, entity=None):
+    def vocabulary(self, **kwargs):
         """return a list of possible values for the attribute"""
         return self.values
     
@@ -247,7 +247,7 @@ class MultipleStaticVocabularyConstraint(StaticVocabularyConstraint):
     # XXX never used
     def check(self, entity, rtype, values):
         """return true if the values satisfy the constraint, else false"""
-        vocab = self.vocabulary(entity)
+        vocab = self.vocabulary(entity=entity)
         for value in values:
             if not value in vocab:
                 return False
