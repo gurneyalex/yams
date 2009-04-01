@@ -8,11 +8,9 @@
 
 __docformat__ = "restructuredtext en"
 
-import decimal
-from decimal import Decimal
-
 import warnings
 import re
+import decimal
 from StringIO import StringIO
 
 
@@ -283,7 +281,7 @@ def check_float(eschema, value):
 def check_decimal(eschema, value):
     """check value is a Decimal"""
     try:
-        Decimal(value)
+        decimal.Decimal(value)
     except (TypeError, decimal.InvalidOperation):
         return False
     return True
@@ -318,7 +316,7 @@ BASE_CONVERTERS = {
     'Int' :      int,
     'Float' :    float,
     'Boolean' :  bool,
-    'Decimal' :  Decimal,
+    'Decimal' :  decimal.Decimal,
     }
 
 def patch_sqlite_decimal():
@@ -328,13 +326,13 @@ def patch_sqlite_decimal():
         # XXX issue a warning
         if isinstance(value, float):
             value = str(value)
-        return Decimal(value)
+        return decimal.Decimal(value)
     def check_decimal(eschema, value):
         """check value is a Decimal"""
         try:
             if isinstance(value, float):
                 return True
-            Decimal(value)
+            decimal.Decimal(value)
         except (TypeError, decimal.InvalidOperation):
             return False
         return True
