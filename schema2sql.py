@@ -13,7 +13,7 @@ from logilab.common.compat import sorted
 from yams.constraints import SizeConstraint, UniqueConstraint
 
 
-def schema2sql(dbhelper, schema, skip_entities=(), skip_relations=()):
+def schema2sql(dbhelper, schema, skip_entities=(), skip_relations=(), prefix=''):
     """write to the output stream a SQL schema to store the objects
     corresponding to the given schema
     """
@@ -23,7 +23,7 @@ def schema2sql(dbhelper, schema, skip_entities=(), skip_relations=()):
         eschema = schema.eschema(etype)
         if eschema.is_final() or eschema.type in skip_entities:
             continue
-        w(eschema2sql(dbhelper, eschema, skip_relations))
+        w(eschema2sql(dbhelper, eschema, skip_relations, prefix=prefix))
     for rtype in sorted(schema.relations()):
         rschema = schema.rschema(rtype)
         if rschema.is_final() or rschema.inlined:
@@ -32,7 +32,7 @@ def schema2sql(dbhelper, schema, skip_entities=(), skip_relations=()):
     return '\n'.join(output)
 
 
-def dropschema2sql(schema, skip_entities=(), skip_relations=()):
+def dropschema2sql(schema, skip_entities=(), skip_relations=(), prefix=''):
     """write to the output stream a SQL schema to store the objects
     corresponding to the given schema
     """
@@ -42,7 +42,7 @@ def dropschema2sql(schema, skip_entities=(), skip_relations=()):
         eschema = schema.eschema(etype)
         if eschema.is_final() or eschema.type in skip_entities:
             continue
-        w(dropeschema2sql(eschema, skip_relations))
+        w(dropeschema2sql(eschema, skip_relations, prefix=prefix))
     for rtype in sorted(schema.relations()):
         rschema = schema.rschema(rtype)
         if rschema.is_final() or rschema.inlined:
@@ -58,18 +58,18 @@ def eschema_attrs(eschema, skip_relations):
               if not rschema.final and rschema.inlined]
     return attrs
 
-def dropeschema2sql(eschema, skip_relations=()):
+def dropeschema2sql(eschema, skip_relations=(), prefix=''):
     """return sql to drop an entity type's table"""
     # not necessary to drop indexes, that's implictly done when dropping
     # the table
     return 'DROP TABLE %s;' % eschema.type
 
-def eschema2sql(dbhelper, eschema, skip_relations=()):
+def eschema2sql(dbhelper, eschema, skip_relations=(), prefix=''):
     """write an entity schema as SQL statements to stdout"""
     output = []
     w = output.append
-    etype = eschema.type
-    w('CREATE TABLE %s(' % etype)
+    table = prefix + eschema.type
+    w('CREATE TABLE %s(' % (table))
     attrs = eschema_attrs(eschema, skip_relations)
     # XXX handle objectinline physical mode
     for i in xrange(len(attrs)):
@@ -80,15 +80,15 @@ def eschema2sql(dbhelper, eschema, skip_relations=()):
             # XXX integer is ginco specific
             sqltype = 'integer'
         if i == len(attrs) - 1:
-            w(' %s %s' % (rschema.type, sqltype))
+            w(' %s%s %s' % (prefix, rschema.type, sqltype))
         else:
-            w(' %s %s,' % (rschema.type, sqltype))
+            w(' %s%s %s,' % (prefix, rschema.type, sqltype))
     w(');')
     # create index
     for i in xrange(len(attrs)):
         rschema, attrschema = attrs[i]
         if attrschema is None or eschema.rproperty(rschema.type, 'indexed'):
-            w(dbhelper.sql_create_index(etype, rschema.type))
+            w(dbhelper.sql_create_index(table, prefix + rschema.type))
     w('')
     return '\n'.join(output)
 
@@ -151,7 +151,7 @@ def droprschema2sql(rschema):
     return 'DROP TABLE %s_relation;' % rschema.type
 
 
-def grant_schema(schema, user, set_owner=True, skip_entities=()):
+def grant_schema(schema, user, set_owner=True, skip_entities=(), prefix=''):
     """write to the output stream a SQL schema to store the objects
     corresponding to the given schema
     """
@@ -161,7 +161,7 @@ def grant_schema(schema, user, set_owner=True, skip_entities=()):
         eschema = schema.eschema(etype)
         if eschema.is_final() or etype in skip_entities:
             continue
-        w(grant_eschema(eschema, user, set_owner))
+        w(grant_eschema(eschema, user, set_owner, prefix=prefix))
     for rtype in sorted(schema.relations()):
         rschema = schema.rschema(rtype)
         if rschema.is_final() or rschema.inlined:
@@ -169,13 +169,13 @@ def grant_schema(schema, user, set_owner=True, skip_entities=()):
         w(grant_rschema(rschema, user, set_owner))
     return '\n'.join(output)
 
-def grant_eschema(eschema, user, set_owner=True):
+def grant_eschema(eschema, user, set_owner=True, prefix=''):
     output = []
     w = output.append
     etype = eschema.type
     if set_owner:
-        w('ALTER TABLE %s OWNER TO %s;' % (etype, user))
-    w('GRANT ALL ON %s TO %s;' % (etype, user))
+        w('ALTER TABLE %s%s OWNER TO %s;' % (prefix, etype, user))
+    w('GRANT ALL ON %s%s TO %s;' % (prefix, etype, user))
     return '\n'.join(output)
 
 def grant_rschema(rschema, user, set_owner=True):
