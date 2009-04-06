@@ -1,20 +1,29 @@
 ChangeLog for yams 
 ------------------
-	
-  --
-    * py datetime support (must be explicitly activated until we drop mx.DateTime support)
-    * new construction_mode argument to load() which allow to silently ignore some error
-    * new has_metadata and meta_attributes methods on entity schema dealing with 
+
+2009-04-06  --  0.21.0
+    * py datetime support (must be explicitly activated until we drop mx.DateTime support) #8435
+
+    * new construction_mode argument to load() which allow to silently ignore some error #8439
+
+    * new has_metadata and meta_attributes methods on entity schema dealing with
       attributes which are describing another attribute
+
     * has_[subject|object]_relation now return the associated relation schema or None
-	
-2008-12-09 -- 0.20.2
+
+
+
+2008-12-09  --  0.20.2
     * add a strict argument to ESchema.is_subobject to return True only if the
       entity can't live outside another one
-	
+
+
+
 2008-09-24  --  0.20.0
     * support for inheritance
-	
+
+
+
 2008-08-07  --  0.19.0
     * add attributs to dots view
 

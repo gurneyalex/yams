@@ -13,7 +13,7 @@ __docformat__ = "restructuredtext en"
 modname = 'yams'
 
 # release version
-numversion = (0, 20, 2)
+numversion = (0, 21, 0)
 version = '.'.join(str(num) for num in numversion)
 
 # license and copyright
