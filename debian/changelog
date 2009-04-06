@@ -1,3 +1,9 @@
+yams (0.21.0-1) DISTRIBUTION; urgency=low
+
+  * new upstream release
+
+ -- Aurélien Campéas <aurelien.campeas@logilab.fr>  Tue, 06 Apr 2009 13:55:00 +0100
+
 yams (0.20.2-1) DISTRIBUTION; urgency=low
 
   * new upstream release
