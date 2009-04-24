@@ -157,7 +157,7 @@ class ERSchema(object):
         assert action in self.ACTIONS, ('%s not in %s' % (action, self.ACTIONS))
         self._groups[action] = groups
     
-    def get_groups(self, action):
+    def get_groups(self):
         """return the groups authorized to perform <action> on entities of
         this type
 
@@ -201,6 +201,19 @@ class ERSchema(object):
         """
         return user.matching_groups(self.get_groups(action))
 
+    def set_default_groups(self):
+        """set default action -> groups mapping"""
+        if self._groups:
+            # already initialized
+            pass
+            #assert not self.is_final(), \
+            #       'permission for final entities are not considered'
+        else:
+            self._groups = self.get_default_groups()
+
+    def get_default_groups(self):
+        """provide default action -> groups mapping"""
+        raise NotImplementedError()
 
 # Schema objects definition ###################################################
 
@@ -262,27 +275,24 @@ class EntitySchema(ERSchema):
         except KeyError:
             pass
 
-    def set_default_groups(self):
-        """set default action -> groups mapping"""
-        if self._groups:
-            # already initialized
-            pass
-            #assert not self.is_final(), \
-            #       'permission for final entities are not considered'
-        elif self.is_final():
+    def get_default_groups(self):
+        """   get default action -> groups mapping  """
+        if self.is_final():
             # no permissions needed for final entities, access to them
             # is defined through relations
-            self._groups = {'read': ('managers', 'users', 'guests',)}
+            return {'read': ('managers', 'users', 'guests',)}
         elif self.meta:
-            self._groups = {'read': ('managers', 'users', 'guests',),
+            return {'read': ('managers', 'users', 'guests',),
                             'update': ('managers', 'owners',),
                             'delete': ('managers',),
                             'add': ('managers',)}
         else:
-            self._groups = {'read': ('managers', 'users', 'guests',),
+            return {'read': ('managers', 'users', 'guests',),
                             'update': ('managers', 'owners',),
                             'delete': ('managers', 'owners'),
                             'add': ('managers', 'users',)}
+
+ 
 
 
     # IEntitySchema interface #################################################
@@ -773,25 +783,21 @@ class RelationSchema(ERSchema):
             assert not self._obj_schemas and not self._subj_schemas
             return True
         return False
-            
-    def set_default_groups(self):
-        """set default action -> groups mapping"""
-        if self._groups:
-            pass # already initialized
-        elif self.final:
-            self._groups = {'read': ('managers', 'users', 'guests'),
+
+    def get_default_groups(self):
+        if self.final:
+            return {'read': ('managers', 'users', 'guests'),
                             'delete': ('managers', 'users', 'guests'),
                             'add': ('managers', 'users', 'guests')}
         elif self.meta:
-            self._groups = {'read': ('managers', 'users', 'guests'),
+            return {'read': ('managers', 'users', 'guests'),
                             'delete': ('managers',),
                             'add': ('managers',)}
         else:
-            self._groups = {'read': ('managers', 'users', 'guests',),
+            return {'read': ('managers', 'users', 'guests',),
                             'delete': ('managers', 'users'),
                             'add': ('managers', 'users',)}
-    
-    
+     
     # relation definitions properties handling ################################
     
     def rproperty_defs(self, desttype):
