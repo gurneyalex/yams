@@ -31,18 +31,18 @@ def _lines(path, comments=None):
     return result
 
 # .rel and .py formats file readers ###########################################
-        
+
 class RelationFileReader(FileReader): # XXX deprecate this ?
     """read simple relation definitions files"""
     rdefcls = buildobjs.RelationDefinition
-    
+
     def read_line(self, line):
         """read a relation definition:
-        
+
         a 3-uple, as in 'User in_groups Group', optionally followed by the
         "symetric" keyword and/or by the "constraint" keyword followed by an arbitrary
         expression (should be handled in a derivated class
-        
+
         the special case of '* rel_name Entity' means that the relation is created
         for each entity's types in the schema
         """
@@ -70,7 +70,7 @@ class RelationFileReader(FileReader): # XXX deprecate this ?
                 self.handle_constraint(rdef, ' '.join(relation_def[1:]))
             else:
                 self.error()
-        
+
     def handle_constraint(self, rdef, constraint_text):
         """handle an arbitrary constraint on a relation, should be overridden for
         application specific stuff
@@ -123,9 +123,9 @@ class PyFileReader(FileReader):
                 continue
             if isdef:
                 self.loader.add_definition(self, obj())
-        
-    def import_schema_file(self, schemamod): 
-        filepath = self.loader.include_schema_files(schemamod)[0]            
+
+    def import_schema_file(self, schemamod):
+        filepath = self.loader.include_schema_files(schemamod)[0]
         try:
             return self._loaded[filepath]
         except KeyError:
@@ -149,7 +149,7 @@ class PyFileReader(FileReader):
             self.loader.add_definition(self, erdef)
             return erdef
         return erdefcls
-    
+
     def exec_file(self, filepath):
         flocals = self.context.copy()
         flocals['import_schema'] = self.import_schema_file # XXX deprecate local name
@@ -162,7 +162,7 @@ class PyFileReader(FileReader):
         del flocals['import_schema']
         self._loaded[filepath] = attrdict(flocals)
         return self._loaded[filepath]
-    
+
 # the main schema loader ######################################################
 
 from yams.sqlreader import EsqlFileReader
@@ -174,16 +174,17 @@ class SchemaLoader(object):
     schemacls = schemamod.Schema
     lib_directory = None
     read_deprecated_relations = False
-    
+
     file_handlers = {
         '.py' : PyFileReader,
         '.rel' : RelationFileReader,
         '.esql' : EsqlFileReader,
         '.sql' : EsqlFileReader,
         }
-    
+
     def load(self, directories, name=None, default_handler=None,
-             register_base_types=True, construction_mode='strict'):
+             register_base_types=True, construction_mode='strict',
+             remove_unused_rtypes=True):
         """return a schema from the schema definition read from <directory>
         """
         self.defined = {}
@@ -191,14 +192,16 @@ class SchemaLoader(object):
         self._instantiate_handlers(default_handler)
         files = self._load_definition_files(directories)
         try:
-            schema = self._build_schema(name, register_base_types, construction_mode)
+            schema = self._build_schema(name, register_base_types,
+                                        construction_mode=construction_mode,
+                                        remove_unused_rtypes=remove_unused_rtypes)
         except Exception, ex:
             if not hasattr(ex, 'schema_files'):
                 ex.schema_files = self.loaded_files
             raise ex, None, sys.exc_info()[-1]
         schema.loaded_files = self.loaded_files
         return schema
-    
+
     def _instantiate_handlers(self, default_handler=None):
         self._live_handlers = {}
         for ext, hdlrcls in self.file_handlers.items():
@@ -209,8 +212,9 @@ class SchemaLoader(object):
         for directory in directories:
             for filepath in self.get_schema_files(directory):
                 self.handle_file(filepath)
-        
-    def _build_schema(self, name, register_base_types=True, construction_mode='strict'):
+
+    def _build_schema(self, name, register_base_types=True,
+                      construction_mode='strict', remove_unused_rtypes=False):
         """build actual schema from definition objects, and return it"""
         schema = self.schemacls(name or 'NoName', construction_mode=construction_mode)
         if register_base_types:
@@ -224,10 +228,11 @@ class SchemaLoader(object):
         # register relation definitions
         for definition in self.defined.itervalues():
             definition.expand_relation_definitions(self.defined, schema)
-        # remove relation types without definitions
-        for rschema in schema.relations():
-            if not rschema.rdefs():
-                schema.del_relation_type(rschema)
+        if remove_unused_rtypes:
+            # remove relation types without definitions
+            for rschema in schema.relations():
+                if not rschema.rdefs():
+                    schema.del_relation_type(rschema)
         # set permissions on entities and relations
         for erschema in schema.entities() + schema.relations():
             erschema.set_default_groups()
@@ -235,7 +240,7 @@ class SchemaLoader(object):
         return schema
 
     # has to be overideable sometimes (usually for test purpose)
-    main_schema_directory = 'schema' 
+    main_schema_directory = 'schema'
     def get_schema_files(self, directory):
         """return an ordered list of files defining a schema
 
@@ -281,10 +286,10 @@ class SchemaLoader(object):
     def handle_file(self, filepath):
         """handle a partial schema definition file according to its extension
         """
-        self._current_file = filepath        
+        self._current_file = filepath
         self._live_handlers[splitext(filepath)[1]](filepath)
         self.loaded_files.append(filepath)
-        
+
     def unhandled_file(self, filepath):
         """called when a file without handler associated has been found,
         does nothing by default.
@@ -301,4 +306,4 @@ class SchemaLoader(object):
         if not isinstance(defobject, buildobjs.Definition):
             hdlr.error('invalid definition object')
         defobject.expand_type_definitions(self.defined)
-            
+
