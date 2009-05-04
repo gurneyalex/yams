@@ -1,5 +1,12 @@
-ChangeLog for yams 
+ChangeLog for yams
 ------------------
+
+2009-05-04  --  0.22.0
+    * new is_metadata method on entity schema
+
+    * refactoring of default groups assignment so we can get back default groups.
+
+
 
 2009-04-06  --  0.21.0
     * py datetime support (must be explicitly activated until we drop mx.DateTime support) #8435
@@ -251,7 +258,7 @@ ChangeLog for yams
 
 2006-02-24  --  0.3.2
     * let subject_types and object_types rschema methods raise a KeyError if a
-      type is specified but not found for the relation (as it was documented)   
+      type is specified but not found for the relation (as it was documented)
 
 
 
