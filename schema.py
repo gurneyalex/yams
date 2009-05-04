@@ -970,6 +970,12 @@ class Schema(object):
         for rschema in self._relations.values():
             rschema._rehash()
 
+    def get(self, name, default=None):
+        try:
+            return self[name]
+        except KeyError:
+            return default
+
     def __getitem__(self, name):
         try:
             return self.eschema(name)
