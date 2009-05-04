@@ -56,7 +56,7 @@ try:
     DATE_FACTORY_MAP = {'Datetime' : DateTimeFrom,
                         'Date' : DateFrom,
                         'Time' : TimeFrom}
-except:
+except ImportError:
     use_py_datetime()
 
 def rehash(dictionary):
