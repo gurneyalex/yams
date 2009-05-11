@@ -441,7 +441,7 @@ class EntitySchema(ERSchema):
             attr, metadata = str(attr).rsplit('_', 1)
         except ValueError:
             return None
-        if self.has_subject_relation('%s_%s' % (attr, metadata)):
+        if self.has_subject_relation(attr):
             return (attr, metadata)
         return None
 
