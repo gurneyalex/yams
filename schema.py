@@ -217,6 +217,8 @@ class ERSchema(object):
 
 # Schema objects definition ###################################################
 
+KNOWN_METAATTRIBUTES = set(('format', 'encoding'))
+
 class EntitySchema(ERSchema):
     """An entity has a type, a set of subject and or object relations
     the entity schema defines the possible relations for a given type and some
@@ -442,7 +444,7 @@ class EntitySchema(ERSchema):
         except ValueError:
             return None
         if self.has_subject_relation(attr):
-            return (attr, metadata)
+            return metadata in KNOWN_METAATTRIBUTES and (attr, metadata) or None
         return None
 
     @cached
@@ -465,7 +467,8 @@ class EntitySchema(ERSchema):
             except ValueError:
                 continue
             if self.has_subject_relation(attr):
-                metaattrs[rschema] = (meta, attr)
+                if meta in KNOWN_METAATTRIBUTES:
+                    metaattrs[rschema] = (meta, attr)
         return metaattrs
 
     def main_attribute(self):

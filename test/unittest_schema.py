@@ -41,6 +41,8 @@ class BaseSchemaTC(TestCase):
             ('Person datenaiss Date'),
             ('Person TEST Boolean'),
             ('Person promo String'),
+            ('Person promo_enlarged String'),
+            ('Person promo_encoding String'),
             # real relations
             ('Person  travaille Societe'),
             ('Person  evaluee   Note'),
@@ -62,7 +64,7 @@ class BaseSchemaTC(TestCase):
                              [StaticVocabularyConstraint((u'bon', u'pasbon',
                                                                   u'bof', u'peux mieux faire'))])
         enote.set_rproperty('date', 'cardinality', '11')
-        
+
         eaffaire.set_rproperty('sujet', 'constraints', [SizeConstraint(128)])
         eaffaire.set_rproperty('ref', 'constraints', [SizeConstraint(12), RegexpConstraint(r'[A-Z]+\d+')])
         eperson.set_rproperty('nom', 'constraints', [SizeConstraint(20, 10)])
@@ -82,7 +84,7 @@ class BaseSchemaTC(TestCase):
             func(*args, **kwargs)
         except Exception, ex:
             self.assertEquals(str(ex), msg)
-            
+
 # test data ###################################################################
 
 BAD_RELS = ( ('Truc badrelation1 Affaire'),
@@ -95,14 +97,14 @@ ATTRIBUTE_BAD_VALUES = (
                 ('sexe', u'F'), ('sexe', u'MorF'), ('sexe', 'F'),
                 ('promo', 'bon'), ('promo', 'uyou'),
                 ('promo', u' pas bon du tout'),
-                ('tel', 'notastring'), 
-                ('tel', 1000000), 
-                ('fax', 11), 
+                ('tel', 'notastring'),
+                ('tel', 1000000),
+                ('fax', 11),
                 ('TEST', 'notaboolean'), #('TEST', 0), ('TEST', 1)]), #should we accept this ?
                 ('TEST', 'true'), ('TEST', 'false')]),
-## the date and time are not checked for now 
+## the date and time are not checked for now
 ##    ('Person', [('nom', u' >10 mais < 20 '),
-##               ('datenaiss', '979-06-12')]), 
+##               ('datenaiss', '979-06-12')]),
 ##    ('Note', [('date', '2229-01-31 minuit')]),
 ##    ('Affaire', [('starton', 'midi')]),
 
@@ -136,7 +138,7 @@ RELATIONS_GOOD_VALUES = {
 
 
 # test suite ##################################################################
-        
+
 class EntitySchemaTC(BaseSchemaTC):
 
     def test_base(self):
@@ -155,7 +157,7 @@ class EntitySchemaTC(BaseSchemaTC):
         l.sort()
         self.assertListEquals(l, [eaffaire, enote, eperson, esociete])
         self.assertListEquals(l, ['Affaire', 'Note', 'Person', 'Societe'])
-        
+
     def test_hash(self):
         from copy import copy
         d = {}
@@ -171,7 +173,7 @@ class EntitySchemaTC(BaseSchemaTC):
         self.failUnlessEqual(copy(eperson), 'Person')
         self.failUnlessEqual(d[copy(eperson)], 'Person')
         self.failUnlessEqual(d[copy(enote)], 'Note')
-        
+
     def test_deepcopy_with_regexp_constraints(self):
         from copy import deepcopy
         eaffaire.set_rproperty('ref', 'constraints', [RegexpConstraint(r'[A-Z]+\d+')])
@@ -197,8 +199,8 @@ class EntitySchemaTC(BaseSchemaTC):
         edivision = schema2.eschema('Division')
         self.assertEquals(edivision.specializes(), 'Company')
         self.assertEquals(edivision.specialized_by(), ['Subdivision'])
-        
-    def test_is_final(self):        
+
+    def test_is_final(self):
         self.assertEquals(eperson.is_final(), False)
         self.assertEquals(enote.is_final(), False)
         self.assertEquals(estring.is_final(), True)
@@ -206,8 +208,15 @@ class EntitySchemaTC(BaseSchemaTC):
         self.assertEquals(eperson.subject_relation('nom').is_final(), True)
         #self.assertEquals(eperson.is_final('concerne'), False)
         self.assertEquals(eperson.subject_relation('concerne').is_final(), False)
-        
-    def test_defaults(self):        
+
+    def test_is_metadata(self):
+        self.assertEquals(eperson.is_metadata('promo'), None)
+        self.assertEquals(eperson.is_metadata('promo_enlarged'), None)
+        self.assertEquals(eperson.is_metadata('promo_encoding'), ('promo', 'encoding'))
+        self.assertEquals([(k.type, v)  for k, v in eperson.meta_attributes().items()],
+                          [('promo_encoding', ('encoding', 'promo'))])
+
+    def test_defaults(self):
         self.assertEquals(list(eperson.defaults()), [])
         self.assertRaises(AssertionError,
                           estring.defaults().next)
@@ -218,24 +227,25 @@ class EntitySchemaTC(BaseSchemaTC):
                           eperson.vocabulary, 'what?')
         self.assertRaises(AssertionError,
                           eperson.vocabulary, 'nom')
-        
+
     def test_indexable_attributes(self):
         eperson.set_rproperty('nom', 'fulltextindexed', True)
         eperson.set_rproperty('prenom', 'fulltextindexed', True)
         self.assertEquals(list(eperson.indexable_attributes()), ['nom', 'prenom'])
 
-    
+
     def test_goodValues_relation_default(self):
         """check good values of entity does not raise an exception"""
         eperson.set_rproperty('nom', 'default', 'No name')
         self.assertEquals(eperson.default('nom'), 'No name')
-        
+
     def test_subject_relations(self):
         """check subject relations a returned in the same order as in the
         schema definition"""
         rels = eperson.ordered_relations()
         expected = ['nom', 'prenom', 'sexe', 'tel', 'fax', 'datenaiss',
-                    'TEST', 'promo', 'travaille', 'evaluee', 'concerne']
+                    'TEST', 'promo', 'promo_enlarged', 'promo_encoding', 'travaille',
+                    'evaluee', 'concerne']
         self.assertEquals([r.type for r in rels], expected)
 
     def test_object_relations(self):
@@ -254,8 +264,8 @@ class EntitySchemaTC(BaseSchemaTC):
         schema definition"""
         self.assertEquals(eperson.destination('nom'), 'String')
         self.assertRaises(AssertionError, eperson.destination, 'travaille')
-        
-        
+
+
 class RelationSchemaTC(BaseSchemaTC):
 
     def test_cmp(self):
@@ -267,7 +277,7 @@ class RelationSchemaTC(BaseSchemaTC):
         self.failIf(rconcerne == rnom)
         self.failUnless(rnom != rconcerne)
         self.failUnless(rconcerne != rnom)
-        
+
     def test_hash(self):
         from copy import copy
         d = {}
@@ -287,7 +297,7 @@ class RelationSchemaTC(BaseSchemaTC):
         self.assertEquals(types, ['Affaire', 'Person'])
         types = sorted(rconcerne.objects())
         self.assertEquals(types, ['Affaire', 'Societe'])
-        
+
     def test_raise_update(self):
         self.assertRaisesMsg(BadSchemaDefinition,
                              'type String can\'t be used as subject in a relation',
@@ -309,10 +319,10 @@ class RelationSchemaTC(BaseSchemaTC):
         assoc_types = []
         for _from, _to in rconcerne.associations():
             assoc_types.append( (_from, _to))
-            #assoc_types.append( (_from.type, [s.type for s in _to]) ) 
+            #assoc_types.append( (_from.type, [s.type for s in _to]) )
         assoc_types.sort()
         self.assertEquals(assoc_types, expected)
-        
+
 #     def test_reverse_association_types(self):
 #         expected = [ ('Affaire', ['Person']),
 #                      ('Societe', ['Person', 'Affaire'])]
@@ -321,13 +331,13 @@ class RelationSchemaTC(BaseSchemaTC):
 #         self.assertEquals(assoc_types, expected)
 #         assoc_types = []
 #         for _from, _to in rconcerne.reverse_association_types(True):
-#             assoc_types.append( (_from.type, [s.type for s in _to]) ) 
+#             assoc_types.append( (_from.type, [s.type for s in _to]) )
 #         assoc_types.sort()
 #         self.assertEquals(assoc_types, expected)
 
-                          
+
 class SchemaTC(BaseSchemaTC):
-        
+
     def test_schema_base(self):
         """test base schema methods
         """
@@ -340,31 +350,31 @@ class SchemaTC(BaseSchemaTC):
         self.assertEquals(types, all_types)
         self.assertEquals(schema.has_entity('Affaire'), True)
         self.assertEquals(schema.has_entity('Aaire'), False)
-        
+
     def test_raise_add_entity_type(self):
         self.assertRaisesMsg(BadSchemaDefinition, "entity type Person is already defined" ,
                              schema.add_entity_type, EntityType('Person'))
-        
+
     def test_raise_relation_def(self):
         self.assertRaisesMsg(BadSchemaDefinition, "using unknown type 'Afire' in relation evaluee"  ,
                              schema.add_relation_def, RelationDefinition('Afire', 'evaluee', 'Note'))
 ## XXX what is this ?
 ##        self.assertRaisesMsg(BadSchemaDefinition, 'the "symetric" property should appear on every definition of relation evaluee' ,
 ##                             schema.add_relation_def, RelationDefinition('Affaire', 'evaluee', 'Note', symetric=True))
-        
+
     def test_schema_relations(self):
         all_relations = ['TEST', 'concerne', 'travaille', 'evaluee',
                          'date', 'type', 'sujet', 'ref', 'nom', 'prenom',
-                         'starton',
-                         'sexe', 'promo', 'tel', 'fax', 'datenaiss']
+                         'starton', 'sexe', 'promo', 'promo_enlarged',
+                         'promo_encoding', 'tel', 'fax', 'datenaiss']
         all_relations.sort()
         relations = schema.relations()
         relations.sort()
         self.assertEquals(relations, all_relations)
-        
-        self.assertEquals(len(eperson.rproperty('nom', 'constraints')), 1) 
+
+        self.assertEquals(len(eperson.rproperty('nom', 'constraints')), 1)
         self.assertEquals(len(eperson.rproperty('prenom', 'constraints')), 1)
-       
+
     def test_schema_check_relations(self):
         """test behaviour with some incorrect relations"""
         for rel in BAD_RELS:
@@ -374,13 +384,13 @@ class SchemaTC(BaseSchemaTC):
         # check we can't extend a final relation
         self.assertRaises(BadSchemaDefinition,
                           schema.add_relation_def, RelationDefinition('Person', 'nom', 'affaire'))
-        
+
     def test_entities_goodValues_check(self):
         """check good values of entity does not raise an exception"""
         for etype, val_list in ATTRIBUTE_GOOD_VALUES:
             eschema = schema.eschema(etype)
             eschema.check(dict(val_list))
-                
+
     def test_entities_badValues_check(self):
         """check bad values of entity raises ValidationError exception"""
         for etype, val_list in ATTRIBUTE_BAD_VALUES:
@@ -388,7 +398,7 @@ class SchemaTC(BaseSchemaTC):
             # check attribute values one each time...
             for item in val_list:
                 self.assertRaises(ValidationError, eschema.check, dict([item]))
-        
+
     def test_pickle(self):
         """schema should be pickeable"""
         import pickle
@@ -424,7 +434,7 @@ class SchemaTC(BaseSchemaTC):
         schema.__test__ = True
         self.assertEquals(workcase.rproperties('concerne'), orig_rprops)
 
-        
+
 class SymetricTC(TestCase):
     def setUp(self):
         global schema
@@ -441,7 +451,7 @@ class SymetricTC(TestCase):
         schema.add_relation_def(RelationDefinition('Story', 'see_also', 'Story'))
         schema.add_relation_def(RelationDefinition('Story', 'see_also', 'Project'))
         schema.add_relation_def(RelationDefinition('Project', 'see_also', 'Project'))
-        
+
         rsee_also = schema.rschema('see_also')
         subj_types = rsee_also.associations()
         subj_types.sort()
@@ -462,6 +472,6 @@ class SymetricTC(TestCase):
                           [('Bug', ['Bug', 'Project', 'Story']),
                            ('Project', ['Bug', 'Project', 'Story']),
                            ('Story', ['Bug', 'Project', 'Story'])])
-        
+
 if __name__ == '__main__':
     unittest_main()
