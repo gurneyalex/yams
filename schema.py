@@ -443,8 +443,8 @@ class EntitySchema(ERSchema):
             attr, metadata = str(attr).rsplit('_', 1)
         except ValueError:
             return None
-        if self.has_subject_relation(attr):
-            return metadata in KNOWN_METAATTRIBUTES and (attr, metadata) or None
+        if metadata in KNOWN_METAATTRIBUTES and self.has_subject_relation(attr):
+            return (attr, metadata)
         return None
 
     @cached
@@ -466,9 +466,8 @@ class EntitySchema(ERSchema):
                 attr, meta = rschema.type.rsplit('_', -1)
             except ValueError:
                 continue
-            if self.has_subject_relation(attr):
-                if meta in KNOWN_METAATTRIBUTES:
-                    metaattrs[rschema] = (meta, attr)
+            if meta in KNOWN_METAATTRIBUTES and self.has_subject_relation(attr):
+                metaattrs[rschema] = (meta, attr)
         return metaattrs
 
     def main_attribute(self):
