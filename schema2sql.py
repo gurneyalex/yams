@@ -1,7 +1,7 @@
 """write a schema as sql
 
 :organization: Logilab
-:copyright: 2004-2008 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
+:copyright: 2004-2009 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
 :contact: http://www.logilab.fr/ -- mailto:contact@logilab.fr
 :license: General Public License version 2 - http://www.gnu.org/licenses
 """
@@ -11,6 +11,10 @@ __metaclass__ = type
 from logilab.common.compat import sorted
 
 from yams.constraints import SizeConstraint, UniqueConstraint
+
+# default are usually not handled at the sql level. If you want them, set
+# SET_DEFAULT to True
+SET_DEFAULT = False
 
 
 def schema2sql(dbhelper, schema, skip_entities=(), skip_relations=(), prefix=''):
@@ -50,6 +54,7 @@ def dropschema2sql(schema, skip_entities=(), skip_relations=(), prefix=''):
         w(droprschema2sql(rschema))
     return '\n'.join(output)
 
+
 def eschema_attrs(eschema, skip_relations):
     attrs = [attrdef for attrdef in eschema.attribute_definitions()
              if not attrdef[0].type in skip_relations]
@@ -58,11 +63,13 @@ def eschema_attrs(eschema, skip_relations):
               if not rschema.final and rschema.inlined]
     return attrs
 
+
 def dropeschema2sql(eschema, skip_relations=(), prefix=''):
     """return sql to drop an entity type's table"""
     # not necessary to drop indexes, that's implictly done when dropping
     # the table
     return 'DROP TABLE %s;' % eschema.type
+
 
 def eschema2sql(dbhelper, eschema, skip_relations=(), prefix=''):
     """write an entity schema as SQL statements to stdout"""
@@ -75,7 +82,8 @@ def eschema2sql(dbhelper, eschema, skip_relations=(), prefix=''):
     for i in xrange(len(attrs)):
         rschema, attrschema = attrs[i]
         if attrschema is not None:
-            sqltype = aschema2sql(dbhelper, eschema, rschema, attrschema, ' ')
+            sqltype = aschema2sql(dbhelper, eschema, rschema, attrschema,
+                                  indent=' ')
         else: # inline relation
             # XXX integer is ginco specific
             sqltype = 'integer'
@@ -92,28 +100,37 @@ def eschema2sql(dbhelper, eschema, skip_relations=(), prefix=''):
     w('')
     return '\n'.join(output)
 
-    
-def aschema2sql(dbhelper, eschema, rschema, aschema, indent=''):
+
+def aschema2sql(dbhelper, eschema, rschema, aschema, creating=True, indent=''):
     """write an attribute schema as SQL statements to stdout"""
     attr = rschema.type
     constraints = rschema.rproperty(eschema.type, aschema.type, 'constraints')
-    sqltype = _type_from_constraints(dbhelper, aschema.type, constraints)
-    default = eschema.default(attr)
-    if default is not None:
-        if aschema.type == 'Boolean':
-            sqltype += ' DEFAULT %s' % (default and 'true' or 'false')
-        elif aschema.type == 'String':
-            sqltype += ' DEFAULT %r' % str(default)
-        elif aschema.type == 'Int':
-            sqltype += ' DEFAULT %s' % default
-    if eschema.rproperty(attr, 'uid'):
-        sqltype += ' PRIMARY KEY'
-    elif rschema.rproperty(eschema.type, aschema.type, 'cardinality')[0] == '1':
-        sqltype += ' NOT NULL'
+    sqltype = type_from_constraints(dbhelper, aschema.type, constraints,
+                                    creating)
+    if SET_DEFAULT:
+        default = eschema.default(attr)
+        if default is not None:
+            if aschema.type == 'Boolean':
+                sqltype += ' DEFAULT %s' % dbhelper.boolean_value(default)
+            elif aschema.type == 'String':
+                sqltype += ' DEFAULT %r' % str(default)
+            elif aschema.type in ('Int', 'Float'):
+                sqltype += ' DEFAULT %s' % default
+            # XXX ignore default for other type
+            # this is expected for NOW / TODAY
+    if creating:
+        if eschema.rproperty(attr, 'uid'):
+            sqltype += ' PRIMARY KEY'
+        elif rschema.rproperty(eschema.type, aschema.type, 'cardinality')[0] == '1':
+            # don't set NOT NULL if backend isn't able to change it later
+            if dbhelper.alter_column_support:
+                sqltype += ' NOT NULL'
+    # else we're getting sql type to alter a column, we don't want key / indexes
+    # / null modifiers
     return sqltype
 
-    
-def _type_from_constraints(dbhelper, etype, constraints):
+
+def type_from_constraints(dbhelper, etype, constraints, creating=True):
     """return a sql type string corresponding to the constraints"""
     constraints = list(constraints)
     unique, sqltype = False, None
@@ -126,10 +143,13 @@ def _type_from_constraints(dbhelper, etype, constraints):
                 unique = True
     if sqltype is None:
         sqltype = dbhelper.TYPE_MAPPING[etype]
-    if unique:
+    if creating and unique:
         sqltype += ' UNIQUE'
     return sqltype
-    
+
+# backward compat
+_type_from_constraints = type_from_constraints
+
 
 _SQL_SCHEMA = """
 CREATE TABLE %(table)s (
@@ -141,8 +161,10 @@ CREATE TABLE %(table)s (
 CREATE INDEX %(table)s_from_idx ON %(table)s(eid_from);
 CREATE INDEX %(table)s_to_idx ON %(table)s(eid_to);"""
 
+
 def rschema2sql(rschema):
     return _SQL_SCHEMA % {'table': '%s_relation' % rschema.type}
+
 
 def droprschema2sql(rschema):
     """return sql to drop a relation type's table"""
@@ -169,6 +191,7 @@ def grant_schema(schema, user, set_owner=True, skip_entities=(), prefix=''):
         w(grant_rschema(rschema, user, set_owner))
     return '\n'.join(output)
 
+
 def grant_eschema(eschema, user, set_owner=True, prefix=''):
     output = []
     w = output.append
@@ -177,6 +200,7 @@ def grant_eschema(eschema, user, set_owner=True, prefix=''):
         w('ALTER TABLE %s%s OWNER TO %s;' % (prefix, etype, user))
     w('GRANT ALL ON %s%s TO %s;' % (prefix, etype, user))
     return '\n'.join(output)
+
 
 def grant_rschema(rschema, user, set_owner=True):
     output = []
