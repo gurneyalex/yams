@@ -7,7 +7,9 @@ from logilab.common.testlib import TestCase, unittest_main
 from logilab.common.adbh import get_adv_func_helper
 
 from yams.reader import SchemaLoader
-from yams.schema2sql import schema2sql
+from yams import schema2sql
+
+schema2sql.SET_DEFAULT = True
 
 import os.path as osp
 
@@ -17,10 +19,10 @@ class DummyDefaultHandler:
 
     def default_modname(self):
         return 'yo'
-    
+
     def vocabulary_license(self):
         return ['GPL', 'ZPL']
-    
+
     def vocabulary_debian_handler(self):
         return ['machin', 'bidule']
 
@@ -254,12 +256,12 @@ CREATE INDEX works_for_relation_to_idx ON works_for_relation(eid_to);
 """
 
 class SQLSchemaTC(TestCase):
-    
+
     def test_known_values(self):
         dbhelper = get_adv_func_helper('postgres')
-        output = schema2sql(dbhelper, schema)
+        output = schema2sql.schema2sql(dbhelper, schema)
         self.assertTextEquals(EXPECTED_DATA_NO_DROP.strip(), output.strip())
 
-        
+
 if __name__ == '__main__':
     unittest_main()
