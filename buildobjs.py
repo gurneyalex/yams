@@ -11,7 +11,7 @@ from logilab.common import attrdict
 from logilab.common.compat import sorted
 
 from yams import BASE_TYPES, MARKER, BadSchemaDefinition
-from yams.constraints import (SizeConstraint, UniqueConstraint, 
+from yams.constraints import (SizeConstraint, UniqueConstraint,
                               StaticVocabularyConstraint)
 
 __all__ = ('ObjectRelation', 'SubjectRelation', 'BothWayRelation',
@@ -27,7 +27,7 @@ ETYPE_PROPERTIES = ('meta', 'description', 'permissions')
 # don't put description inside, handled "manually"
 RTYPE_PROPERTIES = ('meta', 'symetric', 'inlined', 'fulltext_container', 'permissions')
 RDEF_PROPERTIES = ('cardinality', 'constraints', 'composite',
-                   'order',  'default', 'uid', 'indexed', 'uid', 
+                   'order',  'default', 'uid', 'indexed', 'uid',
                    'fulltextindexed', 'internationalizable')
 
 REL_PROPERTIES = RTYPE_PROPERTIES+RDEF_PROPERTIES + ('description',)
@@ -41,7 +41,7 @@ def _add_constraint(kwargs, constraint):
             constraints[i] = constraint
             return
     constraints.append(constraint)
-        
+
 def _add_relation(relations, rdef, name=None, insertidx=None):
     """Add relation (param rdef) to list of relations (param relations)."""
     if isinstance(rdef, BothWayRelation):
@@ -58,9 +58,9 @@ def _add_relation(relations, rdef, name=None, insertidx=None):
 def _check_kwargs(kwargs, attributes):
     """Check that all keys of kwargs are actual attributes."""
     for key in kwargs:
-        if not key in attributes: 
+        if not key in attributes:
             raise BadSchemaDefinition('no such property %r in %r' % (key, attributes))
-    
+
 def _copy_attributes(fromobj, toobj, attributes):
     for attr in attributes:
         value = getattr(fromobj, attr, MARKER)
@@ -71,7 +71,7 @@ def _copy_attributes(fromobj, toobj, attributes):
             raise BadSchemaDefinition('conflicting values %r/%r for property %s of %s'
                                       % (ovalue, value, attr, toobj))
         setattr(toobj, attr, value)
-        
+
 def register_base_types(schema):
     for etype in BASE_TYPES:
         edef = EntityType(name=etype, meta=True)
@@ -90,7 +90,7 @@ class Definition(object):
 
     meta = MARKER
     description = MARKER
-    
+
     def __init__(self, name=None):
         self.name = (name or getattr(self, 'name', None)
                      or self.__class__.__name__)
@@ -105,7 +105,7 @@ class Definition(object):
         to the `defined` dictionnary.
         """
         raise NotImplementedError()
-    
+
     def expand_relation_definitions(self, defined, schema):
         """Schema building step 2: register all relations definition,
         expanding wildcard if necessary.
@@ -141,7 +141,7 @@ class metadefinition(type):
         # sort relations by creation rank
         defclass.__relations__ = sorted(rels, key=lambda r: r.creation_rank)
         return defclass
-        
+
 
 class EntityType(Definition):
     # FIXME reader magic forbids to define a docstring...
@@ -159,7 +159,7 @@ class EntityType(Definition):
     #"""
 
     __metaclass__ = metadefinition
-        
+
     def __init__(self, name=None, **kwargs):
         super(EntityType, self).__init__(name)
         _check_kwargs(kwargs, ETYPE_PROPERTIES)
@@ -174,7 +174,7 @@ class EntityType(Definition):
 
     def __str__(self):
         return 'entity type %r' % self.name
-    
+
     def expand_type_definitions(self, defined):
         """Schema building step 1: register definition objects by adding
         them to the `defined` dictionnary.
@@ -193,7 +193,7 @@ class EntityType(Definition):
             _copy_attributes(rtype, defined[relation.name], RTYPE_PROPERTIES)
         else:
             defined[relation.name] = rtype
-        
+
     def expand_relation_definitions(self, defined, schema):
         """schema building step 2:
 
@@ -216,17 +216,17 @@ class EntityType(Definition):
             rdef._add_relations(defined, schema)
 
     # methods that can be used to extend an existant schema definition ########
-    
+
     def extend(self, othermetadefcls):
         for rdef in othermetadefcls.__relations__:
             self.add_relation(rdef)
-            
+
     def add_relation(self, rdef, name=None):
         if name:
             rdef.name = name
         self._ensure_relation_type(rdef)
         _add_relation(self.relations, rdef, name)
-            
+
     def insert_relation_after(self, afterrelname, name, rdef):
         # FIXME change order of arguments to rdef, name, afterrelname ?
         rdef.name = name
@@ -238,12 +238,12 @@ class EntityType(Definition):
             raise BadSchemaDefinition("can't find %s relation on %s" % (
                     afterrelname, self))
         _add_relation(self.relations, rdef, name, i+1)
-            
+
     def remove_relation(self, name):
         for rdef in self.get_relations(name):
             self.relations.remove(rdef)
             self.__relations__.remove(rdef)
-            
+
     def get_relations(self, name):
         """get relation definitions by name (may have multiple definitions with
         the same name if the relation is both a subject and object relation)
@@ -251,12 +251,12 @@ class EntityType(Definition):
         for rdef in self.relations[:]:
             if rdef.name == name:
                 yield rdef
-                    
+
 class RelationType(Definition):
     symetric = MARKER
     inlined = MARKER
     fulltext_container = MARKER
-    
+
     def __init__(self, name=None, **kwargs):
         """kwargs must have values in RTYPE_PROPERTIES"""
         super(RelationType, self).__init__(name)
@@ -265,7 +265,7 @@ class RelationType(Definition):
 
     def __str__(self):
         return 'relation type %r' % self.name
-    
+
     def expand_type_definitions(self, defined):
         """schema building step 1:
 
@@ -276,7 +276,7 @@ class RelationType(Definition):
                              REL_PROPERTIES + ('subject', 'object'))
         else:
             defined[self.name] = self
-            
+
     def expand_relation_definitions(self, defined, schema):
         """schema building step 2:
 
@@ -291,8 +291,8 @@ class RelationType(Definition):
 
 class RelationDefinition(Definition):
     # FIXME reader magic forbids to define a docstring...
-    #"""a relation is defined by a name, the entity types that can be 
-    #subject or object the relation, the cardinality, the constraints 
+    #"""a relation is defined by a name, the entity types that can be
+    #subject or object the relation, the cardinality, the constraints
     #and the symetric property.
     #"""
 
@@ -302,7 +302,7 @@ class RelationDefinition(Definition):
     constraints = MARKER
     symetric = MARKER
     inlined = MARKER
-    
+
     def __init__(self, subject=None, name=None, object=None, **kwargs):
         """kwargs keys must have values in RDEF_PROPERTIES"""
         if subject:
@@ -318,7 +318,7 @@ class RelationDefinition(Definition):
         _copy_attributes(attrdict(kwargs), self, RDEF_PROPERTIES + ('description',))
         if self.constraints:
             self.constraints = list(self.constraints)
-            
+
     def __str__(self):
         return 'relation definition (%(subject)s %(name)s %(object)s)' % self.__dict__
 
@@ -337,7 +337,7 @@ class RelationDefinition(Definition):
         if key in defined:
             raise BadSchemaDefinition('duplicated %s' % self)
         defined[key] = self
-        
+
     def expand_relation_definitions(self, defined, schema):
         """schema building step 2:
 
@@ -345,7 +345,7 @@ class RelationDefinition(Definition):
         """
         assert self.subject and self.object, '%s; check the schema' % self
         self._add_relations(defined, schema)
-    
+
     def _add_relations(self, defined, schema):
         rtype = defined[self.name]
         _copy_attributes(rtype, self, RDEF_PROPERTIES)
@@ -368,7 +368,7 @@ class RelationDefinition(Definition):
                 rdef = RelationDefinition(subj, self.name, obj)
                 _copy_attributes(self, rdef, RDEF_PROPERTIES + ('description',))
                 schema.add_relation_def(rdef)
-                    
+
     def _actual_types(self, schema, etype):
         if etype == '*':
             return self._wildcard_etypes(schema)
@@ -377,13 +377,13 @@ class RelationDefinition(Definition):
         elif isinstance(etype, (tuple, list)):
             return etype
         return (etype,)
-        
+
     def _wildcard_etypes(self, schema):
         for eschema in schema.entities():
             if eschema.is_final() or eschema.meta:
                 continue
             yield eschema.type
-        
+
     def _pow_etypes(self, schema):
         for eschema in schema.entities():
             if eschema.is_final():
@@ -417,7 +417,7 @@ class UserEntityType(EntityType):
         'delete': ('managers', 'owners',),
         'update': ('managers', 'owners',),
         }
-    
+
 class MetaUserEntityType(UserEntityType):
     meta = True
 
@@ -439,12 +439,12 @@ class UserRelationType(RelationType):
 
 class MetaUserRelationType(UserRelationType):
     meta = True
-    
+
 
 class AttributeRelationType(RelationType):
     # just set permissions to None so default permissions are set
     permissions = MARKER
-    
+
 class MetaAttributeRelationType(AttributeRelationType):
     meta = True
 
@@ -476,18 +476,18 @@ class ObjectRelation(Relation):
              setattr(bsd_ex,'tb_offset',2)
              raise bsd_ex
         _copy_attributes(attrdict(kwargs), self, REL_PROPERTIES)
-    
+
     def __repr__(self):
         return '%(name)s %(etype)s' % self.__dict__
 
-        
+
 class SubjectRelation(ObjectRelation):
     uid = MARKER
     indexed = MARKER
     fulltextindexed = MARKER
     internationalizable = MARKER
     default = MARKER
-    
+
     def __repr__(self):
         return '%(etype)s %(name)s' % self.__dict__
 
@@ -504,7 +504,7 @@ class BothWayRelation(Relation):
 
 class AbstractTypedAttribute(SubjectRelation):
     """AbstractTypedAttribute is not directly instantiable
-    
+
     subclasses must provide a <etype> attribute to be instantiable
     """
     def __init__(self, **kwargs):
@@ -534,10 +534,10 @@ class AbstractTypedAttribute(SubjectRelation):
         if self.__class__.__name__ == 'String': # XXX
             maxsize = max(len(x) for x in vocabulary)
             _add_constraint(kwargs, SizeConstraint(max=maxsize))
-            
+
     def __repr__(self):
         return '<%(name)s(%(etype)s)>' % self.__dict__
-        
+
 # build a specific class for each base type
 for basetype in BASE_TYPES:
     globals()[basetype] = type(basetype, (AbstractTypedAttribute,),
