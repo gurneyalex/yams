@@ -1,6 +1,10 @@
 ChangeLog for yams
 ------------------
 
+2009-06-03  --  0.23.0
+    * stop setting default values in underlying sql schema
+	
+	
 2009-05-04  --  0.22.0
     * new is_metadata method on entity schema
 

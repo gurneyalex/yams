@@ -1,22 +1,28 @@
+yams (0.23.0-1) unstable; urgency=low
+
+  * new upstream release
+
+ -- Nicolas Chauvat <nicolas.chauvat@logilab.fr>  Wed, 03 Jun 2009 18:29:38 +0200
+
 yams (0.22.0-1) unstable; urgency=low
 
   * new upstream release
 
  -- Sylvain Thénault <sylvain.thenault@logilab.fr>  Mon, 04 May 2009 11:02:46 +0200
 
-yams (0.21.0-1) DISTRIBUTION; urgency=low
+yams (0.21.0-1) unstable; urgency=low
 
   * new upstream release
 
  -- Aurélien Campéas <aurelien.campeas@logilab.fr>  Tue, 06 Apr 2009 13:55:00 +0100
 
-yams (0.20.2-1) DISTRIBUTION; urgency=low
+yams (0.20.2-1) unstable; urgency=low
 
   * new upstream release
 
  -- Adrien Di Mascio <Adrien.DiMascio@logilab.fr>  Tue, 09 Dec 2008 14:55:48 +0100
 
-yams (0.20.1-1) DISTRIBUTION; urgency=low
+yams (0.20.1-1) unstable; urgency=low
 
   * new upstream release
 
