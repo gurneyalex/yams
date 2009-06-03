@@ -26,7 +26,7 @@ class SchemaDotPropsHandler(object):
     def node_properties(self, eschema):
         """return default DOT drawing options for an entity schema"""
         label = ['{',eschema.type,'|']
-        label.append(r'\l'.join(rel.type for rel in eschema.subject_relations()
+        label.append(r'\l'.join(rel.type for rel in eschema.ordered_relations()
                                 if rel.final and self.display_attr(rel)))
         label.append(r'\l}') # trailing \l ensure alignement of the last one
         return {'label' : ''.join(label), 'shape' : "record",
