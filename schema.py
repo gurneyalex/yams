@@ -204,10 +204,11 @@ class ERSchema(object):
     def set_default_groups(self):
         """set default action -> groups mapping"""
         if self._groups:
-            # already initialized
-            pass
-            #assert not self.is_final(), \
-            #       'permission for final entities are not considered'
+            # already initialized, check everything is fine
+            for action, groups in self._groups.items():
+                assert isinstance(groups, tuple), \
+                       ('permission for action %s of %s isn\'t a tuple as '
+                        'expected' % (action, self.type))
         else:
             self._groups = self.get_default_groups()
 
