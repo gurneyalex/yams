@@ -16,10 +16,10 @@ class DummyDefaultHandler:
 
     def default_modname(self):
         return 'yo'
-    
+
     def vocabulary_license(self):
         return ['GPL', 'ZPL']
-    
+
     def vocabulary_debian_handler(self):
         return ['machin', 'bidule']
 
@@ -34,21 +34,21 @@ overlap=false
 sep=0.2
 "Person" [shape="record", fontname="Courier", style="filled", label="{Person|nom\lprenom\lsexe\lpromo\ltitre\ladel\lass\lweb\ltel\lfax\ldatenaiss\ltest\lsalary\l}"];
 "Societe" [shape="record", fontname="Courier", style="filled", label="{Societe|nom\lweb\ltel\lfax\lrncs\lad1\lad2\lad3\lcp\lville\l}"];
-"Person" -> "Societe" [taillabel="0..n", style="filled", arrowhead="normal", color="grey", label="travaille", headlabel="0..n", arrowtail="none", decorate="true"];
+"Person" -> "Societe" [taillabel="0..n", style="filled", arrowhead="normal", color="#aa0000", label="travaille", headlabel="0..n", arrowtail="none", decorate="false", fontcolor="#aa0000"];
 }
 '''
 
 
 class DotTC(TestCase):
-    
+
     def test_schema2dot(self):
         """tests dot conversion without attributes information"""
         wanted_entities = set(('Person', 'Societe'))
         skipped_entities = set(schema.entities()) - wanted_entities
-        schema2dot.schema2dot(schema, 'toto.dot', skipentities=skipped_entities)
+        schema2dot.schema2dot(schema, 'toto.dot', skiptypes=skipped_entities)
         generated = open('toto.dot').read()
         os.remove('toto.dot')
         self.assertTextEquals(DOT_SOURCE, generated)
-        
+
 if __name__ == '__main__':
     unittest_main()
