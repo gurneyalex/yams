@@ -1,3 +1,4 @@
+from yams.buildobjs import EntityType, Datetime, Date, Time
 
 class Datetest(EntityType):
     dt1 = Datetime(default=u'now')

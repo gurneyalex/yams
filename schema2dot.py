@@ -91,13 +91,7 @@ class SchemaVisitor(object):
         return True
 
     def nodes(self):
-        # yield non meta first then meta to group them on the graph
-        for nodeid, node in self._nodes:
-            if not node.meta:
-                yield nodeid, node
-        for nodeid, node in self._nodes:
-            if node.meta:
-                yield nodeid, node
+        return self._nodes
 
     def edges(self):
         return self._edges

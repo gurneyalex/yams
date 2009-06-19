@@ -1,11 +1,13 @@
 """Classes used to build a schema.
 
 :organization: Logilab
-:copyright: 2003-2008 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
+:copyright: 2003-2009 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
 :contact: http://www.logilab.fr/ -- mailto:contact@logilab.fr
 :license: General Public License version 2 - http://www.gnu.org/licenses
 """
 __docformat__ = "restructuredtext en"
+
+from warnings import warn
 
 from logilab.common import attrdict
 from logilab.common.compat import sorted
@@ -15,17 +17,13 @@ from yams.constraints import (SizeConstraint, UniqueConstraint,
                               StaticVocabularyConstraint)
 
 __all__ = ('ObjectRelation', 'SubjectRelation', 'BothWayRelation',
-           'RelationDefinition', 'EntityType', 'MetaEntityType',
-           'RestrictedEntityType', 'UserEntityType', 'MetaUserEntityType',
-           'RelationType', 'MetaRelationType', 'UserRelationType',
-           'MetaUserRelationType', 'AttributeRelationType',
-           'MetaAttributeRelationType',
+           'RelationDefinition', 'EntityType', 'RelationType',
            'SubjectRelation', 'ObjectRelation', 'BothWayRelation',
            ) + tuple(BASE_TYPES)
 
-ETYPE_PROPERTIES = ('meta', 'description', 'permissions')
+ETYPE_PROPERTIES = ('description', 'permissions')
 # don't put description inside, handled "manually"
-RTYPE_PROPERTIES = ('meta', 'symetric', 'inlined', 'fulltext_container', 'permissions')
+RTYPE_PROPERTIES = ('symetric', 'inlined', 'fulltext_container', 'permissions')
 RDEF_PROPERTIES = ('cardinality', 'constraints', 'composite',
                    'order',  'default', 'uid', 'indexed', 'uid',
                    'fulltextindexed', 'internationalizable')
@@ -74,7 +72,7 @@ def _copy_attributes(fromobj, toobj, attributes):
 
 def register_base_types(schema):
     for etype in BASE_TYPES:
-        edef = EntityType(name=etype, meta=True)
+        edef = EntityType(name=etype)
         schema.add_entity_type(edef).set_default_groups()
 
 
@@ -260,6 +258,8 @@ class RelationType(Definition):
     def __init__(self, name=None, **kwargs):
         """kwargs must have values in RTYPE_PROPERTIES"""
         super(RelationType, self).__init__(name)
+        if kwargs.pop('meta', None):
+            warn('meta is deprecated', DeprecationWarning)
         _check_kwargs(kwargs, RTYPE_PROPERTIES + ('description',))
         _copy_attributes(attrdict(kwargs), self, RTYPE_PROPERTIES + ('description',))
 
@@ -313,7 +313,11 @@ class RelationDefinition(Definition):
             self.object = object
         else:
             self.object = self.__class__.object
+        assert not self.subject == '*'
+        assert not self.object == '*'
         super(RelationDefinition, self).__init__(name)
+        if kwargs.pop('meta', None):
+            warn('meta is deprecated', DeprecationWarning)
         _check_kwargs(kwargs, RDEF_PROPERTIES + ('description',))
         _copy_attributes(attrdict(kwargs), self, RDEF_PROPERTIES + ('description',))
         if self.constraints:
@@ -370,19 +374,15 @@ class RelationDefinition(Definition):
                 schema.add_relation_def(rdef)
 
     def _actual_types(self, schema, etype):
-        if etype == '*':
-            return self._wildcard_etypes(schema)
-        elif etype == '**':
+        # two bits of error checking & reporting :
+        if type(etype) not in (str, list, tuple):
+            raise RuntimeError('Entity types must not be instances but strings '
+                               'or list/tuples thereof. Ex. (bad, good) : '
+                               'SubjectRelation(Foo), SubjectRelation("Foo"). '
+                               'Hence, %r is not acceptable.' % etype)
+        if etype == '**':
             return self._pow_etypes(schema)
-        elif isinstance(etype, (tuple, list)):
-            return etype
         return (etype,)
-
-    def _wildcard_etypes(self, schema):
-        for eschema in schema.entities():
-            if eschema.is_final() or eschema.meta:
-                continue
-            yield eschema.type
 
     def _pow_etypes(self, schema):
         for eschema in schema.entities():
@@ -390,63 +390,6 @@ class RelationDefinition(Definition):
                 continue
             yield eschema.type
 
-
-# various derivated classes with some predefined values #######################
-
-class MetaEntityType(EntityType):
-    permissions = {
-        'read':   ('managers', 'users', 'guests',),
-        'add':    ('managers',),
-        'delete': ('managers',),
-        'update': ('managers', 'owners',),
-        }
-    meta = True
-
-class RestrictedEntityType(MetaEntityType):
-    permissions = {
-        'read':   ('managers', 'users',),
-        'add':    ('managers',),
-        'delete': ('managers',),
-        'update': ('managers', 'owners',),
-        }
-
-class UserEntityType(EntityType):
-    permissions = {
-        'read':   ('managers', 'users', 'guests',),
-        'add':    ('managers', 'users',),
-        'delete': ('managers', 'owners',),
-        'update': ('managers', 'owners',),
-        }
-
-class MetaUserEntityType(UserEntityType):
-    meta = True
-
-
-class MetaRelationType(RelationType):
-    permissions = {
-        'read':   ('managers', 'users', 'guests',),
-        'add':    ('managers',),
-        'delete': ('managers',),
-        }
-    meta = True
-
-class UserRelationType(RelationType):
-    permissions = {
-        'read':   ('managers', 'users', 'guests',),
-        'add':    ('managers', 'users',),
-        'delete': ('managers', 'users',),
-        }
-
-class MetaUserRelationType(UserRelationType):
-    meta = True
-
-
-class AttributeRelationType(RelationType):
-    # just set permissions to None so default permissions are set
-    permissions = MARKER
-
-class MetaAttributeRelationType(AttributeRelationType):
-    meta = True
 
 # classes used to define relationships within entity type classes ##################
 
@@ -542,4 +485,46 @@ class AbstractTypedAttribute(SubjectRelation):
 for basetype in BASE_TYPES:
     globals()[basetype] = type(basetype, (AbstractTypedAttribute,),
                                {'etype' : basetype})
+
+
+# various derivated classes with some predefined values XXX deprecated
+
+class MetaEntityType(EntityType):
+    permissions = {
+        'read':   ('managers', 'users', 'guests',),
+        'add':    ('managers',),
+        'delete': ('managers',),
+        'update': ('managers', 'owners',),
+        }
+
+class MetaUserEntityType(EntityType):
+    permissions = {
+        'read':   ('managers', 'users', 'guests',),
+        'add':    ('managers', 'users',),
+        'delete': ('managers', 'owners',),
+        'update': ('managers', 'owners',),
+        }
+
+class MetaRelationType(RelationType):
+    permissions = {
+        'read':   ('managers', 'users', 'guests',),
+        'add':    ('managers',),
+        'delete': ('managers',),
+        }
+
+class MetaUserRelationType(RelationType):
+    permissions = {
+        'read':   ('managers', 'users', 'guests',),
+        'add':    ('managers', 'users',),
+        'delete': ('managers', 'users',),
+        }
+
+class MetaAttributeRelationType(RelationType):
+    # just set permissions to None so default permissions are set
+    permissions = MARKER
+
+
+__all__ += ('MetaEntityType', 'MetaUserEntityType',
+            'MetaRelationType', 'MetaUserRelationType',
+            'MetaAttributeRelationType')
 
