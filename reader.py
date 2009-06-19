@@ -13,6 +13,7 @@ __docformat__ = "restructuredtext en"
 import sys
 from os.path import exists, join, splitext
 from os import listdir
+from warnings import warn
 
 from logilab.common import attrdict
 from logilab.common.textutils import get_csv
@@ -91,6 +92,22 @@ for objname in dir(constraints):
     except TypeError:
         continue
 
+class DeprecatedContext(dict):
+    def __init__(self, context):
+        dict.__init__(self, context)
+
+    def __getitem__(self, key):
+        if key in self:
+            warn('please import explicitly, %s won\'t be implicitly defined in later versions'
+                 % key, DeprecationWarning, stacklevel=2)
+            if key in ('MetaEntityType', 'MetaUserEntityType',
+                       'MetaRelationType', 'MetaUserRelationType',
+                       'MetaAttributeRelationType'):
+                warn('%s is deprecated, please use EntityType / RelationType with explicit permission'
+                     % key, DeprecationWarning, stacklevel=2)
+            return super(DeprecatedContext, self).__getitem__(key)
+        raise KeyError(key)
+
 
 def _builder_context():
     """builds the context in which the schema files
@@ -101,8 +118,7 @@ def _builder_context():
 
 class PyFileReader(FileReader):
     """read schema definition objects from a python file"""
-    context = {'_' : unicode}
-    context.update(_builder_context())
+    context = _builder_context()
     context.update(CONSTRAINTS)
 
     def __init__(self, *args, **kwargs):
@@ -151,15 +167,16 @@ class PyFileReader(FileReader):
         return erdefcls
 
     def exec_file(self, filepath):
-        flocals = self.context.copy()
-        flocals['import_schema'] = self.import_schema_file # XXX deprecate local name
-        flocals['import_erschema'] = self.import_erschema
-        flocals['defined_types'] = self.loader.defined
-        execfile(filepath, flocals)
-        for key in self.context:
+        fglobals = self.context.copy()
+        fglobals['import_schema'] = self.import_schema_file # XXX deprecate local name
+        fglobals['import_erschema'] = self.import_erschema
+        fglobals['defined_types'] = self.loader.defined
+        fglobals['__file__'] = filepath
+        flocals = {}
+        execfile(filepath, DeprecatedContext(fglobals), flocals)
+        for key in fglobals:
             if key in flocals:
                 del flocals[key]
-        del flocals['import_schema']
         self._loaded[filepath] = attrdict(flocals)
         return self._loaded[filepath]
 

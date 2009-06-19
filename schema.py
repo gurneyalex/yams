@@ -115,7 +115,6 @@ class ERSchema(object):
         assert erdef
         self.schema = schema
         self.type = erdef.name
-        self.meta = erdef.meta or False
         self.description = erdef.description or ''
         # mapping from action to groups
         try:
@@ -284,16 +283,11 @@ class EntitySchema(ERSchema):
             # no permissions needed for final entities, access to them
             # is defined through relations
             return {'read': ('managers', 'users', 'guests',)}
-        elif self.meta:
-            return {'read': ('managers', 'users', 'guests',),
-                            'update': ('managers', 'owners',),
-                            'delete': ('managers',),
-                            'add': ('managers',)}
         else:
             return {'read': ('managers', 'users', 'guests',),
-                            'update': ('managers', 'owners',),
-                            'delete': ('managers', 'owners'),
-                            'add': ('managers', 'users',)}
+                    'update': ('managers', 'owners',),
+                    'delete': ('managers', 'owners'),
+                    'add': ('managers', 'users',)}
 
     # IEntitySchema interface #################################################
 
@@ -476,7 +470,7 @@ class EntitySchema(ERSchema):
         attribute defined in the entity schema
         """
         for rschema, _ in self.attribute_definitions():
-            if not rschema.meta:
+            if not self.is_metadata(rschema):
                 return rschema
 
     def indexable_attributes(self):
@@ -799,10 +793,6 @@ class RelationSchema(ERSchema):
             return {'read': ('managers', 'users', 'guests'),
                     'delete': ('managers', 'users', 'guests'),
                     'add': ('managers', 'users', 'guests')}
-        elif self.meta:
-            return {'read': ('managers', 'users', 'guests'),
-                            'delete': ('managers',),
-                            'add': ('managers',)}
         else:
             return {'read': ('managers', 'users', 'guests',),
                             'delete': ('managers', 'users'),

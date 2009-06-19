@@ -7,5 +7,5 @@ class rel(RelationType):
     inlined = False
 
 class otherrel(RelationType):
-    name = rel
+    name = 'rel'
     inlined = False
