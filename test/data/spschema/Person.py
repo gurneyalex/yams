@@ -1,3 +1,5 @@
+from yams.buildobjs import EntityType, SubjectRelation, String
+
 class Person(EntityType):
     firstname = String()
     knows = SubjectRelation('Person')

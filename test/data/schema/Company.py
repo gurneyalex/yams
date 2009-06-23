@@ -1,4 +1,5 @@
-from yams.buildobjs import EntityType, RelationType, String, SubjectRelation
+from yams.buildobjs import EntityType, RelationType, RelationDefinition, \
+     SubjectRelation, String
 
 class Company(EntityType):
     name = String()

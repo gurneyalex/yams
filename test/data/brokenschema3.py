@@ -1,3 +1,4 @@
+from yams.buildobjs import EntityType, RelationType, SubjectRelation
 # conflicting RelationType properties
 
 class Anentity(EntityType):

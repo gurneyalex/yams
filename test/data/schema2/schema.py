@@ -1,3 +1,4 @@
+from yams.buildobjs import EntityType, RelationType, SubjectRelation
 
 class Anentity(EntityType):
     rel = SubjectRelation('Anentity', inlined=True)
@@ -14,4 +15,4 @@ class rel(RelationType):
 class __rel(RelationType):
     name = 'rel'
     composite = 'subject'
-    
+
