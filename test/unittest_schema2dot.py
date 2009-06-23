@@ -1,6 +1,7 @@
 """unittests for schema2dot"""
 
 import os
+import os.path as osp
 
 from logilab.common.testlib import TestCase, unittest_main
 from logilab.common.compat import set
@@ -8,22 +9,9 @@ from logilab.common.compat import set
 from yams.reader import SchemaLoader
 from yams import schema2dot
 
-import os.path as osp
-
 DATADIR = osp.abspath(osp.join(osp.dirname(__file__), 'data'))
 
-class DummyDefaultHandler:
-
-    def default_modname(self):
-        return 'yo'
-
-    def vocabulary_license(self):
-        return ['GPL', 'ZPL']
-
-    def vocabulary_debian_handler(self):
-        return ['machin', 'bidule']
-
-schema = SchemaLoader().load([DATADIR], default_handler=DummyDefaultHandler())
+schema = SchemaLoader().load([DATADIR])
 
 DOT_SOURCE = r'''digraph "toto" {
 rankdir=BT

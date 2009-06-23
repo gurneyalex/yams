@@ -1,7 +1,8 @@
 from yams.buildobjs import EntityType, RelationType, SubjectRelation, \
-     Int, String,  Boolean
+     ObjectRelation, Int, String,  Boolean
+from yams.constraints import SizeConstraint, UniqueConstraint
 
-class State(MetaUserEntityType):
+class State(EntityType):
     """used to associate simple states to an entity
     type and/or to define workflows
     """
@@ -41,7 +42,7 @@ class next_state(RelationType):
         'delete': ('managers',),
         }
 
-class initial_state(MetaUserRelationType):
+class initial_state(RelationType):
     """indicate which state should be used by default when an entity using states
     is created
     """

@@ -461,8 +461,10 @@ class SymetricTC(TestCase):
                            ('Story', ['Bug', 'Story', 'Project'])])
 
     def test_wildcard_association_types(self):
-        rdef = RelationDefinition('**', 'see_also', '**')
-        rdef.expand_relation_definitions({'see_also':rdef}, schema)
+        class see_also(RelationDefinition):
+            subject = '**'
+            object ='**'
+        see_also.expand_relation_definitions({'see_also': see_also}, schema)
         rsee_also = schema.rschema('see_also')
         subj_types = rsee_also.associations()
         subj_types.sort()

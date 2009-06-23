@@ -1,6 +1,7 @@
 """unit tests for module yams.schema2sql
 """
 
+import os.path as osp
 from cStringIO import StringIO
 
 from logilab.common.testlib import TestCase, unittest_main
@@ -11,22 +12,9 @@ from yams import schema2sql
 
 schema2sql.SET_DEFAULT = True
 
-import os.path as osp
-
 DATADIR = osp.abspath(osp.join(osp.dirname(__file__), 'data'))
 
-class DummyDefaultHandler:
-
-    def default_modname(self):
-        return 'yo'
-
-    def vocabulary_license(self):
-        return ['GPL', 'ZPL']
-
-    def vocabulary_debian_handler(self):
-        return ['machin', 'bidule']
-
-schema = SchemaLoader().load([DATADIR], default_handler=DummyDefaultHandler())
+schema = SchemaLoader().load([DATADIR])
 
 
 EXPECTED_DATA_NO_DROP = """
@@ -82,7 +70,7 @@ CREATE TABLE Person(
  nom varchar(64) NOT NULL,
  prenom varchar(64),
  sexe varchar(1) DEFAULT 'M',
- promo text,
+ promo varchar(6),
  titre varchar(128),
  adel varchar(128),
  ass varchar(128),
@@ -123,17 +111,16 @@ CREATE TABLE Subdivision(
 );
 
 CREATE TABLE pkginfo(
- modname varchar(30) DEFAULT 'yo' NOT NULL,
- version varchar(10) NOT NULL,
+ modname varchar(30) NOT NULL,
+ version varchar(10) DEFAULT '0.1' NOT NULL,
  copyright text NOT NULL,
- license text,
- pyversions text,
+ license varchar(3),
  short_desc varchar(80) NOT NULL,
  long_desc text NOT NULL,
  author varchar(100) NOT NULL,
  author_email varchar(100) NOT NULL,
  mailinglist varchar(100),
- debian_handler text
+ debian_handler varchar(6)
 );
 
 
