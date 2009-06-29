@@ -2,6 +2,8 @@ from yams.buildobjs import EntityType, RelationType, SubjectRelation, \
      ObjectRelation, Int, String,  Boolean
 from yams.constraints import SizeConstraint, UniqueConstraint
 
+from data.schema import RESTRICTED_RTYPE_PERMS
+
 class State(EntityType):
     """used to associate simple states to an entity
     type and/or to define workflows
@@ -27,20 +29,12 @@ class State(EntityType):
 
 class state_of(RelationType):
     """link a state to one or more entity type"""
-    permissions = {
-        'read':   ('managers', 'users', 'guests',),
-        'add':    ('managers',),
-        'delete': ('managers',),
-        }
+    permissions = RESTRICTED_RTYPE_PERMS
 
 class next_state(RelationType):
     """define a workflow by associating a state to possible following states
     """
-    permissions = {
-        'read':   ('managers', 'users', 'guests',),
-        'add':    ('managers',),
-        'delete': ('managers',),
-        }
+    permissions = RESTRICTED_RTYPE_PERMS
 
 class initial_state(RelationType):
     """indicate which state should be used by default when an entity using states
