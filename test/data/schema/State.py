@@ -14,13 +14,14 @@ class State(EntityType):
         'delete': ('managers', 'owners',),
         'update': ('managers', 'owners',),
         }
+    
 
     # attributes
     eid = Int(required=True, uid=True)
     name = String(required=True,
                   indexed=True, internationalizable=True,
                   constraints=[SizeConstraint(256)])
-    description = String(fulltextindexed=True)
+    description = String(fulltextindexed=True, meta=True) # XXX meta to test bw compat
     # relations
     state_of = SubjectRelation('Eetype', cardinality='+*')
     next_state = SubjectRelation('State', cardinality='**')

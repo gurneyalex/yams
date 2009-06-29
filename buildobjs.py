@@ -22,9 +22,11 @@ __all__ = ('ObjectRelation', 'SubjectRelation', 'BothWayRelation',
            'SubjectRelation', 'ObjectRelation', 'BothWayRelation',
            ) + tuple(BASE_TYPES)
 
-ETYPE_PROPERTIES = ('description', 'permissions')
+ETYPE_PROPERTIES = ('description', 'permissions',
+                    'meta') # XXX meta is deprecated
 # don't put description inside, handled "manually"
-RTYPE_PROPERTIES = ('symetric', 'inlined', 'fulltext_container', 'permissions')
+RTYPE_PROPERTIES = ('symetric', 'inlined', 'fulltext_container', 'permissions',
+                    'meta') # XXX meta is deprecated
 RDEF_PROPERTIES = ('cardinality', 'constraints', 'composite',
                    'order',  'default', 'uid', 'indexed', 'uid',
                    'fulltextindexed', 'internationalizable')
