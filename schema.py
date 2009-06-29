@@ -1143,6 +1143,8 @@ class Schema(object):
         try:
             return self._entities[etype]
         except KeyError:
+            if isinstance(etype, tuple):
+                etype = list(etype)
             raise KeyError('No entity named %s in schema' % etype)
 
     def relations(self):
