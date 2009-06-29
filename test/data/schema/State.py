@@ -1,11 +1,21 @@
+from yams.buildobjs import EntityType, RelationType, SubjectRelation, \
+     ObjectRelation, Int, String,  Boolean
+from yams.constraints import SizeConstraint, UniqueConstraint
 
-class State(MetaUserEntityType):
+class State(EntityType):
     """used to associate simple states to an entity
     type and/or to define workflows
     """
+    permissions = {
+        'read':   ('managers', 'users', 'guests',),
+        'add':    ('managers', 'users',),
+        'delete': ('managers', 'owners',),
+        'update': ('managers', 'owners',),
+        }
+
     # attributes
     eid = Int(required=True, uid=True)
-    name = String(required=True, 
+    name = String(required=True,
                   indexed=True, internationalizable=True,
                   constraints=[SizeConstraint(256)])
     description = String(fulltextindexed=True)
@@ -17,22 +27,42 @@ class State(MetaUserEntityType):
 
 class state_of(RelationType):
     """link a state to one or more entity type"""
-    meta = True
+    permissions = {
+        'read':   ('managers', 'users', 'guests',),
+        'add':    ('managers',),
+        'delete': ('managers',),
+        }
 
-class next_state(MetaRelationType):
+class next_state(RelationType):
     """define a workflow by associating a state to possible following states
     """
+    permissions = {
+        'read':   ('managers', 'users', 'guests',),
+        'add':    ('managers',),
+        'delete': ('managers',),
+        }
 
-class initial_state(MetaUserRelationType):
+class initial_state(RelationType):
     """indicate which state should be used by default when an entity using states
     is created
     """
+    permissions = {
+        'read':   ('managers', 'users', 'guests',),
+        'add':    ('managers', 'users',),
+        'delete': ('managers', 'users',),
+        }
     inlined = True
-    
-class Eetype(MetaEntityType):
+
+class Eetype(EntityType):
     """define an entity type, used to build the application schema"""
+    permissions = {
+        'read':   ('managers', 'users', 'guests',),
+        'add':    ('managers',),
+        'delete': ('managers',),
+        'update': ('managers', 'owners',),
+        }
     name = String(required=True, indexed=True, internationalizable=True,
-                           constraints=[UniqueConstraint(), SizeConstraint(64)])
+                  constraints=[UniqueConstraint(), SizeConstraint(64)])
     description = String(fulltextindexed=True)
     meta = Boolean()
     final = Boolean()

@@ -1,16 +1,15 @@
 """Write a schema as a dot file.
 
 :organization: Logilab
-:copyright: 2003-2008 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
+:copyright: 2003-2009 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
 :contact: http://www.logilab.fr/ -- mailto:contact@logilab.fr
 :license: General Public License version 2 - http://www.gnu.org/licenses
 """
-
 __docformat__ = "restructuredtext en"
-__metaclass__ = type
 
 import sys, os
 import os.path as osp
+from itertools import cycle
 
 from logilab.common.graph import DotBackend, GraphGenerator
 
@@ -20,20 +19,24 @@ CARD_MAP = {'?': '0..1',
             '+': '1..n'}
 
 class SchemaDotPropsHandler(object):
-    def display_attr(self, rschema):
-        return not rschema.meta
-    
+    def __init__(self, visitor):
+        self.visitor = visitor
+        # FIXME: colors are arbitrary
+        self.nextcolor = cycle( ('#aa0000', '#00aa00', '#0000aa',
+                                 '#000000', '#888888') ).next
+
     def node_properties(self, eschema):
         """return default DOT drawing options for an entity schema"""
         label = ['{',eschema.type,'|']
         label.append(r'\l'.join(rel.type for rel in eschema.ordered_relations()
-                                if rel.final and self.display_attr(rel)))
+                                if rel.final and self.visitor.should_display_attr(rel)))
         label.append(r'\l}') # trailing \l ensure alignement of the last one
         return {'label' : ''.join(label), 'shape' : "record",
                 'fontname' : "Courier", 'style' : "filled"}
-    
+
     def edge_properties(self, rschema, subjnode, objnode):
         """return default DOT drawing options for a relation schema"""
+        # symetric rels are handled differently, let yams decide what's best
         if rschema.symetric:
             kwargs = {'label': rschema.type,
                       'color': '#887788', 'style': 'dashed',
@@ -57,22 +60,27 @@ class SchemaDotPropsHandler(object):
                 kwargs['taillabel'] = CARD_MAP[cards[1]]
             if cards[0] != '1':
                 kwargs['headlabel'] = CARD_MAP[cards[0]]
-        
-        kwargs['decorate'] = 'true'
-        kwargs['color'] = 'grey'
+            kwargs['color'] = self.nextcolor()
+        kwargs['fontcolor'] = kwargs['color']
+        # dot label decoration is just awful (1 line underlining the label
+        # + 1 line going to the closest edge spline point)
+        kwargs['decorate'] = 'false'
         #kwargs['labelfloat'] = 'true'
         return kwargs
 
 
 class SchemaVisitor(object):
-    def __init__(self, skipmeta=True):
+    def __init__(self, skiptypes=()):
         self._done = set()
-        self.skipmeta = skipmeta
+        self.skiptypes = skiptypes
         self._nodes = None
         self._edges = None
-        
-    def display_schema(self, erschema):
-        return not (erschema.is_final() or (self.skipmeta and erschema.meta))
+
+    def should_display_schema(self, erschema):
+        return not (erschema.is_final() or erschema in self.skiptypes)
+
+    def should_display_attr(self, rschema):
+        return not rschema in self.skiptypes
 
     def display_rel(self, rschema, setype, tetype):
         if (rschema, setype, tetype) in self._done:
@@ -83,35 +91,28 @@ class SchemaVisitor(object):
         return True
 
     def nodes(self):
-        # yield non meta first then meta to group them on the graph
-        for nodeid, node in self._nodes:
-            if not node.meta:
-                yield nodeid, node
-        for nodeid, node in self._nodes:
-            if node.meta:
-                yield nodeid, node
-            
+        return self._nodes
+
     def edges(self):
         return self._edges
 
-    
+
 class FullSchemaVisitor(SchemaVisitor):
-    def __init__(self, schema, skipetypes=(), skiprels=(), skipmeta=True):
-        super(FullSchemaVisitor, self).__init__(skipmeta)
+    def __init__(self, schema, skiptypes=()):
+        super(FullSchemaVisitor, self).__init__(skiptypes)
         self.schema = schema
-        self.skiprels = skiprels
         self._eindex = None
         entities = [eschema for eschema in schema.entities()
-                    if self.display_schema(eschema) and not eschema.type in skipetypes]
+                    if self.should_display_schema(eschema)]
         self._eindex = dict([(e.type, e) for e in entities])
 
     def nodes(self):
         for eschema in self._eindex.values():
             yield eschema.type, eschema
-            
+
     def edges(self):
         for rschema in self.schema.relations():
-            if rschema.is_final() or rschema.type in self.skiprels:
+            if not self.should_display_schema(rschema):
                 continue
             for setype, tetype in rschema._rproperties:
                 if not (setype in self._eindex and tetype in self._eindex):
@@ -120,36 +121,36 @@ class FullSchemaVisitor(SchemaVisitor):
                     continue
                 yield str(setype), str(tetype), rschema
 
-    
+
 class OneHopESchemaVisitor(SchemaVisitor):
-    def __init__(self, eschema, skiprels=()):
-        super(OneHopESchemaVisitor, self).__init__(skipmeta=False)
+    def __init__(self, eschema, skiptypes=()):
+        super(OneHopESchemaVisitor, self).__init__(skiptypes)
         nodes = set()
         edges = set()
         nodes.add((eschema.type, eschema))
         for rschema in eschema.subject_relations():
-            if rschema.is_final() or rschema.type in skiprels:
+            if self.should_display_schema(rschema):
                 continue
             for teschema in rschema.objects(eschema.type):
                 nodes.add((teschema.type, teschema))
                 if not self.display_rel(rschema, eschema.type, teschema.type):
-                    continue                
+                    continue
                 edges.add((eschema.type, teschema.type, rschema))
         for rschema in eschema.object_relations():
-            if rschema.type in skiprels:
+            if self.should_display_schema(rschema):
                 continue
             for teschema in rschema.subjects(eschema.type):
                 nodes.add((teschema.type, teschema))
                 if not self.display_rel(rschema, teschema.type, eschema.type):
-                    continue                
+                    continue
                 edges.add((teschema.type, eschema.type, rschema))
         self._nodes = nodes
         self._edges = edges
 
 
 class OneHopRSchemaVisitor(SchemaVisitor):
-    def __init__(self, rschema, skiprels=()):
-        super(OneHopRSchemaVisitor, self).__init__(skipmeta=False)
+    def __init__(self, rschema, skiptypes=()):
+        super(OneHopRSchemaVisitor, self).__init__(skiptypes)
         nodes = set()
         edges = set()
         done = set()
@@ -158,19 +159,17 @@ class OneHopRSchemaVisitor(SchemaVisitor):
             for oeschema in rschema.objects(seschema.type):
                 nodes.add((oeschema.type, oeschema))
                 if not self.display_rel(rschema, seschema.type, oeschema.type):
-                    continue                                
+                    continue
                 edges.add((seschema.type, oeschema.type, rschema))
         self._nodes = nodes
         self._edges = edges
 
 
-def schema2dot(schema=None, outputfile=None, skipentities=(),
-               skiprels=(), skipmeta=True, visitor=None,
-               prophdlr=None, size=None):
+def schema2dot(schema=None, outputfile=None, skiptypes=(),
+               visitor=None, prophdlr=None, size=None):
     """write to the output stream a dot graph representing the given schema"""
-    visitor = visitor or FullSchemaVisitor(schema, skipentities,
-                                           skiprels, skipmeta)
-    prophdlr = prophdlr or SchemaDotPropsHandler()
+    visitor = visitor or FullSchemaVisitor(schema, skiptypes)
+    prophdlr = prophdlr or SchemaDotPropsHandler(visitor)
     if outputfile:
         schemaname = osp.splitext(osp.basename(outputfile))[0]
     else:
@@ -210,4 +209,4 @@ def run():
 
 if __name__ == '__main__':
     run()
-    
+

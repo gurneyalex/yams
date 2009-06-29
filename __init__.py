@@ -20,54 +20,17 @@ import __builtin__
 __builtin__._ = unicode
 
 from logilab.common.compat import set
-    
+
 BASE_TYPES = set(('String', 'Int', 'Float', 'Boolean', 'Date', 'Decimal',
                   'Time', 'Datetime', 'Interval', 'Password', 'Bytes'))
+
+# base groups used in permissions 
+BASE_GROUPS = set(('managers', 'users', 'guests', 'owners'))
+
 
 from logilab.common import nullobject
 MARKER = nullobject()
 
-
-class FileReader(object):
-    """Abstract class for file readers."""
-    
-    def __init__(self, loader, defaulthandler=None, readdeprecated=False):
-        self.loader = loader
-        self.default_hdlr = defaulthandler
-        self.read_deprecated = readdeprecated
-        self._current_file = None
-        self._current_line = None
-        self._current_lineno = None
-
-    def __call__(self, filepath):
-        self._current_file = filepath
-        self.read_file(filepath)
-        
-    def error(self, msg=None):
-        """raise a contextual exception"""
-        raise BadSchemaDefinition(self._current_file, self._current_lineno,
-            self._current_line, msg)
-    
-    def read_file(self, filepath):
-        """default implementation, calling read_line() method for each
-        non-blank lines, and ignoring lines starting by '#' which are
-        considered as comment lines
-        """
-        for i, line in enumerate(file(filepath)):
-            line = line.strip()
-            if not line or line.startswith('#'):
-                continue
-            self._current_line = line
-            self._current_lineno = i
-            if line.startswith('//'):
-                if self.read_deprecated:
-                    self.read_line(line[2:])
-            else:
-                self.read_line(line)
-
-    def read_line(self, line):
-        """need overriding !"""
-        raise NotImplementedError()
 
 # work in progress
 from yams._exceptions import *
@@ -86,7 +49,7 @@ class _RelationRole(int):
             return OBJECT
         return SUBJECT
 
-    
+
 SUBJECT = _RelationRole(0)
 OBJECT  = _RelationRole(1)
 
@@ -106,4 +69,4 @@ def ensure_new_subjobj(val, cls=None, attr=None):
         if cls:
             msg += ' for attribute %s of class %s' % (attr, cls.__name__)
         warn(DeprecationWarning, msg)
-        return SUBJECT    
+        return SUBJECT

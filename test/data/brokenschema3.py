@@ -1,3 +1,4 @@
+from yams.buildobjs import EntityType, RelationType, SubjectRelation
 # conflicting RelationType properties
 
 class Anentity(EntityType):
@@ -7,5 +8,5 @@ class rel(RelationType):
     inlined = False
 
 class otherrel(RelationType):
-    name = rel
+    name = 'rel'
     inlined = False
