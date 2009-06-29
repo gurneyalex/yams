@@ -378,7 +378,7 @@ class SchemaLoaderTC2(TestCase):
         SchemaLoader.main_schema_directory = 'brokenschema1'
         ex = self.assertRaises(BadSchemaDefinition,
                                SchemaLoader().load, [DATADIR], 'Test')
-        self.assertEquals(str(ex), "conflicting values True/False for property inlined of relation type 'rel'")
+        self.assertEquals(str(ex), "conflicting values False/True for property inlined of relation type 'rel'")
 
     def test_broken_schema2(self):
         SchemaLoader.main_schema_directory = 'brokenschema2'
