@@ -412,7 +412,7 @@ class EntitySchema(ERSchema):
             assert role == 'object'
             if ttype is None:
                 ttype = rschema.subjects(self)[0]
-            return rschema.rproperty(ttype, self, prop):
+            return rschema.rproperty(ttype, self, prop)
 
     def rproperty(self, rtype, prop):
         """convenience method to access a property of a final subject relation"""
