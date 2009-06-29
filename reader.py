@@ -118,7 +118,8 @@ class PyFileReader(object):
              'predefined context in globals)', DeprecationWarning)
         try:
             erdef = self.loader.defined[ertype]
-            if erdef.name == ertype:
+            name = hasattr(erdef, 'name') and erdef.name or erdef.__name__
+            if name == ertype:
                 assert instantiate, 'can\'t get class of an already registered type'
                 return erdef
         except KeyError:
