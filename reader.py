@@ -141,22 +141,18 @@ class PyFileReader(object):
             modname = splitext(basename(filepath))[0]
             doimport = False
         fglobals = self.context.copy()
-        flocals = {}
         # wrap callable that should be imported
         def obsolete(func, reason="This function is obsolete"):
             def wrapped(*args, **kwargs):
-                if not func.__name__ in flocals:
+                if func.__name__ in self.context:
                     warn(reason, DeprecationWarning, stacklevel=2)
                 return func(*args, **kwargs)
             return wrapped
         for key, val in fglobals.items():
-            if key in BASE_TYPES or \
+            if key in BASE_TYPES or key in CONSTRAINTS or \
                    key in ('SubjectRelation', 'ObjectRelation', 'BothWayRelation'):
-                msg = '%s should be explictly imported from yams.buildobjs' % key
-                fglobals[key] = obsolete(val, msg)
-            elif key in CONSTRAINTS:
-                msg = '%s should be explictly imported from yams.constraints' % key
-                fglobals[key] = obsolete(val, msg)
+                msg = '%s should be explictly imported from %s'
+                fglobals[key] = obsolete(val, msg % (key, val.__module__))
         fglobals['import_erschema'] = self.import_erschema
         fglobals['defined_types'] = DeprecatedDict(self.loader.defined,
                                                    'defined_types is deprecated, '
@@ -176,16 +172,16 @@ class PyFileReader(object):
             package = '.'.join(modname.split('.')[:-1])
             if package and not package in sys.modules:
                 __import__(package)
-            execfile(filepath, fglobals, flocals)
+            execfile(filepath, fglobals)
             # check for use of classes that should be imported, without
             # importing them
-            for name, obj in flocals.items():
+            for name, obj in fglobals.items():
                 if isinstance(obj, type) and \
                        issubclass(obj, buildobjs.Definition) and \
                        obj.__module__ == modname:
                     for parent in obj.__bases__:
                         pname = parent.__name__
-                        if pname in fglobals and not pname in flocals:
+                        if pname in self.context:
                             warn('%s: please explicitly import %s'
                                  % (filepath, pname), DeprecationWarning)
                         if pname in ('MetaEntityType', 'MetaUserEntityType',
@@ -194,11 +190,10 @@ class PyFileReader(object):
                             warn('%s is deprecated, use EntityType/RelationType'
                                  ' with explicit permission' % pname,
                                  DeprecationWarning)
-            for key in fglobals:
-                if key in flocals:
-                    del flocals[key]
-            flocals['__file__'] = filepath
-            module = attrdict(flocals)
+            for key in self.context:
+                del fglobals[key]
+            fglobals['__file__'] = filepath
+            module = attrdict(fglobals)
             sys.modules[modname] = module
         self._loaded[filepath] = (modname, module)
         return self._loaded[filepath]
