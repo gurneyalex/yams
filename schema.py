@@ -21,9 +21,6 @@ from yams.interfaces import (ISchema, IRelationSchema, IEntitySchema,
                              IVocabularyConstraint)
 from yams.constraints import BASE_CHECKERS, BASE_CONVERTERS, UniqueConstraint
 
-
-from mx.DateTime import today, now, DateTimeFrom, DateFrom, TimeFrom
-
 def use_py_datetime():
     global DATE_FACTORY_MAP, KEYWORD_MAP
 
