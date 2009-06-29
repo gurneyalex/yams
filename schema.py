@@ -392,11 +392,11 @@ class EntitySchema(ERSchema):
         assert len(objtypes) == 1
         return objtypes[0]
 
-    def subjrproperty(self, rschema, prop):
+    def subjrproperty(self, rtype, prop):
         """convenience method to access a property of a subject relation"""
         return self.role_rproperty('subject', rtype, prop)
 
-    def objrproperty(self, rschema, prop):
+    def objrproperty(self, rtype, prop):
         """convenience method to access a property of an object relation"""
         return self.role_rproperty('object', rtype, prop)
 
@@ -405,11 +405,13 @@ class EntitySchema(ERSchema):
         this schema role
         """
         if role == 'subject':
+            rschema = self.subject_relation(rtype)
             if ttype is None:
                 rschema.objects(self)[0]
             return rschema.rproperty(self, ttype, prop)
         else:
             assert role == 'object'
+            rschema = self.object_relation(rtype)
             if ttype is None:
                 ttype = rschema.subjects(self)[0]
             return rschema.rproperty(ttype, self, prop)
