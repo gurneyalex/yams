@@ -157,7 +157,7 @@ class PyFileReader(object):
                    key in ('SubjectRelation', 'ObjectRelation', 'BothWayRelation'):
                 msg = '%s should be explictly imported from %s'
                 val = obsolete(val, msg % (key, val.__module__))
-                setattr(__builtin__, key, val)
+            setattr(__builtin__, key, val)
         __builtin__.import_erschema = self.import_erschema
         __builtin__.defined_types = DeprecatedDict(self.loader.defined,
                                                     'defined_types is deprecated, '
