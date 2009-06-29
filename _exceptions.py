@@ -9,10 +9,10 @@ __docformat__ = "restructuredtext en"
 
 class SchemaError(Exception):
     """base class for schema exceptions"""
-    
+
     def __str__(self):
         return unicode(self).encode('utf8')
-    
+
 class UnknownType(SchemaError):
     """using an unknown entity type"""
 
@@ -38,14 +38,14 @@ class BadSchemaDefinition(SchemaError):
         else:
             return None
     filename = property(__get_filename)
-    
+
     def __get_lineno(self):
         if len(self.args) > 2:
             return self.args[1]
         else:
             return None
     lineno = property(__get_lineno)
-    
+
     def __get_line(self):
         if len(self.args) > 3:
             return self.args[2]
@@ -91,8 +91,10 @@ class ValidationError(SchemaError):
         # set args so ValidationError are serializable through pyro
         SchemaError.__init__(self, entity, explanation)
         self.entity = entity
+        assert isinstance(explanation, dict), \
+            'validation error explanation must be a dict'
         self.errors = explanation
-        
+
     def __unicode__(self):
         if len(self.errors) == 1:
             attr, error = self.errors.items()[0]
