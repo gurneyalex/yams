@@ -400,14 +400,15 @@ class RelationDefinition(Definition):
                 schema.add_relation_def(rdef)
 
 def _actual_types(schema, etype):
-    # two bits of error checking & reporting :
-    if type(etype) not in (str, list, tuple):
+    if etype == '**':
+        return _pow_etypes(schema)
+    if isinstance(etype, (list, tuple)):
+        return etype
+    if not isinstance(etype, basestring):
         raise RuntimeError('Entity types must not be instances but strings '
                            'or list/tuples thereof. Ex. (bad, good) : '
                            'SubjectRelation(Foo), SubjectRelation("Foo"). '
                            'Hence, %r is not acceptable.' % etype)
-    if etype == '**':
-        return _pow_etypes(schema)
     return (etype,)
 
 def _pow_etypes(schema):
