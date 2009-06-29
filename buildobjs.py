@@ -354,13 +354,14 @@ class RelationDefinition(Definition):
 
         register definition objects by adding them to the `defined` dictionnary
         """
-        rtype = RelationType(cls.name)
+        name = getattr(cls, 'name', cls.__name__)
+        rtype = RelationType(name)
         _copy_attributes(cls, rtype, RTYPE_PROPERTIES)
-        if cls.name in defined:
-            _copy_attributes(rtype, defined[cls.name], RTYPE_PROPERTIES)
+        if name in defined:
+            _copy_attributes(rtype, defined[name], RTYPE_PROPERTIES)
         else:
-            defined[cls.name] = rtype
-        key = (cls.subject, cls.name, cls.object)
+            defined[name] = rtype
+        key = (cls.subject, name, cls.object)
         if key in defined:
             raise BadSchemaDefinition('duplicated %s' % cls)
         defined[key] = cls
