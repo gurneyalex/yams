@@ -300,11 +300,6 @@ class EntitySchema(ERSchema):
         """
         return self.type in BASE_TYPES
 
-    def subjrproperty(self, rschema, prop):
-        return rschema.rproperty(self.type, rschema.objects(self.type)[0], prop)
-    def objrproperty(self, rschema, prop):
-        return rschema.rproperty(rschema.subjects(self.type)[0], self.type, prop)
-
     def is_subobject(self, strict=False):
         """return True if this entity type is contained by another. If strict,
         return True if this entity type *must* be contained by another.
@@ -397,8 +392,30 @@ class EntitySchema(ERSchema):
         assert len(objtypes) == 1
         return objtypes[0]
 
-    def rproperty(self, rtype, prop):
+    def subjrproperty(self, rschema, prop):
         """convenience method to access a property of a subject relation"""
+        return self.role_rproperty('subject', rtype, prop)
+
+    def objrproperty(self, rschema, prop):
+        """convenience method to access a property of an object relation"""
+        return self.role_rproperty('object', rtype, prop)
+
+    def role_rproperty(self, role, rtype, prop, ttype=None):
+        """convenience method to access a property of a relation according to
+        this schema role
+        """
+        if role == 'subject':
+            if ttype is None:
+                rschema.objects(self)[0]
+            return rschema.rproperty(self, ttype, prop)
+        else:
+            assert role == 'object'
+            if ttype is None:
+                ttype = rschema.subjects(self)[0]
+            return rschema.rproperty(ttype, self, prop):
+
+    def rproperty(self, rtype, prop):
+        """convenience method to access a property of a final subject relation"""
         rschema = self.subject_relation(rtype)
         return rschema.rproperty(self, self.destination(rtype), prop)
 
