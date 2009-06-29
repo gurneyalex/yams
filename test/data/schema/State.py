@@ -14,7 +14,6 @@ class State(EntityType):
         'delete': ('managers', 'owners',),
         'update': ('managers', 'owners',),
         }
-    
 
     # attributes
     eid = Int(required=True, uid=True)

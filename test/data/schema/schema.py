@@ -33,6 +33,7 @@ class Person(EntityType):
 
 
 class Societe(EntityType):
+    meta = False # test bw compat
     nom  = String(maxsize=64, fulltextindexed=True)
     web = String(maxsize=128)
     tel  = Int()

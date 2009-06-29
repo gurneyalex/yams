@@ -140,7 +140,10 @@ class PyFileReader(object):
                  'files to make it importable' % filepath, DeprecationWarning)
             modname = splitext(basename(filepath))[0]
             doimport = False
-        fglobals = self.context.copy()
+        # XXX until bw compat is gone, put context into builtins to allow proper
+        # control of deprecation warning
+        import __builtin__
+        fglobals = {} # self.context.copy()
         # wrap callable that should be imported
         def obsolete(func, reason="This function is obsolete"):
             def wrapped(*args, **kwargs):
@@ -148,15 +151,16 @@ class PyFileReader(object):
                     warn(reason, DeprecationWarning, stacklevel=2)
                 return func(*args, **kwargs)
             return wrapped
-        for key, val in fglobals.items():
+        for key, val in self.context.items():
             if key in BASE_TYPES or key in CONSTRAINTS or \
                    key in ('SubjectRelation', 'ObjectRelation', 'BothWayRelation'):
                 msg = '%s should be explictly imported from %s'
-                fglobals[key] = obsolete(val, msg % (key, val.__module__))
-        fglobals['import_erschema'] = self.import_erschema
-        fglobals['defined_types'] = DeprecatedDict(self.loader.defined,
-                                                   'defined_types is deprecated, '
-                                                   'use yams.reader.context')
+                val = obsolete(val, msg % (key, val.__module__))
+                setattr(__builtin__, key, val)
+        __builtin__.import_erschema = self.import_erschema
+        __builtin__.defined_types = DeprecatedDict(self.loader.defined,
+                                                    'defined_types is deprecated, '
+                                                    'use yams.reader.context')
         fglobals['__file__'] = filepath
         fglobals['__name__'] = modname
         # XXX can't rely on __import__ until bw compat (eg implicit import) needed
@@ -181,17 +185,19 @@ class PyFileReader(object):
                        obj.__module__ == modname:
                     for parent in obj.__bases__:
                         pname = parent.__name__
-                        if pname in self.context:
-                            warn('%s: please explicitly import %s'
-                                 % (filepath, pname), DeprecationWarning)
                         if pname in ('MetaEntityType', 'MetaUserEntityType',
                                      'MetaRelationType', 'MetaUserRelationType',
                                      'MetaAttributeRelationType'):
                             warn('%s is deprecated, use EntityType/RelationType'
                                  ' with explicit permission' % pname,
                                  DeprecationWarning)
+                        if pname in fglobals or not pname in self.context:
+                            # imported
+                            continue
+                        warn('%s: please explicitly import %s'
+                             % (filepath, pname), DeprecationWarning)
             for key in self.context:
-                del fglobals[key]
+                fglobals.pop(key, None)
             fglobals['__file__'] = filepath
             module = attrdict(fglobals)
             sys.modules[modname] = module
