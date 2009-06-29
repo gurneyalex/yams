@@ -1,3 +1,6 @@
+from yams.buildobjs import EntityType, RelationType, RelationDefinition, \
+     SubjectRelation, String
+
 class Company(EntityType):
     name = String()
 
@@ -33,9 +36,15 @@ class missing_require_permission(RelationDefinition):
     subject = 'Company'
     object = 'EPermission'
 
-class EPermission(MetaEntityType):
+class EPermission(EntityType):
     """entity type that may be used to construct some advanced security configuration
     """
+    permissions = {
+        'read':   ('managers', 'users', 'guests',),
+        'add':    ('managers',),
+        'delete': ('managers',),
+        'update': ('managers', 'owners',),
+        }
     name = String(required=True, indexed=True, internationalizable=True,
                   fulltextindexed=True, maxsize=100,
                   description=_('name or identifier of the permission'))
