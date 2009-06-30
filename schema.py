@@ -407,7 +407,7 @@ class EntitySchema(ERSchema):
         if role == 'subject':
             rschema = self.subject_relation(rtype)
             if ttype is None:
-                rschema.objects(self)[0]
+                ttype = rschema.objects(self)[0]
             return rschema.rproperty(self, ttype, prop)
         else:
             assert role == 'object'
