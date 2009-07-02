@@ -36,7 +36,7 @@ author_email = "devel@logilab.fr"
 web = "http://www.logilab.org/project/%s" % modname
 
 # mailing list
-mailinglist = 'mailto://python-projects@lists.logilab.org' 
+mailinglist = 'mailto://python-projects@lists.logilab.org'
 
 # download place
 ftp = "ftp://ftp.logilab.org/pub/%s" % modname
