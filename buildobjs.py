@@ -277,7 +277,7 @@ class RelationType(Definition):
         """kwargs must have values in RTYPE_PROPERTIES"""
         super(RelationType, self).__init__(name)
         if kwargs.pop('meta', None):
-            warn('meta is deprecated', DeprecationWarning)
+            warn('meta is deprecated', DeprecationWarning, stacklevel=2)
         _check_kwargs(kwargs, RTYPE_PROPERTIES + ('description',))
         _copy_attributes(attrdict(kwargs), self, RTYPE_PROPERTIES + ('description',))
 
