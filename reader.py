@@ -19,7 +19,6 @@ from logilab.common import attrdict
 from logilab.common.testlib import mock_object
 from logilab.common.textutils import get_csv
 from logilab.common.modutils import modpath_from_file
-from logilab.common.deprecation import obsolete
 
 from yams import UnknownType, BadSchemaDefinition, BASE_TYPES
 from yams import constraints, schema as schemamod
@@ -101,17 +100,6 @@ class PyFileReader(object):
             if isdef and obj.__module__ == modname:
                 self.loader.add_definition(self, obj)
 
-#     def _import_schema_file(self, schemamod):
-#         filepath = self.loader.include_schema_files(schemamod)[0]
-#         try:
-#             return self._loaded[filepath]
-#         except KeyError:
-#             try:
-#                 return self.exec_file(filepath)
-#             except Exception, ex:
-#                 setattr(ex,'schema_files',filepath)
-#                 raise
-
     def import_erschema(self, ertype, schemamod=None, instantiate=True):
         warn('import_erschema is deprecated, use explicit import once schema '
              'is turned into a proper python module (eg not expecting '
@@ -125,12 +113,6 @@ class PyFileReader(object):
         except KeyError:
             pass
         assert False, 'ooups'
-#         erdefcls = getattr(self._import_schema_file(schemamod or ertype), ertype)
-#         if instantiate:
-#             erdef = erdefcls()
-#             self.loader.add_definition(self, erdef)
-#             return erdef
-#         return erdefcls
 
     def exec_file(self, filepath):
         try:
@@ -146,17 +128,10 @@ class PyFileReader(object):
         import __builtin__
         fglobals = {} # self.context.copy()
         # wrap callable that should be imported
-        def obsolete(func, reason="This function is obsolete"):
-            def wrapped(*args, **kwargs):
-                if func.__name__ in self.context:
-                    warn(reason, DeprecationWarning, stacklevel=2)
-                return func(*args, **kwargs)
-            return wrapped
         for key, val in self.context.items():
             if key in BASE_TYPES or key in CONSTRAINTS or \
                    key in ('SubjectRelation', 'ObjectRelation', 'BothWayRelation'):
-                msg = '%s should be explictly imported from %s'
-                val = obsolete(val, msg % (key, val.__module__))
+                val = obsolete(val)
             setattr(__builtin__, key, val)
         __builtin__.import_erschema = self.import_erschema
         __builtin__.defined_types = DeprecatedDict(self.loader.defined,
@@ -204,6 +179,14 @@ class PyFileReader(object):
             sys.modules[modname] = module
         self._loaded[filepath] = (modname, module)
         return self._loaded[filepath]
+
+def obsolete(cls):
+    def wrapped(*args, **kwargs):
+        reason = '%s should be explictly imported from %s' % (
+            cls.__name__, cls.__module__)
+        warn(reason, DeprecationWarning, stacklevel=2)
+        return cls(*args, **kwargs)
+    return wrapped
 
 # the main schema loader ######################################################
 
@@ -297,19 +280,6 @@ class SchemaLoader(object):
                 else:
                     self.unhandled_file(join(directory, filename))
         return result
-
-#     def include_schema_files(self, etype, directory=None):
-#         """return schema files for a type defined in a schemas library"""
-#         directory = directory or self.lib_directory
-#         if directory is None:
-#             raise BadSchemaDefinition('No schemas library defined')
-#         base = join(directory, etype)
-#         result = []
-#         if exists(base + '.py'):
-#             result.append(base + ext)
-#         if not result:
-#             raise UnknownType('No type %s in %s' % (etype, directory))
-#         return result
 
     def handle_file(self, filepath):
         """handle a partial schema definition file according to its extension
