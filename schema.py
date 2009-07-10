@@ -16,45 +16,12 @@ from logilab.common.compat import sorted
 from logilab.common.interface import implements
 from logilab.common.deprecation import deprecated_function
 
-from yams import BASE_TYPES, MARKER, ValidationError, BadSchemaDefinition
+import yams
+from yams import (BASE_TYPES, MARKER, ValidationError, BadSchemaDefinition,
+                  use_py_datetime)
 from yams.interfaces import (ISchema, IRelationSchema, IEntitySchema,
                              IVocabularyConstraint)
 from yams.constraints import BASE_CHECKERS, BASE_CONVERTERS, UniqueConstraint
-
-def use_py_datetime():
-    global DATE_FACTORY_MAP, KEYWORD_MAP
-
-    from datetime import datetime, date, time
-    from time import strptime as time_strptime
-
-    try:
-        strptime = datetime.strptime
-    except AttributeError: # py < 2.5
-        def strptime(value, format):
-            return datetime(*time_strptime(value, format)[:6])
-
-    def strptime_time(value, format='%H:%M'):
-        return time(*time_strptime(value, format)[3:6])
-
-    KEYWORD_MAP = {'Datetime.NOW' : datetime.now,
-                   'Datetime.TODAY': datetime.today,
-                   'Date.TODAY': date.today}
-    DATE_FACTORY_MAP = {
-        'Datetime' : lambda x: ':' in x and strptime(x, '%Y/%m/%d %H:%M') or strptime(x, '%Y/%m/%d'),
-        'Date' : lambda x : strptime(x, '%Y/%m/%d'),
-        'Time' : strptime_time
-        }
-
-try:
-    from mx.DateTime import today, now, DateTimeFrom, DateFrom, TimeFrom
-    KEYWORD_MAP = {'Datetime.NOW' : now,
-                   'Datetime.TODAY' : today,
-                   'Date.TODAY': today}
-    DATE_FACTORY_MAP = {'Datetime' : DateTimeFrom,
-                        'Date' : DateFrom,
-                        'Time' : TimeFrom}
-except ImportError:
-    use_py_datetime()
 
 def rehash(dictionary):
     """this function manually builds a copy of `dictionary` but forces
@@ -556,9 +523,9 @@ class EntitySchema(ERSchema):
                     default = Decimal(default)
             elif attrtype in ('Date', 'Datetime', 'Time'):
                 try:
-                    default = KEYWORD_MAP['%s.%s' % (attrtype, default.upper())]()
+                    default = yams.KEYWORD_MAP['%s.%s' % (attrtype, default.upper())]()
                 except KeyError:
-                    default = DATE_FACTORY_MAP[attrtype](default)
+                    default = yams.DATE_FACTORY_MAP[attrtype](default)
             else:
                 default = unicode(default)
         return default
