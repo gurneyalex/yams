@@ -148,6 +148,17 @@ class metadefinition(type):
         return defclass
 
 
+# HACK: add_relation_function will be transformed in a classmethod
+#       in EntityType but external projects might need to access the
+#       original function object, i.e. add_relation_function
+#       Have a look at cubicweb.schema.py for an example
+def add_relation_function(cls, rdef, name=None):
+    if name:
+        rdef.name = name
+    cls._ensure_relation_type(rdef)
+    _add_relation(cls.__relations__, rdef, name)
+
+
 class EntityType(Definition):
     # FIXME reader magic forbids to define a docstring...
     #"""an entity has attributes and can be linked to other entities by
@@ -232,12 +243,7 @@ class EntityType(Definition):
         for rdef in othermetadefcls.__relations__:
             cls.add_relation(rdef)
 
-    @classmethod
-    def add_relation(cls, rdef, name=None):
-        if name:
-            rdef.name = name
-        cls._ensure_relation_type(rdef)
-        _add_relation(cls.__relations__, rdef, name)
+    add_relation = classmethod(add_relation_function)
 
     @classmethod
     def insert_relation_after(cls, afterrelname, name, rdef):
