@@ -1,0 +1,127 @@
+#!/usr/bin/python
+
+import sys
+from pprint import pprint
+
+from xml.etree import ElementTree as ET
+
+OWL = '{http://www.w3.org/2002/07/owl#}'
+RDF = '{http://www.w3.org/1999/02/22-rdf-syntax-ns#}'
+RDFS= '{http://www.w3.org/2000/01/rdf-schema#}'
+
+def last(uri):
+    last = uri.split('/')[-1]
+    if '#' in last:
+        last = last.split('#')[-1]
+    return last
+def clean_klass(name):
+    return name.replace(' ','').replace('-','')
+def clean_attr(name):
+    return name.replace(' ','_')
+
+class Klass:
+    def __init__(self, uri, label):
+        self.uri = uri
+        self.label = label
+        self.parents = []
+        self.attributes = []
+
+tree = ET.parse(sys.argv[1])
+
+THING = OWL[1:-1]+'Thing'
+
+Thing = Klass(THING, 'Thing')
+Thing.attributes = [('uri','string'),]
+
+classes = {THING: Thing,
+           }
+
+relations = {}
+
+for klass in tree.findall(OWL+'Class'):
+    uri = klass.attrib[RDF+'about']
+    label = klass.find(RDFS+'label').text 
+    classes[uri] = Klass(uri, label)
+
+    subclassof = klass.find(RDFS+'subClassOf')
+    if subclassof is not None:
+        parent = subclassof.attrib[RDF+'resource']
+        classes[uri].parents.append(parent)
+
+for prop in tree.findall(OWL+'DatatypeProperty'):
+    uri = prop.attrib[RDF+'about']
+    label = prop.find(RDFS+'label').text 
+    domain = prop.find(RDFS+'domain') 
+    range = prop.find(RDFS+'range')
+    if RDF+'resource' not in domain.attrib:
+        sys.stderr.write('problem with %s\n' % uri)
+        continue
+    klass = domain.attrib[RDF+'resource']
+    if RDF+'resource' not in range.attrib:
+        sys.stderr.write('problem with %s\n' % uri)
+        continue
+    dtype = range.attrib[RDF+'resource'].split('#')[1]
+    attr = (clean_attr(label), dtype)
+    classes[klass].attributes.append(attr)
+
+for prop in tree.findall(OWL+'ObjectProperty'):
+    uri = prop.attrib[RDF+'about']
+    label = prop.find(RDFS+'label').text 
+    domain = prop.find(RDFS+'domain') 
+    range = prop.find(RDFS+'range')
+    if RDF+'resource' not in domain.attrib:
+        sys.stderr.write('problem with %s\n' % uri)
+        continue
+    subj = domain.attrib[RDF+'resource']
+    if RDF+'resource' not in range.attrib:
+        sys.stderr.write('problem with %s\n' % uri)
+        continue
+    obj = range.attrib[RDF+'resource']
+    relations[uri] = (subj, label, obj)
+
+TYPE_MAP = {'string':'String',
+            'integer':'Int',
+            'date':'Date', # FIXME
+            'float':'Float',
+            }
+
+def ordered_classes(items):
+    order = []
+    done = set()
+    while items:
+        uri, klass = items.pop(0)
+        if not set(klass.parents) <= done:
+            items.append( (uri, klass) )
+            continue
+        done.add(uri)
+        order.append( (uri, klass) )
+    return order
+
+def write_model(classes, relations):
+    sorted_classes = sorted(classes.items())
+    for uri, klass in ordered_classes(sorted(classes.items())):
+        parent = 'EntityType'
+        if klass.parents:
+            parent = ','.join(last(par) for par in klass.parents)
+        print 'class %s(%s):' % (last(klass.uri), parent)
+        print '    """%s <%s>"""' % (klass.label, klass.uri)
+        for attr, dtype in klass.attributes:
+            print '    %s = %s()' % (attr.lower(), TYPE_MAP[dtype])
+        print
+    for uri, (subj, label, obj) in sorted(relations.items()):
+        rel = clean_attr(label).replace('(','').replace(')','')
+        if rel == 'class':
+            sys.stderr.write('Achtung! relation named class!\n')
+            rel = 'klass'
+        #rel = '_'+rel
+        print 'class %s(RelationType):' % rel.lower()
+        print '    """%s"""' % uri
+        print '    subject = "%s"' % clean_klass(classes[subj].label)
+        print '    object = "%s"' % clean_klass(classes[obj].label)
+        print '    cardinality = "**"'
+        print
+
+write_model(classes, relations)
+    
+
+
