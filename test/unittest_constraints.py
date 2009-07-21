@@ -1,6 +1,10 @@
+import yams
+yams.use_py_datetime()
 from yams.constraints import *
+# after import *
+from datetime import datetime, date, timedelta
 
-from logilab.common.testlib import TestCase, unittest_main
+from logilab.common.testlib import TestCase, unittest_main, mock_object
 
 class ConstraintTC(TestCase):
 
@@ -12,11 +16,11 @@ class ConstraintTC(TestCase):
         cstr = IntervalBoundConstraint(minvalue=13)
         self.assertEquals(cstr.serialize(), '13;None')
         self.assertRaises(AssertionError, IntervalBoundConstraint)
-        
+
     def test_interval_serialization_floats(self):
         cstr = IntervalBoundConstraint(12.13, 13.14)
         self.assertEquals(cstr.serialize(), '12.13;13.14')
-        
+
 
     def test_interval_deserialization_integers(self):
         cstr = IntervalBoundConstraint.deserialize('12;13')
@@ -27,25 +31,51 @@ class ConstraintTC(TestCase):
         self.assertEquals(cstr.maxvalue, 13)
         cstr = IntervalBoundConstraint.deserialize('12;None')
         self.assertEquals(cstr.minvalue, 12)
-        self.assertEquals(cstr.maxvalue, None) 
-       
+        self.assertEquals(cstr.maxvalue, None)
+
     def test_interval_deserialization_floats(self):
         cstr = IntervalBoundConstraint.deserialize('12.13;13.14')
         self.assertEquals(cstr.minvalue, 12.13)
-        self.assertEquals(cstr.maxvalue, 13.14) 
+        self.assertEquals(cstr.maxvalue, 13.14)
 
 
     def test_regexp_serialization(self):
         cstr = RegexpConstraint('[a-z]+,[A-Z]+', 12)
         self.assertEquals(cstr.serialize(), '[a-z]+,[A-Z]+,12')
-        
+
     def test_regexp_deserialization(self):
         cstr = RegexpConstraint.deserialize('[a-z]+,[A-Z]+,12')
         self.assertEquals(cstr.regexp, '[a-z]+,[A-Z]+')
         self.assertEquals(cstr.flags, 12)
-        
-    
+
+    def test_constraints_with_attribute(self):
+        cstr = IntervalBoundConstraint(NOW(), Attribute('hop'))
+        cstr2 = IntervalBoundConstraint.deserialize(cstr.serialize())
+        self.assertEquals(cstr2.minvalue.offset, None)
+        self.assertEquals(cstr2.maxvalue.attr, 'hop')
+        self.failUnless(cstr2.check(mock_object(hop=datetime.now()+timedelta(hours=1)),
+                                    'hip', datetime.now() + timedelta(seconds=2)))
+        # fail, value < minvalue
+        self.failIf(cstr2.check(mock_object(hop=datetime.now()+timedelta(hours=1)),
+                                'hip', datetime.now() - timedelta(hours=2)))
+        # fail, value > maxvalue
+        self.failIf(cstr2.check(mock_object(hop=datetime.now()+timedelta(hours=1)),
+                                'hip', datetime.now() + timedelta(hours=2)))
+
+
+    def test_constraints_with_date(self):
+        cstr = IntervalBoundConstraint(TODAY(timedelta(1)),
+                                       TODAY(timedelta(3)))
+        cstr2 = IntervalBoundConstraint.deserialize(cstr.serialize())
+        self.assertEquals(cstr2.minvalue.offset, timedelta(1))
+        self.assertEquals(cstr2.maxvalue.offset, timedelta(3))
+        self.failUnless(cstr2.check(None, 'hip', date.today() + timedelta(2)))
+        # fail, value < minvalue
+        self.failIf(cstr2.check(None, 'hip', date.today()))
+        # fail, value > maxvalue
+        self.failIf(cstr2.check(None, 'hip', date.today() + timedelta(4)))
+
 if __name__ == '__main__':
     unittest_main()
-    
-    
+
+
