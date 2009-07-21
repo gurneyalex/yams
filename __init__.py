@@ -20,7 +20,7 @@ import __builtin__
 __builtin__._ = unicode
 
 from logilab.common.compat import set
-    
+
 BASE_TYPES = set(('String', 'Int', 'Float', 'Boolean', 'Date', 'Decimal',
                   'Time', 'Datetime', 'Interval', 'Password', 'Bytes'))
 
@@ -28,9 +28,45 @@ from logilab.common import nullobject
 MARKER = nullobject()
 
 
+def use_py_datetime():
+    global DATE_FACTORY_MAP, KEYWORD_MAP
+
+    from datetime import datetime, date, time
+    from time import strptime as time_strptime
+
+    try:
+        strptime = datetime.strptime
+    except AttributeError: # py < 2.5
+        def strptime(value, format):
+            return datetime(*time_strptime(value, format)[:6])
+
+    def strptime_time(value, format='%H:%M'):
+        return time(*time_strptime(value, format)[3:6])
+
+    KEYWORD_MAP = {'Datetime.NOW' : datetime.now,
+                   'Datetime.TODAY': datetime.today,
+                   'Date.TODAY': date.today}
+    DATE_FACTORY_MAP = {
+        'Datetime' : lambda x: ':' in x and strptime(x, '%Y/%m/%d %H:%M') or strptime(x, '%Y/%m/%d'),
+        'Date' : lambda x : strptime(x, '%Y/%m/%d'),
+        'Time' : strptime_time
+        }
+
+try:
+    from mx.DateTime import today, now, DateTimeFrom, DateFrom, TimeFrom
+    KEYWORD_MAP = {'Datetime.NOW' : now,
+                   'Datetime.TODAY' : today,
+                   'Date.TODAY': today}
+    DATE_FACTORY_MAP = {'Datetime' : DateTimeFrom,
+                        'Date' : DateFrom,
+                        'Time' : TimeFrom}
+except ImportError:
+    use_py_datetime()
+
+
 class FileReader(object):
     """Abstract class for file readers."""
-    
+
     def __init__(self, loader, defaulthandler=None, readdeprecated=False):
         self.loader = loader
         self.default_hdlr = defaulthandler
@@ -42,12 +78,12 @@ class FileReader(object):
     def __call__(self, filepath):
         self._current_file = filepath
         self.read_file(filepath)
-        
+
     def error(self, msg=None):
         """raise a contextual exception"""
         raise BadSchemaDefinition(self._current_file, self._current_lineno,
             self._current_line, msg)
-    
+
     def read_file(self, filepath):
         """default implementation, calling read_line() method for each
         non-blank lines, and ignoring lines starting by '#' which are
@@ -86,7 +122,7 @@ class _RelationRole(int):
             return OBJECT
         return SUBJECT
 
-    
+
 SUBJECT = _RelationRole(0)
 OBJECT  = _RelationRole(1)
 
@@ -106,4 +142,4 @@ def ensure_new_subjobj(val, cls=None, attr=None):
         if cls:
             msg += ' for attribute %s of class %s' % (attr, cls.__name__)
         warn(DeprecationWarning, msg)
-        return SUBJECT    
+        return SUBJECT
