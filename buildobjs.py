@@ -399,6 +399,8 @@ class RelationDefinition(Definition):
         if not self.constraints:
             self.constraints = ()
         rschema = schema.rschema(name)
+        if self.subject == '**' or self.object == '**':
+            warn('** is deprecated, use * (%s)' % rtype, DeprecationWarning)
         for subj in _actual_types(schema, self.subject):
             for obj in _actual_types(schema, self.object):
                 rdef = RelationDefinition(subj, name, obj)
@@ -406,7 +408,7 @@ class RelationDefinition(Definition):
                 schema.add_relation_def(rdef)
 
 def _actual_types(schema, etype):
-    if etype == '**':
+    if etype in ('**', '*'): # XXX ** is deprecated
         return _pow_etypes(schema)
     if isinstance(etype, (list, tuple)):
         return etype
