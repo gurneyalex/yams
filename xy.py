@@ -22,7 +22,7 @@ class XYRegistry(object):
         self.prefixes[prefix] = xmlns
 
     def _norm_yams_key(self, yamssnippet):
-        parts = yamssnippet.split('.')
+        parts = yamssnippet.split(' ')
         if len(parts) == 1:
             if parts[0][0].islower():
                 return '*', parts[0], '*'
@@ -34,7 +34,7 @@ class XYRegistry(object):
 
     def _norm_xml_key(self, xmlsnippet, isentity=False):
         parts = []
-        for xmlsnippet in xmlsnippet.split('.'):
+        for xmlsnippet in xmlsnippet.split(' '):
             pfx, tag = xmlsnippet.rsplit(':', 1)
             xmlns = self.prefixes.get(pfx, pfx)
             parts.append( (xmlns, tag) )
