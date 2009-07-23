@@ -48,6 +48,7 @@ for objname in dir(constraints):
     except TypeError:
         continue
 
+
 class DeprecatedDict(dict):
     def __init__(self, context, message):
         dict.__init__(self, context)

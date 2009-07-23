@@ -243,6 +243,35 @@ class StaticVocabularyConstraint(BaseConstraint):
     deserialize = classmethod(deserialize)
 
 
+class FormatConstraint(StaticVocabularyConstraint):
+
+    regular_formats = (_('text/rest'),
+                       _('text/html'),
+                       _('text/plain'),
+                       )
+    def __init__(self):
+        pass
+
+    def serialize(self):
+        """called to make persistent valuable data of a constraint"""
+        return None
+
+    @classmethod
+    def deserialize(cls, value):
+        """called to restore serialized data of a constraint. Should return
+        a `cls` instance
+        """
+        return cls()
+
+    def vocabulary(self, entity=None, req=None):
+        return self.regular_formats
+
+    def __str__(self):
+        return 'value in (%s)' % u', '.join(repr(unicode(word)) for word in self.vocabulary())
+
+format_constraint = FormatConstraint()
+
+
 class MultipleStaticVocabularyConstraint(StaticVocabularyConstraint):
     """Enforce a list of values to be in a predefined set vocabulary."""
     # XXX never used
