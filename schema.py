@@ -795,8 +795,8 @@ class RelationSchema(ERSchema):
                     'add': ('managers', 'users', 'guests')}
         else:
             return {'read': ('managers', 'users', 'guests',),
-                            'delete': ('managers', 'users'),
-                            'add': ('managers', 'users',)}
+                    'delete': ('managers', 'users'),
+                    'add': ('managers', 'users',)}
 
     # relation definitions properties handling ################################
 

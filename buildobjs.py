@@ -15,12 +15,12 @@ from logilab.common.decorators import iclassmethod
 
 from yams import BASE_TYPES, MARKER, BadSchemaDefinition
 from yams.constraints import (SizeConstraint, UniqueConstraint,
-                              StaticVocabularyConstraint)
+                              StaticVocabularyConstraint, format_constraint)
 
 __all__ = ('ObjectRelation', 'SubjectRelation', 'BothWayRelation',
            'RelationDefinition', 'EntityType', 'RelationType',
            'SubjectRelation', 'ObjectRelation', 'BothWayRelation',
-           ) + tuple(BASE_TYPES)
+           'RichString', ) + tuple(BASE_TYPES)
 
 ETYPE_PROPERTIES = ('description', 'permissions',
                     'meta') # XXX meta is deprecated
@@ -45,6 +45,12 @@ def _add_constraint(kwargs, constraint):
 
 def _add_relation(relations, rdef, name=None, insertidx=None):
     """Add relation (param rdef) to list of relations (param relations)."""
+    if isinstance(rdef, RichString):
+        format_attrdef = String(internationalizable=True,
+                                default=rdef.default_format, maxsize=50,
+                                constraints=rdef.format_constraints)
+        _add_relation(relations, format_attrdef,
+                      (name or rdef.name) + '_format', insertidx)
     if isinstance(rdef, BothWayRelation):
         _add_relation(relations, rdef.subjectrel, name, insertidx)
         _add_relation(relations, rdef.objectrel, name, insertidx)
@@ -148,16 +154,6 @@ class metadefinition(type):
         return defclass
 
 
-# HACK: add_relation_function will be transformed in a classmethod
-#       in EntityType but external projects might need to access the
-#       original function object, i.e. add_relation_function
-#       Have a look at cubicweb.schema.py for an example
-def add_relation_function(cls, rdef, name=None):
-    if name:
-        rdef.name = name
-    cls._ensure_relation_type(rdef)
-    _add_relation(cls.__relations__, rdef, name)
-
 
 class EntityType(Definition):
     # FIXME reader magic forbids to define a docstring...
@@ -243,7 +239,16 @@ class EntityType(Definition):
         for rdef in othermetadefcls.__relations__:
             cls.add_relation(rdef)
 
-    add_relation = classmethod(add_relation_function)
+    @classmethod
+    def add_relation(cls, rdef, name=None):
+        if name:
+            rdef.name = name
+        cls._ensure_relation_type(rdef)
+        _add_relation(cls.__relations__, rdef, name)
+        if isinstance(rdef, RichString) and not rdef in cls._defined:
+            format_attr_name = (name or rdef.name) + '_format'
+            rdef = cls.get_relations(format_attr_name).next()
+            cls._ensure_relation_type(rdef)
 
     @classmethod
     def insert_relation_after(cls, afterrelname, name, rdef):
@@ -520,6 +525,28 @@ class AbstractTypedAttribute(SubjectRelation):
 for basetype in BASE_TYPES:
     globals()[basetype] = type(basetype, (AbstractTypedAttribute,),
                                {'etype' : basetype})
+
+# provides a RichString class for convenience
+
+
+class RichString(String):
+    """Convenience RichString attribute type
+    The following declaration::
+
+      class Card(EntityType):
+          content = RichString(fulltextindexed=True, default_format='text/rest')
+
+    is equivalent to::
+
+      class Card(EntityType):
+          content_format = String(internationalizable=True,
+                                  default='text/rest', constraints=[format_constraint])
+          content  = String(fulltextindexed=True)
+    """
+    def __init__(self, default_format='text/plain', format_constraints=None, **kwargs):
+        self.default_format = default_format
+        self.format_constraints = format_constraints or [format_constraint]
+        super(RichString, self).__init__(**kwargs)
 
 
 # various derivated classes with some predefined values XXX deprecated
