@@ -32,7 +32,8 @@ class DotTC(TestCase):
     def test_schema2dot(self):
         """tests dot conversion without attributes information"""
         wanted_entities = set(('Person', 'Societe'))
-        skipped_entities = set(schema.entities()) - wanted_entities
+        skipped_entities = set(ent for ent in schema.entities()
+                               if ent.type not in wanted_entities)
         schema2dot.schema2dot(schema, 'toto.dot', skiptypes=skipped_entities)
         generated = open('toto.dot').read()
         os.remove('toto.dot')
