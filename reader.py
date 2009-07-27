@@ -148,7 +148,8 @@ class PyFileReader(object):
         #else:
         if modname in sys.modules:
             module = sys.modules[modname]
-            assert filepath == module.__file__, (filepath, module.__file__)
+            # NOTE: don't test raw equality to avoid .pyc / .py comparisons
+            assert module.__file__.startswith(filepath), (filepath, module.__file__)
         else:
             package = '.'.join(modname.split('.')[:-1])
             if package and not package in sys.modules:
