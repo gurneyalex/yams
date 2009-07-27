@@ -166,8 +166,8 @@ class PyFileReader(object):
                         if pname in ('MetaEntityType', 'MetaUserEntityType',
                                      'MetaRelationType', 'MetaUserRelationType',
                                      'MetaAttributeRelationType'):
-                            warn('%s is deprecated, use EntityType/RelationType'
-                                 ' with explicit permission' % pname,
+                            warn('%s: %s is deprecated, use EntityType/RelationType'
+                                 ' with explicit permission' % (filepath, pname),
                                  DeprecationWarning)
                         if pname in fglobals or not pname in self.context:
                             # imported
