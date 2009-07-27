@@ -20,7 +20,7 @@ class DbModelTC(TestCase):
         if GaeSchemaLoader is None:
             self.skip('could not import appengine')
         self.loader = GaeSchemaLoader()
-    
+
     def import_module(self, modname):
         mod = new.module(modname)
         fname = osp.join(self.datadir, 'dbmodel', '%s.py' % modname)
@@ -34,7 +34,7 @@ class DbModelTC(TestCase):
         etypes = [eschema.type for eschema in schema.entities()
                   if not eschema.is_final()]
         self.assertSetEquals(etypes, ['Blog', 'Article'])
-    
+
     def test_blog_conversion(self):
         blog = self.import_module('blog')
         schema = self.loader.load_module(blog, True)
@@ -72,7 +72,7 @@ class DbModelTC(TestCase):
         talks_about = blog.subject_relation('cites')
         self.failIf(talks_about.is_final())
         self.assertEquals(talks_about.objects(), ['Blog'])
-        
+
     def test_article_conversion(self):
         article = self.import_module('blog')
         schema = self.loader.load_module(article, True)

@@ -16,10 +16,10 @@ class DummyDefaultHandler:
 
     def default_modname(self):
         return 'yo'
-    
+
     def vocabulary_license(self):
         return ['GPL', 'ZPL']
-    
+
     def vocabulary_debian_handler(self):
         return ['machin', 'bidule']
 
@@ -40,7 +40,7 @@ sep=0.2
 
 
 class DotTC(TestCase):
-    
+
     def test_schema2dot(self):
         """tests dot conversion without attributes information"""
         wanted_entities = set(('Person', 'Societe'))
@@ -49,6 +49,6 @@ class DotTC(TestCase):
         generated = open('toto.dot').read()
         os.remove('toto.dot')
         self.assertTextEquals(DOT_SOURCE, generated)
-        
+
 if __name__ == '__main__':
     unittest_main()

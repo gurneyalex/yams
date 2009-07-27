@@ -27,15 +27,15 @@ class DummyLoader:
     def add_definition(self, hdlr, defobject):
         self._defs.append(defobject)
 
-        
+
 class SQLSchemaReaderClassTest(TestCase):
     """test suite for sql schema readers"""
-    
+
     def setUp(self):
         loader = DummyLoader()
         self.reader = EsqlFileReader(loader)
         self.result = loader._defs
-        
+
     def test_bad_schema(self):
         """tests schema_readers on a bad schema"""
         testfile = osp.join(DATADIR, '_missing_dynamicchoice_handler.sql')
@@ -50,7 +50,7 @@ class SQLSchemaReaderClassTest(TestCase):
             self.assertEquals(ex.filename,testfile)
             self.assertEquals(ex.lineno, 2)
             self.assertEquals(ex.line, "yo dynamicchoice('')")
-        
+
     def test_bad_esql(self):
         """test schema_readers on a bad entity definition"""
         testfile = osp.join(DATADIR,'_bad_entity.sql')
@@ -64,11 +64,11 @@ class SQLSchemaReaderClassTest(TestCase):
             self.assertEquals(ex.filename,testfile)
             self.assertEquals(ex.lineno,11)
             self.assertEquals(ex.line,"bla bla bla")
-        
+
     def _get_result(self):
         self.assertEqual(len(self.result), 1)
         return self.result[0]
-    
+
     def test_read_constraints(self):
         """checks how constraints are read and stored"""
         self.reader(osp.join(DATADIR,'Person.sql'))
@@ -97,7 +97,7 @@ class SQLSchemaReaderClassTest(TestCase):
                              ('datenaiss', 'Date'), ('sexe', 'String'),
                              ('salary', 'Float')):
             self.assertEqual(getattr(edef, attr).etype, etype)
-        
-        
+
+
 if __name__ == '__main__':
     unittest_main()

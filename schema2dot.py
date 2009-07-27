@@ -22,7 +22,7 @@ CARD_MAP = {'?': '0..1',
 class SchemaDotPropsHandler(object):
     def display_attr(self, rschema):
         return not rschema.meta
-    
+
     def node_properties(self, eschema):
         """return default DOT drawing options for an entity schema"""
         label = ['{',eschema.type,'|']
@@ -31,7 +31,7 @@ class SchemaDotPropsHandler(object):
         label.append(r'\l}') # trailing \l ensure alignement of the last one
         return {'label' : ''.join(label), 'shape' : "record",
                 'fontname' : "Courier", 'style' : "filled"}
-    
+
     def edge_properties(self, rschema, subjnode, objnode):
         """return default DOT drawing options for a relation schema"""
         if rschema.symetric:
@@ -57,7 +57,7 @@ class SchemaDotPropsHandler(object):
                 kwargs['taillabel'] = CARD_MAP[cards[1]]
             if cards[0] != '1':
                 kwargs['headlabel'] = CARD_MAP[cards[0]]
-        
+
         kwargs['decorate'] = 'true'
         kwargs['color'] = 'grey'
         #kwargs['labelfloat'] = 'true'
@@ -70,7 +70,7 @@ class SchemaVisitor(object):
         self.skipmeta = skipmeta
         self._nodes = None
         self._edges = None
-        
+
     def display_schema(self, erschema):
         return not (erschema.is_final() or (self.skipmeta and erschema.meta))
 
@@ -90,11 +90,11 @@ class SchemaVisitor(object):
         for nodeid, node in self._nodes:
             if node.meta:
                 yield nodeid, node
-            
+
     def edges(self):
         return self._edges
 
-    
+
 class FullSchemaVisitor(SchemaVisitor):
     def __init__(self, schema, skipetypes=(), skiprels=(), skipmeta=True):
         super(FullSchemaVisitor, self).__init__(skipmeta)
@@ -108,7 +108,7 @@ class FullSchemaVisitor(SchemaVisitor):
     def nodes(self):
         for eschema in self._eindex.values():
             yield eschema.type, eschema
-            
+
     def edges(self):
         for rschema in self.schema.relations():
             if rschema.is_final() or rschema.type in self.skiprels:
@@ -120,7 +120,7 @@ class FullSchemaVisitor(SchemaVisitor):
                     continue
                 yield str(setype), str(tetype), rschema
 
-    
+
 class OneHopESchemaVisitor(SchemaVisitor):
     def __init__(self, eschema, skiprels=()):
         super(OneHopESchemaVisitor, self).__init__(skipmeta=False)
@@ -133,7 +133,7 @@ class OneHopESchemaVisitor(SchemaVisitor):
             for teschema in rschema.objects(eschema.type):
                 nodes.add((teschema.type, teschema))
                 if not self.display_rel(rschema, eschema.type, teschema.type):
-                    continue                
+                    continue
                 edges.add((eschema.type, teschema.type, rschema))
         for rschema in eschema.object_relations():
             if rschema.type in skiprels:
@@ -141,7 +141,7 @@ class OneHopESchemaVisitor(SchemaVisitor):
             for teschema in rschema.subjects(eschema.type):
                 nodes.add((teschema.type, teschema))
                 if not self.display_rel(rschema, teschema.type, eschema.type):
-                    continue                
+                    continue
                 edges.add((teschema.type, eschema.type, rschema))
         self._nodes = nodes
         self._edges = edges
@@ -158,7 +158,7 @@ class OneHopRSchemaVisitor(SchemaVisitor):
             for oeschema in rschema.objects(seschema.type):
                 nodes.add((oeschema.type, oeschema))
                 if not self.display_rel(rschema, seschema.type, oeschema.type):
-                    continue                                
+                    continue
                 edges.add((seschema.type, oeschema.type, rschema))
         self._nodes = nodes
         self._edges = edges
@@ -210,4 +210,3 @@ def run():
 
 if __name__ == '__main__':
     run()
-    
