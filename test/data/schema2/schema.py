@@ -14,4 +14,3 @@ class rel(RelationType):
 class __rel(RelationType):
     name = 'rel'
     composite = 'subject'
-    

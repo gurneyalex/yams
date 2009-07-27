@@ -5,7 +5,7 @@ class State(MetaUserEntityType):
     """
     # attributes
     eid = Int(required=True, uid=True)
-    name = String(required=True, 
+    name = String(required=True,
                   indexed=True, internationalizable=True,
                   constraints=[SizeConstraint(256)])
     description = String(fulltextindexed=True)
@@ -28,7 +28,7 @@ class initial_state(MetaUserRelationType):
     is created
     """
     inlined = True
-    
+
 class Eetype(MetaEntityType):
     """define an entity type, used to build the application schema"""
     name = String(required=True, indexed=True, internationalizable=True,

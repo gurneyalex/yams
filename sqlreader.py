@@ -46,7 +46,7 @@ class EsqlFileReader(FileReader):
         self._edef = EntityType(name=split(splitext(filepath)[0])[1])
         super(EsqlFileReader, self).read_file(filepath)
         self.loader.add_definition(self, self._edef)
-        
+
     def read_line(self, line):
         """reads a line of entity definition"""
         match = SQL_RE.match(line)
@@ -125,7 +125,7 @@ class EsqlFileReader(FileReader):
             default = getattr(self.default_hdlr, 'default_%s' % rdef.name, MARKER)
         if default is not MARKER:
             rdef.default = default
-            
+
 
 def parse_default_constraint(value, etype):
     """Parses a default value string and return its actual value"""
@@ -161,4 +161,3 @@ def check_choice_values(values):
             else:
                 assert rqltype == 'Float', 'different type used in choice'
     return rqltype
-

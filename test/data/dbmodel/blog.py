@@ -10,6 +10,5 @@ class Blog(db.Model):
     diem = db.DateProperty(required=True, auto_now_add=True)
     content = db.TextProperty()
     itemtype = db.StringProperty(required=True, choices=('personal', 'business'))
-    talks_about = db.ReferenceProperty(Article) 
-    cites = db.SelfReferenceProperty() 
-    
+    talks_about = db.ReferenceProperty(Article)
+    cites = db.SelfReferenceProperty()

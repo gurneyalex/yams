@@ -43,7 +43,7 @@ class SpecializationTC(TestCase):
         # subsubdivision
         subsubdivision = schema.eschema('SubSubDivision')
         self.assertEquals(subsubdivision.ancestors(), [])
-        
+
     def test_specialized_by(self):
         schema = self.schema
         # company
@@ -60,7 +60,7 @@ class SpecializationTC(TestCase):
         # subsubdivision
         subsubdivision = schema.eschema('SubSubDivision')
         self.assertEquals(subsubdivision.specialized_by(False), [])
-        
+
     def test_relations_infered(self):
         entities = [str(e) for e in self.schema.entities() if not e.is_final()]
         relations = sorted([r for r in self.schema.relations() if not r.final])
@@ -128,8 +128,7 @@ class SpecializationTC(TestCase):
             self.assertEquals(wrschema.rproperty(subject, object, 'infered'),
                               expected[subjobj])
         self.assertEquals(len(set(expected) - done), 0, 'missing %s' % (set(expected) - done))
-            
+
 
 if __name__ == '__main__':
     unittest_main()
-    
