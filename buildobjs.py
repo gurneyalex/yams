@@ -24,7 +24,7 @@ __all__ = ('ObjectRelation', 'SubjectRelation', 'BothWayRelation',
 
 ETYPE_PROPERTIES = ('description', 'permissions',
                     'meta') # XXX meta is deprecated
-# don't put description inside, handled "manually"
+# don't put description inside, handled "manualy"
 RTYPE_PROPERTIES = ('symetric', 'inlined', 'fulltext_container', 'permissions',
                     'meta') # XXX meta is deprecated
 RDEF_PROPERTIES = ('cardinality', 'constraints', 'composite',
@@ -555,17 +555,12 @@ class MetaEntityType(EntityType):
     permissions = {
         'read':   ('managers', 'users', 'guests',),
         'add':    ('managers',),
-        'delete': ('managers',),
         'update': ('managers', 'owners',),
+        'delete': ('managers',),
         }
 
 class MetaUserEntityType(EntityType):
-    permissions = {
-        'read':   ('managers', 'users', 'guests',),
-        'add':    ('managers', 'users',),
-        'delete': ('managers', 'owners',),
-        'update': ('managers', 'owners',),
-        }
+    pass
 
 class MetaRelationType(RelationType):
     permissions = {
@@ -575,11 +570,7 @@ class MetaRelationType(RelationType):
         }
 
 class MetaUserRelationType(RelationType):
-    permissions = {
-        'read':   ('managers', 'users', 'guests',),
-        'add':    ('managers', 'users',),
-        'delete': ('managers', 'users',),
-        }
+    pass
 
 class MetaAttributeRelationType(RelationType):
     # just set permissions to None so default permissions are set
