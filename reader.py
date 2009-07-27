@@ -130,7 +130,7 @@ class PyFileReader(object):
         fglobals = {} # self.context.copy()
         # wrap callable that should be imported
         for key, val in self.context.items():
-            if key in BASE_TYPES or key in CONSTRAINTS or \
+            if key in BASE_TYPES or key == 'RichString' or key in CONSTRAINTS or \
                    key in ('SubjectRelation', 'ObjectRelation', 'BothWayRelation'):
                 val = obsolete(val)
             setattr(__builtin__, key, val)
@@ -166,7 +166,7 @@ class PyFileReader(object):
                                      'MetaRelationType', 'MetaUserRelationType',
                                      'MetaAttributeRelationType'):
                             warn('%s is deprecated, use EntityType/RelationType'
-                                 ' with explicit permission' % pname,
+                                 ' with explicit permission (%s)' % (pname, name),
                                  DeprecationWarning)
                         if pname in fglobals or not pname in self.context:
                             # imported
