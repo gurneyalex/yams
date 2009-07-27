@@ -91,7 +91,7 @@ class PyFileReader(object):
             modname, fdata = self._loaded[filepath]
         except KeyError:
             modname, fdata = self.exec_file(filepath)
-        for name, obj in fdata.items():
+        for name, obj in vars(fdata).items():
             if name.startswith('_'):
                 continue
             try:
