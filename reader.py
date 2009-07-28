@@ -213,6 +213,8 @@ class SchemaLoader(object):
         self.loaded_files = []
         self._pyreader = PyFileReader(self)
         sys.modules[__name__].context = self
+        # ensure we don't have an iterator
+        directories = tuple(directories)
         try:
             files = self._load_definition_files(directories)
             try:
