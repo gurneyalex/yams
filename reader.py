@@ -91,7 +91,7 @@ class PyFileReader(object):
             modname, fdata = self._loaded[filepath]
         except KeyError:
             modname, fdata = self.exec_file(filepath)
-        for name, obj in fdata.items():
+        for name, obj in vars(fdata).items():
             if name.startswith('_'):
                 continue
             try:
@@ -148,7 +148,8 @@ class PyFileReader(object):
         #else:
         if modname in sys.modules:
             module = sys.modules[modname]
-            assert filepath == module.__file__, (filepath, module.__file__)
+            # NOTE: don't test raw equality to avoid .pyc / .py comparisons
+            assert module.__file__.startswith(filepath), (filepath, module.__file__)
         else:
             package = '.'.join(modname.split('.')[:-1])
             if package and not package in sys.modules:
@@ -165,8 +166,8 @@ class PyFileReader(object):
                         if pname in ('MetaEntityType', 'MetaUserEntityType',
                                      'MetaRelationType', 'MetaUserRelationType',
                                      'MetaAttributeRelationType'):
-                            warn('%s is deprecated, use EntityType/RelationType'
-                                 ' with explicit permission (%s)' % (pname, name),
+                            warn('%s: %s is deprecated, use EntityType/RelationType'
+                                 ' with explicit permission (%s)' % (filepath, pname, name),
                                  DeprecationWarning)
                         if pname in fglobals or not pname in self.context:
                             # imported
