@@ -16,24 +16,24 @@ from logilab.common.interface import Interface
 
 class ISchema(Interface):#(IRQLSchema):
     """a schema is a collection of relation and entity schemas"""
-    
+
     def entities(self, schema=None):
         """return a list of possible entity's type
-        
+
         If schema is not None, return a list of schemas instead of types.
         """
-            
+
     def has_entity(self, e_type):
         """return true the type is defined in the schema
         """
-    
+
     def eschema(self, e_type):
         """return the entity's schema for the given type
         """
 
     def relations(self, schema=None):
         """return the list of possible relation'types
-        
+
         If schema is not None, return a list of schemas instead of relation's
         types.
         """
@@ -46,7 +46,7 @@ class ISchema(Interface):#(IRQLSchema):
         """return the relation schema for the given relation type
         """
 
-    
+
 class IRelationSchema(Interface):#(IRQLRelationSchema):
     """A relation is a named ordered link between two entities.
     A relation schema defines the possible types of both extremities.
@@ -54,29 +54,29 @@ class IRelationSchema(Interface):#(IRQLRelationSchema):
     def associations(self, schema=None):
         """return a list of (subject_type, [object_types]) defining between
         which types this relation may exists
-        
+
         If schema is not None, return a list of schemas instead of type.
         """
-        
+
     def subjects(self, etype=None):
         """return a list of types which can be subject of this relation
-        
+
         If e_type is not None, return a list of types which can be subject of
         this relation with e_type as object.
         If schema is not None, return a list of schemas instead of type.
         Raise KeyError if e_type is not known
         """
-        
-        
+
+
     def objects(self, etype=None):
         """return a list of types which can be object of this relation.
-        
+
         If e_type is not None, return a list of types which can be object of
         this relation with e_type as subject.
         If schema is not None, return a list of schemas instead of type.
         Raise KeyError if e_type is not known.
         """
-        
+
 
 class IEntitySchema(Interface):#(IRQLEntitySchema):
     """An entity has a type, a set of subject and or object relations.
@@ -85,41 +85,41 @@ class IEntitySchema(Interface):#(IRQLEntitySchema):
 
     Attributes are defined with relations pointing to a 'final' entity
     """
-     
+
     def subject_relations(self):
         """return a list of relations that may have this type of entity as
         subject
-        
+
         If schema is not None, return a list of schemas instead of relation's
         types.
         """
-    
+
     def object_relations(self):
         """return a list of relations that may have this type of entity as
         object
-        
+
         If schema is not None, return a list of schemas instead of relation's
         types.
         """
 
     def subject_relation(self, rtype):
         """return the relation schema for the rtype subject relation
-        
+
         Raise KeyError if rtype is not known.
-        """        
-    
+        """
+
     def object_relation(self, rtype):
         """return the relation schema for the rtype object relation
-        
+
         Raise KeyError if rtype is not known.
         """
 
     def relation_definitions(self):
         """return an iterator on "real" relation definitions
-        
+
         "real"  relations are a subset of subject relations where the
         object's type is not a final entity
-        
+
         a relation definition is a 2-uple :
         * name of the relation
         * schema of the destination entity type
@@ -127,10 +127,10 @@ class IEntitySchema(Interface):#(IRQLEntitySchema):
 
     def attribute_definitions(self):
         """return an iterator on attribute definitions
-        
+
         attribute relations are a subset of subject relations where the
         object's type is a final entity
-        
+
         an attribute definition is a 2-uple :
         * name of the relation
         * schema of the destination entity type
@@ -140,7 +140,7 @@ class IEntitySchema(Interface):#(IRQLEntitySchema):
         """return true if the entity is a final entity (ie cannot be used
         as subject of a relation)
         """
-    
+
     def constraints(self, rtype):
         """return the existing constraints on the <rtype> subject relation
         """
@@ -148,7 +148,7 @@ class IEntitySchema(Interface):#(IRQLEntitySchema):
     def default(self, rtype):
         """return the default value of a subject relation
         """
-        
+
     def check(self, entity):
         """check the entity and raises an InvalidEntity exception if it
         contains some invalid fields (ie some constraints failed)
@@ -163,6 +163,6 @@ class IVocabularyConstraint(IConstraint):
     """a specific constraint restricting the set of possible value for an
     attribute value
     """
-    
+
     def vocabulary(self):
         """return a list of possible values for the attribute"""

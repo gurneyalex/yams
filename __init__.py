@@ -24,7 +24,7 @@ from logilab.common.compat import set
 BASE_TYPES = set(('String', 'Int', 'Float', 'Boolean', 'Date', 'Decimal',
                   'Time', 'Datetime', 'Interval', 'Password', 'Bytes'))
 
-# base groups used in permissions 
+# base groups used in permissions
 BASE_GROUPS = set(('managers', 'users', 'guests', 'owners'))
 
 
