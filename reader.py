@@ -124,22 +124,6 @@ class PyFileReader(object):
                  'files to make it importable' % filepath, DeprecationWarning)
             modname = splitext(basename(filepath))[0]
             doimport = False
-        # XXX until bw compat is gone, put context into builtins to allow proper
-        # control of deprecation warning
-        import __builtin__
-        fglobals = {} # self.context.copy()
-        # wrap callable that should be imported
-        for key, val in self.context.items():
-            if key in BASE_TYPES or key == 'RichString' or key in CONSTRAINTS or \
-                   key in ('SubjectRelation', 'ObjectRelation', 'BothWayRelation'):
-                val = obsolete(val)
-            setattr(__builtin__, key, val)
-        __builtin__.import_erschema = self.import_erschema
-        __builtin__.defined_types = DeprecatedDict(self.loader.defined,
-                                                    'defined_types is deprecated, '
-                                                    'use yams.reader.context')
-        fglobals['__file__'] = filepath
-        fglobals['__name__'] = modname
         # XXX can't rely on __import__ until bw compat (eg implicit import) needed
         #if doimport:
         #    module = __import__(modname, fglobals)
@@ -151,6 +135,22 @@ class PyFileReader(object):
             # NOTE: don't test raw equality to avoid .pyc / .py comparisons
             assert module.__file__.startswith(filepath), (filepath, module.__file__)
         else:
+            # XXX until bw compat is gone, put context into builtins to allow proper
+            # control of deprecation warning
+            import __builtin__
+            fglobals = {} # self.context.copy()
+            # wrap callable that should be imported
+            for key, val in self.context.items():
+                if key in BASE_TYPES or key == 'RichString' or key in CONSTRAINTS or \
+                       key in ('SubjectRelation', 'ObjectRelation', 'BothWayRelation'):
+                    val = obsolete(val)
+                setattr(__builtin__, key, val)
+            __builtin__.import_erschema = self.import_erschema
+            __builtin__.defined_types = DeprecatedDict(self.loader.defined,
+                                                        'defined_types is deprecated, '
+                                                        'use yams.reader.context')
+            fglobals['__file__'] = filepath
+            fglobals['__name__'] = modname
             package = '.'.join(modname.split('.')[:-1])
             if package and not package in sys.modules:
                 __import__(package)
