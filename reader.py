@@ -26,7 +26,6 @@ from yams import buildobjs
 
 
 def cleanup_sys_modules(directories):
-    # cleanup sys.modules from schema modules
     for modname, module in sys.modules.items():
         modfile =  getattr(module, '__file__', None)
         if modfile:
@@ -226,6 +225,12 @@ class SchemaLoader(object):
                     ex.schema_files = self.loaded_files
                 raise ex, None, sys.exc_info()[-1]
         finally:
+            # cleanup sys.modules from schema modules
+            # ensure we're only cleaning schema [sub]modules
+            directories = [(not directory.endswith(self.main_schema_directory)
+                            and join(directory, self.main_schema_directory)
+                            or directory)
+                           for directory in directories]
             cleanup_sys_modules(directories)
         schema.loaded_files = self.loaded_files
         return schema
