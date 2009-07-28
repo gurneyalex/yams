@@ -91,7 +91,7 @@ class PyFileReader(object):
             modname, fdata = self._loaded[filepath]
         except KeyError:
             modname, fdata = self.exec_file(filepath)
-        for name, obj in vars(fdata).items():
+        for name, obj in fdata.items():
             if name.startswith('_'):
                 continue
             try:
@@ -134,6 +134,11 @@ class PyFileReader(object):
             module = sys.modules[modname]
             # NOTE: don't test raw equality to avoid .pyc / .py comparisons
             assert module.__file__.startswith(filepath), (filepath, module.__file__)
+            if not isinstance(module, attrdict):
+                # module imported by regular import, we've to provide .items for
+                # bw compat until we can use proper module objects everywhere
+                # XXX we may miss some deprecation warning here
+                module.items = lambda : vars(module).items()
         else:
             # XXX until bw compat is gone, put context into builtins to allow proper
             # control of deprecation warning
