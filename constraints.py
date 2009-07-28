@@ -13,8 +13,9 @@ import re
 import decimal
 from StringIO import StringIO
 
-
+import yams
 from yams.interfaces import IConstraint, IVocabularyConstraint
+
 
 class BaseConstraint(object):
     """base class for constraints"""
@@ -27,12 +28,12 @@ class BaseConstraint(object):
         """called to make persistent valuable data of a constraint"""
         return None
 
+    @classmethod
     def deserialize(cls, value):
         """called to restore serialized data of a constraint. Should return
         a `cls` instance
         """
         return cls()
-    deserialize = classmethod(deserialize)
 
 
 # possible constraints ########################################################
@@ -40,12 +41,12 @@ class BaseConstraint(object):
 class UniqueConstraint(BaseConstraint):
     """object of relation must be unique"""
 
+    def __str__(self):
+        return 'unique'
+
     def check(self, entity, rtype, values):
         """return true if the value satisfy the constraint, else false"""
         return True
-
-    def __str__(self):
-        return 'unique'
 
 
 class SizeConstraint(BaseConstraint):
@@ -60,6 +61,14 @@ class SizeConstraint(BaseConstraint):
         self.max = max
         self.min = min
 
+    def __str__(self):
+        res = 'size'
+        if self.max is not None:
+            res = '%s < %s' % (res, self.max)
+        if self.min is not None:
+            res = '%s < %s' % (self.min, res)
+        return res
+
     def check(self, entity, rtype, value):
         """return true if the value is in the interval specified by
         self.min and self.max
@@ -72,14 +81,6 @@ class SizeConstraint(BaseConstraint):
                 return False
         return True
 
-    def __str__(self):
-        res = 'size'
-        if self.max is not None:
-            res = '%s < %s' % (res, self.max)
-        if self.min is not None:
-            res = '%s < %s' % (self.min, res)
-        return res
-
     def serialize(self):
         """simple text serialization"""
         if self.max and self.min:
@@ -88,6 +89,7 @@ class SizeConstraint(BaseConstraint):
             return u'max=%s' % (self.max)
         return u'min=%s' % (self.min)
 
+    @classmethod
     def deserialize(cls, value):
         """simple text deserialization"""
         kwargs = {}
@@ -96,7 +98,6 @@ class SizeConstraint(BaseConstraint):
             assert key in ('min', 'max')
             kwargs[str(key)] = int(val)
         return cls(**kwargs)
-    deserialize = classmethod(deserialize)
 
 
 class RegexpConstraint(BaseConstraint):
@@ -115,22 +116,22 @@ class RegexpConstraint(BaseConstraint):
         self.flags = flags
         self._rgx = re.compile(regexp, flags)
 
+    def __str__(self):
+        return 'regexp %s' % self.serialize()
+
     def check(self, entity, rtype, value):
         """return true if the value maches the regular expression"""
         return self._rgx.match(value, self.flags)
-
-    def __str__(self):
-        return 'regexp %s' % self.serialize()
 
     def serialize(self):
         """simple text serialization"""
         return u'%s,%s' % (self.regexp, self.flags)
 
+    @classmethod
     def deserialize(cls, value):
         """simple text deserialization"""
         regexp, flags = value.rsplit(',', 1)
         return cls(regexp, int(flags))
-    deserialize = classmethod(deserialize)
 
     def __deepcopy__(self, memo):
         return RegexpConstraint(self.regexp, self.flags)
@@ -142,7 +143,6 @@ class BoundConstraint(BaseConstraint):
     set a minimal or maximal value to a numerical value
     This class is DEPRECATED, use IntervalBoundConstraint instead
     """
-    # FIXME add DeprecationWarning
     __implements__ = IConstraint
 
     def __init__(self, operator, bound=None):
@@ -152,23 +152,23 @@ class BoundConstraint(BaseConstraint):
         self.operator = operator
         self.bound = bound
 
+    def __str__(self):
+        return 'value %s' % self.serialize()
+
     def check(self, entity, rtype, value):
         """return true if the value satisfy the constraint, else false"""
         return eval('%s %s %s' % (value, self.operator, self.bound))
-
-    def __str__(self):
-        return 'value %s' % self.serialize()
 
     def serialize(self):
         """simple text serialization"""
         return u'%s %s' % (self.operator, self.bound)
 
+    @classmethod
     def deserialize(cls, value):
         """simple text deserialization"""
         operator = value.split()[0]
         bound = ' '.join(value.split()[1:])
         return cls(operator, bound)
-    deserialize = classmethod(deserialize)
 
 
 class IntervalBoundConstraint(BaseConstraint):
@@ -188,25 +188,27 @@ class IntervalBoundConstraint(BaseConstraint):
         self.minvalue = minvalue
         self.maxvalue = maxvalue
 
-    def check(self, entity, rtype, value):
-        if self.minvalue is not None and value < self.minvalue:
-            return False
-        if self.maxvalue is not None and value > self.maxvalue:
-            return False
-        return True
-
     def __str__(self):
         return 'value [%s]' % self.serialize()
+
+    def check(self, entity, rtype, value):
+        minvalue = actual_value(self.minvalue, entity)
+        if minvalue is not None and value < minvalue:
+            return False
+        maxvalue = actual_value(self.maxvalue, entity)
+        if maxvalue is not None and value > maxvalue:
+            return False
+        return True
 
     def serialize(self):
         """simple text serialization"""
         return u'%s;%s' % (self.minvalue, self.maxvalue)
 
+    @classmethod
     def deserialize(cls, value):
         """simple text deserialization"""
         minvalue, maxvalue = value.split(';')
         return cls(eval(minvalue), eval(maxvalue))
-    deserialize = classmethod(deserialize)
 
 
 class StaticVocabularyConstraint(BaseConstraint):
@@ -216,6 +218,9 @@ class StaticVocabularyConstraint(BaseConstraint):
     def __init__(self, values):
         self.values = tuple(values)
 
+    def __str__(self):
+        return 'value in (%s)' % self.serialize()
+
     def check(self, entity, rtype, value):
         """return true if the value is in the specific vocabulary"""
         return value in self.vocabulary(entity=entity)
@@ -223,9 +228,6 @@ class StaticVocabularyConstraint(BaseConstraint):
     def vocabulary(self, **kwargs):
         """return a list of possible values for the attribute"""
         return self.values
-
-    def __str__(self):
-        return 'value in (%s)' % self.serialize()
 
     def serialize(self):
         """serialize possible values as a csv list of evaluable strings"""
@@ -237,10 +239,10 @@ class StaticVocabularyConstraint(BaseConstraint):
             return u', '.join(repr(word) for word in self.vocabulary())
         return u', '.join(repr(unicode(word)) for word in self.vocabulary())
 
+    @classmethod
     def deserialize(cls, value):
         """deserialize possible values from a csv list of evaluable strings"""
         return cls([eval(w) for w in value.split(', ')])
-    deserialize = classmethod(deserialize)
 
 
 class FormatConstraint(StaticVocabularyConstraint):
@@ -283,8 +285,60 @@ class MultipleStaticVocabularyConstraint(StaticVocabularyConstraint):
                 return False
         return True
 
+# special classes to be used w/ constraints accepting values as argument(s):
+# IntervalBoundConstraint
 
-# base types checking functions ###############################################
+# XXX suppose using datetime, not mx.DateTime (but ok since mx.DateTime will be
+# dropped at some point)
+import datetime # needed for timedelta evaluation
+
+def actual_value(value, entity):
+    if hasattr(value, 'value'):
+        return value.value(entity)
+    return value
+
+
+class Attribute(object):
+    def __init__(self, attr):
+        self.attr = attr
+
+    def __str__(self):
+        return '%s(%r)' % (self.__class__.__name__, self.attr)
+
+    def value(self, entity):
+        return getattr(entity, self.attr)
+
+
+class NOW(object):
+    def __init__(self, offset=None):
+        self.offset = offset
+
+    def __str__(self):
+        return '%s(%r)' % (self.__class__.__name__, self.offset)
+
+    def value(self, entity):
+        now = yams.KEYWORD_MAP['Datetime.NOW']()
+        if self.offset:
+            now += self.offset
+        return now
+
+
+class TODAY(object):
+    def __init__(self, offset=None, type='Date'):
+        self.offset = offset
+        self.type = type
+
+    def __str__(self):
+        return '%s(%r, %r)' % (self.__class__.__name__, self.offset, self.type)
+
+    def value(self, entity):
+        now = yams.KEYWORD_MAP['%s.TODAY' % self.type]()
+        if self.offset:
+            now += self.offset
+        return now
+
+
+# base types checking functions ################################################
 
 def check_string(eschema, value):
     """check value is an unicode string"""

@@ -16,48 +16,12 @@ from logilab.common.compat import sorted
 from logilab.common.interface import implements
 from logilab.common.deprecation import deprecated_function
 
-from yams import BASE_TYPES, MARKER, ValidationError, BadSchemaDefinition
+import yams
+from yams import (BASE_TYPES, MARKER, ValidationError, BadSchemaDefinition,
+                  use_py_datetime)
 from yams.interfaces import (ISchema, IRelationSchema, IEntitySchema,
                              IVocabularyConstraint)
 from yams.constraints import BASE_CHECKERS, BASE_CONVERTERS, UniqueConstraint
-
-
-from mx.DateTime import today, now, DateTimeFrom, DateFrom, TimeFrom
-
-def use_py_datetime():
-    global DATE_FACTORY_MAP, KEYWORD_MAP
-
-    from datetime import datetime, date, time
-    from time import strptime as time_strptime
-
-    try:
-        strptime = datetime.strptime
-    except AttributeError: # py < 2.5
-        def strptime(value, format):
-            return datetime(*time_strptime(value, format)[:6])
-
-    def strptime_time(value, format='%H:%M'):
-        return time(*time_strptime(value, format)[3:6])
-
-    KEYWORD_MAP = {'Datetime.NOW' : datetime.now,
-                   'Datetime.TODAY': datetime.today,
-                   'Date.TODAY': date.today}
-    DATE_FACTORY_MAP = {
-        'Datetime' : lambda x: ':' in x and strptime(x, '%Y/%m/%d %H:%M') or strptime(x, '%Y/%m/%d'),
-        'Date' : lambda x : strptime(x, '%Y/%m/%d'),
-        'Time' : strptime_time
-        }
-
-try:
-    from mx.DateTime import today, now, DateTimeFrom, DateFrom, TimeFrom
-    KEYWORD_MAP = {'Datetime.NOW' : now,
-                   'Datetime.TODAY' : today,
-                   'Date.TODAY': today}
-    DATE_FACTORY_MAP = {'Datetime' : DateTimeFrom,
-                        'Date' : DateFrom,
-                        'Time' : TimeFrom}
-except ImportError:
-    use_py_datetime()
 
 def rehash(dictionary):
     """this function manually builds a copy of `dictionary` but forces
@@ -297,11 +261,6 @@ class EntitySchema(ERSchema):
         """
         return self.type in BASE_TYPES
 
-    def subjrproperty(self, rschema, prop):
-        return rschema.rproperty(self.type, rschema.objects(self.type)[0], prop)
-    def objrproperty(self, rschema, prop):
-        return rschema.rproperty(rschema.subjects(self.type)[0], self.type, prop)
-
     def is_subobject(self, strict=False):
         """return True if this entity type is contained by another. If strict,
         return True if this entity type *must* be contained by another.
@@ -394,8 +353,32 @@ class EntitySchema(ERSchema):
         assert len(objtypes) == 1
         return objtypes[0]
 
-    def rproperty(self, rtype, prop):
+    def subjrproperty(self, rtype, prop):
         """convenience method to access a property of a subject relation"""
+        return self.role_rproperty('subject', rtype, prop)
+
+    def objrproperty(self, rtype, prop):
+        """convenience method to access a property of an object relation"""
+        return self.role_rproperty('object', rtype, prop)
+
+    def role_rproperty(self, role, rtype, prop, ttype=None):
+        """convenience method to access a property of a relation according to
+        this schema role
+        """
+        if role == 'subject':
+            rschema = self.subject_relation(rtype)
+            if ttype is None:
+                ttype = rschema.objects(self)[0]
+            return rschema.rproperty(self, ttype, prop)
+        else:
+            assert role == 'object'
+            rschema = self.object_relation(rtype)
+            if ttype is None:
+                ttype = rschema.subjects(self)[0]
+            return rschema.rproperty(ttype, self, prop)
+
+    def rproperty(self, rtype, prop):
+        """convenience method to access a property of a final subject relation"""
         rschema = self.subject_relation(rtype)
         return rschema.rproperty(self, self.destination(rtype), prop)
 
@@ -534,9 +517,9 @@ class EntitySchema(ERSchema):
                     default = Decimal(default)
             elif attrtype in ('Date', 'Datetime', 'Time'):
                 try:
-                    default = KEYWORD_MAP['%s.%s' % (attrtype, default.upper())]()
+                    default = yams.KEYWORD_MAP['%s.%s' % (attrtype, default.upper())]()
                 except KeyError:
-                    default = DATE_FACTORY_MAP[attrtype](default)
+                    default = yams.DATE_FACTORY_MAP[attrtype](default)
             else:
                 default = unicode(default)
         return default
