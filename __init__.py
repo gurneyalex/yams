@@ -25,7 +25,7 @@ BASE_TYPES = set(('String', 'Int', 'Float', 'Boolean', 'Date', 'Decimal',
                   'Time', 'Datetime', 'Interval', 'Password', 'Bytes'))
 
 # base groups used in permissions
-BASE_GROUPS = set(('managers', 'users', 'guests', 'owners'))
+BASE_GROUPS = set((_('managers'_, _('users'), _('guests'), _('owners')))
 
 
 from logilab.common import nullobject
