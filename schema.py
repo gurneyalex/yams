@@ -727,6 +727,9 @@ class RelationSchema(ERSchema):
                 pass
         else:
             self.init_rproperties(subjschema, objschema, rdef)
+        if self.inlined and self.rproperty(subjschema, objschema, 'cardinality')[0] in '*+':
+            raise BadSchemaDefinition('inlined relation %s can\'t have multiple cardinality for its subject %s'
+                                      % (self.type, subjschema))
         # update extremities schema
         subjschema.add_subject_relation(self)
         if self.symetric:
