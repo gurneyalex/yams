@@ -14,7 +14,6 @@ from decimal import Decimal
 from logilab.common.decorators import cached
 from logilab.common.compat import sorted
 from logilab.common.interface import implements
-from logilab.common.deprecation import deprecated_function
 
 import yams
 from yams import (BASE_TYPES, MARKER, ValidationError, BadSchemaDefinition,
@@ -805,8 +804,6 @@ class RelationSchema(ERSchema):
     def iter_rdefs(self):
         """return an iterator on (subject, object) of this relation"""
         return self._rproperties.iterkeys()
-
-    rproperty_keys = deprecated_function(iter_rdefs) # XXX bw compat
 
     def rdefs(self):
         """return a list of (subject, object) of this relation"""
