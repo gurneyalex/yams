@@ -7,8 +7,8 @@ from datetime import datetime, date, time
 from logilab.common.testlib import TestCase, unittest_main
 from logilab.common.compat import sorted
 
-from yams import BadSchemaDefinition
-from yams.schema import Schema, EntitySchema
+from yams import BadSchemaDefinition, buildobjs
+from yams.schema import Schema
 from yams.reader import SchemaLoader
 from yams.constraints import StaticVocabularyConstraint, SizeConstraint
 
@@ -391,6 +391,17 @@ class SchemaLoaderTC2(TestCase):
         ex = self.assertRaises(BadSchemaDefinition,
                                SchemaLoader().load, [DATADIR], 'Test')
         self.assertEquals(str(ex), "conflicting values True/False for property inlined of relation type 'rel'")
+
+    def test_broken_schema4(self):
+        schema = Schema('toto')
+        schema.add_entity_type(buildobjs.EntityType(name='Entity'))
+        schema.add_entity_type(buildobjs.EntityType(name='Int'))
+        schema.add_relation_type(buildobjs.RelationType(name='toto'))
+        ex = self.assertRaises(BadSchemaDefinition,
+                               schema.add_relation_def,
+                               buildobjs.RelationDefinition(name='toto', subject='Entity', object='Int',
+                                                     constraints=[SizeConstraint(40)]))
+        self.assertEquals(str(ex), "size constraint doesn't apply to Int entity type")
 
     def test_schema(self):
         SchemaLoader.main_schema_directory = 'schema2'
