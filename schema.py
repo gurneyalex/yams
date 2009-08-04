@@ -552,6 +552,15 @@ class EntitySchema(ERSchema):
                                  (rtype, self))
         return constraint.vocabulary()
 
+    def cardinality(self, rtype, role):
+        """return cardinality (a single letter in 1?*+) for the given relation"""
+        rschema = self.schema.rschema(rtype)
+        if role == 'subject':
+            targetschema = rschema.objects(self)[0]
+            return rschema.rproperty(self, targetschema, 'cardinality')[0]
+        targetschema = rschema.subjects(self)[0]
+        return rschema.rproperty(targetschema, self, 'cardinality')[1]
+
     def check(self, entity, creation=False, _=unicode):
         """check the entity and raises an ValidationError exception if it
         contains some invalid fields (ie some constraints failed)
