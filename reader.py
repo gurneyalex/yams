@@ -18,21 +18,12 @@ from warnings import warn
 from logilab.common import attrdict
 from logilab.common.testlib import mock_object
 from logilab.common.textutils import get_csv
-from logilab.common.modutils import modpath_from_file
+from logilab.common.modutils import modpath_from_file, cleanup_sys_modules
 
 from yams import UnknownType, BadSchemaDefinition, BASE_TYPES
 from yams import constraints, schema as schemamod
 from yams import buildobjs
 
-
-def cleanup_sys_modules(directories):
-    for modname, module in sys.modules.items():
-        modfile =  getattr(module, '__file__', None)
-        if modfile:
-            for directory in directories:
-                if modfile.startswith(directory):
-                    del sys.modules[modname]
-                    break
 
 CONSTRAINTS = {}
 # add constraint classes to the context
