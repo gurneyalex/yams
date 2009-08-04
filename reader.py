@@ -201,7 +201,6 @@ class SchemaLoader(object):
     set of files
     """
     schemacls = schemamod.Schema
-#     lib_directory = None
 
     def load(self, directories, name=None,
              register_base_types=True, construction_mode='strict',
