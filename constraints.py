@@ -14,12 +14,16 @@ import decimal
 from StringIO import StringIO
 
 import yams
+from yams import BadSchemaDefinition
 from yams.interfaces import IConstraint, IVocabularyConstraint
 
 
 class BaseConstraint(object):
     """base class for constraints"""
     __implements__ = IConstraint
+
+    def check_consistency(self, subjschema, objschema):
+        pass
 
     def type(self):
         return self.__class__.__name__
@@ -43,6 +47,11 @@ class UniqueConstraint(BaseConstraint):
 
     def __str__(self):
         return 'unique'
+
+    def check_consistency(self, subjschema, objschema):
+        if not objschema.is_final():
+            raise BadSchemaDefinition("unique constraint doesn't apply to non "
+                                      "final entity type")
 
     def check(self, entity, rtype, values):
         """return true if the value satisfy the constraint, else false"""
@@ -68,6 +77,14 @@ class SizeConstraint(BaseConstraint):
         if self.min is not None:
             res = '%s < %s' % (self.min, res)
         return res
+
+    def check_consistency(self, subjschema, objschema):
+        if not objschema.is_final():
+            raise BadSchemaDefinition("size constraint doesn't apply to non "
+                                      "final entity type")
+        if not objschema in ('String', 'Bytes', 'Password'):
+            raise BadSchemaDefinition("size constraint doesn't apply to %s "
+                                      "entity type" % objschema)
 
     def check(self, entity, rtype, value):
         """return true if the value is in the interval specified by
@@ -119,6 +136,14 @@ class RegexpConstraint(BaseConstraint):
     def __str__(self):
         return 'regexp %s' % self.serialize()
 
+    def check_consistency(self, subjschema, objschema):
+        if not objschema.is_final():
+            raise BadSchemaDefinition("regexp constraint doesn't apply to non "
+                                      "final entity type")
+        if not objschema in ('String', 'Password'):
+            raise BadSchemaDefinition("regexp constraint doesn't apply to %s "
+                                      "entity type" % objschema)
+
     def check(self, entity, rtype, value):
         """return true if the value maches the regular expression"""
         return self._rgx.match(value, self.flags)
@@ -155,6 +180,11 @@ class BoundConstraint(BaseConstraint):
     def __str__(self):
         return 'value %s' % self.serialize()
 
+    def check_consistency(self, subjschema, objschema):
+        if not objschema.is_final():
+            raise BadSchemaDefinition("bound constraint doesn't apply to non "
+                                      "final entity type")
+
     def check(self, entity, rtype, value):
         """return true if the value satisfy the constraint, else false"""
         return eval('%s %s %s' % (value, self.operator, self.bound))
@@ -190,6 +220,11 @@ class IntervalBoundConstraint(BaseConstraint):
 
     def __str__(self):
         return 'value [%s]' % self.serialize()
+
+    def check_consistency(self, subjschema, objschema):
+        if not objschema.is_final():
+            raise BadSchemaDefinition("interval bound constraint doesn't apply "
+                                      "to non final entity type")
 
     def check(self, entity, rtype, value):
         minvalue = actual_value(self.minvalue, entity)
@@ -253,6 +288,13 @@ class FormatConstraint(StaticVocabularyConstraint):
                        )
     def __init__(self):
         pass
+
+    def check_consistency(self, subjschema, objschema):
+        if not objschema.is_final():
+            raise BadSchemaDefinition("unique constraint doesn't apply to non "
+                                      "final entity type")
+        if not objschema == 'String':
+            raise BadSchemaDefinition("format constraint only apply to String")
 
     def serialize(self):
         """called to make persistent valuable data of a constraint"""
