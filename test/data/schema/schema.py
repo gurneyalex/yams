@@ -6,10 +6,10 @@ class Affaire(EntityType):
     ref = String(maxsize=12)
 
     concerne = SubjectRelation('Societe')
-    obj_wildcard = SubjectRelation('**')
+    obj_wildcard = SubjectRelation('*')
     sym_rel = SubjectRelation('Person', symetric=True)
     inline_rel = SubjectRelation('Person', inlined=True, cardinality='?*')
-    subj_wildcard = ObjectRelation('**')
+    subj_wildcard = ObjectRelation('*')
 
 
 class Person(EntityType):
