@@ -721,8 +721,10 @@ class RelationSchema(ERSchema):
                 msg = "ambiguous relation %s: %s is final but not %s" % (
                     self.type, frschema, nfrschema)
                 raise BadSchemaDefinition(msg)
-        for cstr in getattr(rdef, 'constraints', ()):
-            cstr.check_consistency(subjschema, objschema)
+        constraints = getattr(rdef, 'constraints', None)
+        if constraints:
+            for cstr in constraints:
+                cstr.check_consistency(subjschema, objschema)
         self.final = final
         # update our internal struct
         self._update(subjschema, objschema)
