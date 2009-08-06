@@ -724,7 +724,7 @@ class RelationSchema(ERSchema):
         constraints = getattr(rdef, 'constraints', None)
         if constraints:
             for cstr in constraints:
-                cstr.check_consistency(subjschema, objschema)
+                cstr.check_consistency(subjschema, objschema, rdef)
         self.final = final
         # update our internal struct
         self._update(subjschema, objschema)

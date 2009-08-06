@@ -402,6 +402,18 @@ class SchemaLoaderTC2(TestCase):
                                buildobjs.RelationDefinition(name='toto', subject='Entity', object='Int',
                                                      constraints=[SizeConstraint(40)]))
         self.assertEquals(str(ex), "size constraint doesn't apply to Int entity type")
+        
+    def test_broken_schema5(self):
+        schema = Schema('toto')
+        schema.add_entity_type(buildobjs.EntityType(name='Entity'))
+        schema.add_entity_type(buildobjs.EntityType(name='String'))
+        schema.add_relation_type(buildobjs.RelationType(name='toto'))
+        ex = self.assertRaises(BadSchemaDefinition,
+                               schema.add_relation_def,
+                               buildobjs.RelationDefinition(name='toto', subject='Entity', object='String',
+                                                            constraints=[StaticVocabularyConstraint(['ab', 'abc']),
+                                                                         SizeConstraint(2)]))
+        self.assertEquals(str(ex), "size constraint set to 2 but vocabulary contains string of greater size")
 
     def test_schema(self):
         SchemaLoader.main_schema_directory = 'schema2'
