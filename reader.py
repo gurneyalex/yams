@@ -107,7 +107,7 @@ class PyFileReader(object):
 
     def exec_file(self, filepath):
         try:
-            modname = '.'.join(modpath_from_file(filepath))
+            modname = '.'.join(modpath_from_file(filepath, self.loader.extrapath))
             doimport = True
         except ImportError:
             warn('module for %s can\'t be found, add necessary __init__.py '
@@ -192,6 +192,7 @@ class SchemaLoader(object):
     set of files
     """
     schemacls = schemamod.Schema
+    extrapath = None
 
     def load(self, directories, name=None,
              register_base_types=True, construction_mode='strict',
