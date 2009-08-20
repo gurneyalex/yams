@@ -11,11 +11,11 @@ files or a direct python definition file.
 __docformat__ = "restructuredtext en"
 
 import sys
+import types
 from os import listdir
 from os.path import exists, join, splitext, basename
 from warnings import warn
 
-from logilab.common import attrdict
 from logilab.common.testlib import mock_object
 from logilab.common.textutils import get_csv
 from logilab.common.modutils import modpath_from_file, cleanup_sys_modules
@@ -78,10 +78,10 @@ class PyFileReader(object):
     def read_file(self, filepath):
         self._current_file = filepath
         try:
-            modname, fdata = self._loaded[filepath]
+            modname, module = self._loaded[filepath]
         except KeyError:
-            modname, fdata = self.exec_file(filepath)
-        for name, obj in fdata.items():
+            modname, module = self.exec_file(filepath)
+        for name, obj in vars(module).items():
             if name.startswith('_'):
                 continue
             try:
@@ -124,11 +124,6 @@ class PyFileReader(object):
             module = sys.modules[modname]
             # NOTE: don't test raw equality to avoid .pyc / .py comparisons
             assert module.__file__.startswith(filepath), (filepath, module.__file__)
-            if not isinstance(module, attrdict):
-                # module imported by regular import, we've to provide .items for
-                # bw compat until we can use proper module objects everywhere
-                # XXX we may miss some deprecation warning here
-                module.items = lambda : vars(module).items()
         else:
             # XXX until bw compat is gone, put context into builtins to allow proper
             # control of deprecation warning
@@ -172,8 +167,11 @@ class PyFileReader(object):
             for key in self.context:
                 fglobals.pop(key, None)
             fglobals['__file__'] = filepath
-            module = attrdict(fglobals)
+            module = types.ModuleType(modname)
+            module.__dict__.update(fglobals)
             sys.modules[modname] = module
+            if package:
+                setattr(sys.modules[package], modname.split('.')[-1], module)
         self._loaded[filepath] = (modname, module)
         return self._loaded[filepath]
 
