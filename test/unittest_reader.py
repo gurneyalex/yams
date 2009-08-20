@@ -378,7 +378,10 @@ class SchemaLoaderTC2(TestCase):
         SchemaLoader.main_schema_directory = 'brokenschema1'
         ex = self.assertRaises(BadSchemaDefinition,
                                SchemaLoader().load, [DATADIR], 'Test')
-        self.assertEquals(str(ex), "conflicting values False/True for property inlined of relation type 'rel'")
+        try:
+            self.assertEquals(str(ex), "conflicting values False/True for property inlined of relation type 'rel'")
+        except AssertionError:
+            self.assertEquals(str(ex), "conflicting values True/False for property inlined of relation type 'rel'")
 
     def test_broken_schema2(self):
         SchemaLoader.main_schema_directory = 'brokenschema2'
@@ -402,7 +405,7 @@ class SchemaLoaderTC2(TestCase):
                                buildobjs.RelationDefinition(name='toto', subject='Entity', object='Int',
                                                      constraints=[SizeConstraint(40)]))
         self.assertEquals(str(ex), "size constraint doesn't apply to Int entity type")
-        
+
     def test_broken_schema5(self):
         schema = Schema('toto')
         schema.add_entity_type(buildobjs.EntityType(name='Entity'))
