@@ -1072,6 +1072,8 @@ class Schema(object):
         for rschema in eschema._obj_relations.values():
             for subjtype in rschema.subjects(etype):
                 self.del_relation_def(subjtype, rschema, eschema)
+        if eschema.specializes():
+            eschema.specializes()._specialized_by.remove(eschema)
         del self._entities[etype]
 
     def infer_specialization_rules(self):

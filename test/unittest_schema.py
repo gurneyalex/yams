@@ -199,6 +199,8 @@ class EntitySchemaTC(BaseSchemaTC):
         edivision = schema2.eschema('Division')
         self.assertEquals(edivision.specializes(), 'Company')
         self.assertEquals(edivision.specialized_by(), ['Subdivision'])
+        schema2.del_entity_type('Subdivision')
+        self.assertEquals(edivision.specialized_by(), [])
 
     def test_is_final(self):
         self.assertEquals(eperson.is_final(), False)
