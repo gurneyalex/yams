@@ -1077,6 +1077,9 @@ class Schema(object):
                 self.del_relation_def(subjtype, rschema, eschema)
         if eschema.specializes():
             eschema.specializes()._specialized_by.remove(eschema)
+        if eschema.specialized_by():
+            raise Exception("can't remove entity type %s used as parent class by %s" %
+                            (eschema, ','.join(str(et) for et in eschema.specialized_by())))
         del self._entities[etype]
 
     def infer_specialization_rules(self):
