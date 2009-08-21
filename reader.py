@@ -94,7 +94,7 @@ class PyFileReader(object):
     def import_erschema(self, ertype, schemamod=None, instantiate=True):
         warn('import_erschema is deprecated, use explicit import once schema '
              'is turned into a proper python module (eg not expecting '
-             'predefined context in globals)', DeprecationWarning)
+             'predefined context in globals)', DeprecationWarning, stacklevel=3)
         try:
             erdef = self.loader.defined[ertype]
             name = hasattr(erdef, 'name') and erdef.name or erdef.__name__
