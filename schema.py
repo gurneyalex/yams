@@ -11,6 +11,7 @@ import warnings
 from copy import deepcopy
 from decimal import Decimal
 
+from logilab.common import attrdict
 from logilab.common.decorators import cached
 from logilab.common.compat import sorted
 from logilab.common.interface import implements
@@ -1079,9 +1080,6 @@ class Schema(object):
         del self._entities[etype]
 
     def infer_specialization_rules(self):
-        # XXX
-        class XXXRelationDef:
-            infered = True
         for rschema in self.relations():
             if rschema.is_final() or rschema in self.no_specialization_inference:
                 continue
@@ -1090,11 +1088,12 @@ class Schema(object):
                 objeschemas = [object] + object.specialized_by(recursive=True)
                 for subjschema in subjeschemas:
                     for objschema in objeschemas:
-                        subjobj = (subjschema, objschema)
                         # don't try to add an already defined relation
-                        if subjobj in rschema.rdefs():
+                        if rschema.has_rdef(subjschema, objschema):
                             continue
-                        rschema.update(subjschema, objschema, XXXRelationDef)
+                        rdef = attrdict(rschema.rproperties(subject, object))
+                        rdef['infered'] = True
+                        rschema.update(subjschema, objschema, rdef)
 
     def remove_infered_definitions(self):
         """remove any infered definitions added by
