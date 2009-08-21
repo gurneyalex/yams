@@ -198,6 +198,7 @@ class EntitySchema(ERSchema):
     # they may be missing from schemas obtained by pyro
     _specialized_type = None
     _specialized_by = []
+
     def __init__(self, schema=None, rdef=None, *args, **kwargs):
         super(EntitySchema, self).__init__(schema, rdef, *args, **kwargs)
         if rdef is not None:
@@ -350,7 +351,8 @@ class EntitySchema(ERSchema):
         rschema = self.subject_relation(rtype)
         assert rschema.is_final(), (self.type, rtype)
         objtypes = rschema.objects(self.type)
-        assert len(objtypes) == 1
+        assert len(objtypes) == 1, (self.type, str(rtype),
+                                    [str(ot) for ot in objtypes])
         return objtypes[0]
 
     def subjrproperty(self, rtype, prop):
