@@ -931,6 +931,8 @@ class Schema(object):
     __implements__ = ISchema
     entity_class = EntitySchema
     relation_class = RelationSchema
+    # relation that should not be infered according to entity type inheritance
+    no_specialization_inference = ()
     # __hashmode__ is a evil hack to support schema pickling
     # it should be set to 'pickle' before pickling is done and reset to None
     # once it's done
@@ -1081,7 +1083,7 @@ class Schema(object):
         class XXXRelationDef:
             infered = True
         for rschema in self.relations():
-            if rschema.is_final():
+            if rschema.is_final() or rschema in self.no_specialization_inference:
                 continue
             for subject, object in rschema.rdefs():
                 subjeschemas = [subject] + subject.specialized_by(recursive=True)
