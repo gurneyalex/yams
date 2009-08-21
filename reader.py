@@ -167,7 +167,7 @@ class PyFileReader(object):
             for key in self.context:
                 fglobals.pop(key, None)
             fglobals['__file__'] = filepath
-            module = types.ModuleType(modname)
+            module = types.ModuleType(str(modname))
             module.__dict__.update(fglobals)
             sys.modules[modname] = module
             if package:
