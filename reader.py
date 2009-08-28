@@ -162,8 +162,8 @@ class PyFileReader(object):
                         if pname in fglobals or not pname in self.context:
                             # imported
                             continue
-                        warn('%s: please explicitly import %s'
-                             % (filepath, pname), DeprecationWarning)
+                        warn('%s: please explicitly import %s (%s)'
+                             % (filepath, pname, name), DeprecationWarning)
             for key in self.context:
                 fglobals.pop(key, None)
             fglobals['__file__'] = filepath
