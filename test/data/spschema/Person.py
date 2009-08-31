@@ -24,4 +24,3 @@ class SubDivision(Division):
 # This class doesn't extend the schema
 class SubSubDivision(SubDivision):
     pass
-
