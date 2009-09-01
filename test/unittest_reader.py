@@ -379,23 +379,28 @@ class SchemaLoaderTC2(TestCase):
         ex = self.assertRaises(BadSchemaDefinition,
                                SchemaLoader().load, [DATADIR], 'Test')
         try:
-            self.assertEquals(str(ex), "conflicting values False/True for property inlined of relation type 'rel'")
+            self.assertEquals(str(ex), "conflicting values False/True for property inlined of relation 'rel'")
         except AssertionError:
-            self.assertEquals(str(ex), "conflicting values True/False for property inlined of relation type 'rel'")
+            self.assertEquals(str(ex), "conflicting values True/False for property inlined of relation 'rel'")
 
 
     def test_broken_schema2(self):
         SchemaLoader.main_schema_directory = 'brokenschema2'
         ex = self.assertRaises(BadSchemaDefinition,
                                SchemaLoader().load, [DATADIR], 'Test')
-        self.assertEquals(str(ex), "conflicting values True/False for property inlined of relation type 'rel'")
-
+        try:
+            self.assertEquals(str(ex), "conflicting values True/False for property inlined of relation 'rel'")
+        except AssertionError:
+            self.assertEquals(str(ex), "conflicting values False/True for property inlined of relation 'rel'")
 
     def test_broken_schema3(self):
         SchemaLoader.main_schema_directory = 'brokenschema3'
         ex = self.assertRaises(BadSchemaDefinition,
                                SchemaLoader().load, [DATADIR], 'Test')
-        self.assertEquals(str(ex), "conflicting values True/False for property inlined of relation type 'rel'")
+        try:
+            self.assertEquals(str(ex), "conflicting values True/False for property inlined of relation 'rel'")
+        except AssertionError:
+            self.assertEquals(str(ex), "conflicting values False/True for property inlined of relation 'rel'")
 
     def test_broken_schema4(self):
         schema = Schema('toto')
@@ -444,6 +449,29 @@ class SchemaLoaderTC2(TestCase):
                                                       'delete': ()})
         self.assertEquals([str(r) for r,at in schema['MyNote'].attribute_definitions()],
                           ['date', 'type', 'para', 'text'])
+
+    def test_duplicated_rtype(self):
+        loader = SchemaLoader()
+        loader.defined = {}
+        class RT1(RelationType):
+            pass
+        loader.add_definition(None, RT1)
+        ex = self.assertRaises(BadSchemaDefinition,
+                          loader.add_definition, None, RT1)
+        self.assertEquals(str(ex), 'duplicated relation type for RT1')
+
+    def test_rtype_priority(self):
+        loader = SchemaLoader()
+        loader.defined = {}
+        class RT1Def(RelationDefinition):
+            name = 'RT1'
+            subject = 'Whatever'
+            object = 'Whatever'
+        class RT1(RelationType):
+            pass
+        loader.add_definition(None, RT1Def)
+        loader.add_definition(None, RT1)
+        self.assertEquals(loader.defined['RT1'], RT1)
 
 if __name__ == '__main__':
     unittest_main()

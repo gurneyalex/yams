@@ -76,9 +76,10 @@ def _copy_attributes(fromobj, toobj, attributes):
             continue
         ovalue = getattr(toobj, attr, MARKER)
         if not ovalue is MARKER and value != ovalue:
+            rname = getattr(toobj, 'name', None) or toobj.__name__
             raise BadSchemaDefinition(
-                'conflicting values %r/%r for property %s of %s'
-                % (ovalue, value, attr, toobj))
+                'conflicting values %r/%r for property %s of relation %r'
+                % (ovalue, value, attr, rname))
         setattr(toobj, attr, value)
 
 def register_base_types(schema):
@@ -305,10 +306,13 @@ class RelationType(Definition):
         if cls.__doc__ and not cls.description:
             cls.description = ' '.join(cls.__doc__.split())
         if name in defined:
-            _copy_attributes(cls, defined[name],
+            if defined[name].__class__ is not RelationType:
+                raise BadSchemaDefinition('duplicated relation type for %s'
+                                          % name)
+            # relation type created from a relation definition, override it
+            _copy_attributes(defined[name], cls,
                              REL_PROPERTIES + ('subject', 'object'))
-        else:
-            defined[name] = cls
+        defined[name] = cls
 
     @classmethod
     def expand_relation_definitions(cls, defined, schema):
