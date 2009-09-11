@@ -67,7 +67,7 @@ try:
 except ImportError:
     use_py_datetime()
 
-# work in progress
+# work in progress ###
 from yams._exceptions import *
 from yams.schema import Schema, EntitySchema, RelationSchema
 
