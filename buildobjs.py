@@ -268,7 +268,6 @@ class EntityType(Definition):
     def remove_relation(cls, name):
         for rdef in cls.get_relations(name):
             cls.__relations__.remove(rdef)
-            cls.__relations__.remove(rdef)
 
     @classmethod
     def get_relations(cls, name):
