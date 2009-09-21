@@ -8,9 +8,9 @@
 
 __docformat__ = "restructuredtext en"
 
-import warnings
 import re
 import decimal
+import operator
 from StringIO import StringIO
 
 import yams
@@ -170,6 +170,13 @@ class RegexpConstraint(BaseConstraint):
         return RegexpConstraint(self.regexp, self.flags)
 
 
+OPERATORS = {
+    '<=': operator.le,
+    '<': operator.lt,
+    '>': operator.gt,
+    '>=': operator.ge,
+    }
+
 class BoundConstraint(BaseConstraint):
     """the int/float bound constraint :
 
@@ -178,12 +185,10 @@ class BoundConstraint(BaseConstraint):
     """
     __implements__ = IConstraint
 
-    def __init__(self, operator, bound=None):
-        assert operator in ('<=', '<', '>', '>=')
-        warnings.warn("use IntervalBoundConstraint instead of BoundConstraint",
-                      DeprecationWarning, stacklevel=2)
-        self.operator = operator
-        self.bound = bound
+    def __init__(self, op, boundary=None):
+        assert op in OPERATORS, op
+        self.operator = op
+        self.boundary = boundary
 
     def __str__(self):
         return 'value %s' % self.serialize()
@@ -195,18 +200,18 @@ class BoundConstraint(BaseConstraint):
 
     def check(self, entity, rtype, value):
         """return true if the value satisfy the constraint, else false"""
-        return eval('%s %s %s' % (value, self.operator, self.bound))
+        boundary = actual_value(self.boundary, entity)
+        return OPERATORS[self.operator](value, boundary)
 
     def serialize(self):
         """simple text serialization"""
-        return u'%s %s' % (self.operator, self.bound)
+        return u'%s %s' % (self.operator, self.boundary)
 
     @classmethod
     def deserialize(cls, value):
         """simple text deserialization"""
-        operator = value.split()[0]
-        bound = ' '.join(value.split()[1:])
-        return cls(operator, bound)
+        op, boundary = value.split(' ', 1)
+        return cls(op, eval(boundary))
 
 
 class IntervalBoundConstraint(BaseConstraint):
