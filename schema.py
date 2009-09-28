@@ -181,7 +181,7 @@ class ERSchema(object):
 
 # Schema objects definition ###################################################
 
-KNOWN_METAATTRIBUTES = set(('format', 'encoding'))
+KNOWN_METAATTRIBUTES = set(('format', 'encoding', 'name'))
 
 class EntitySchema(ERSchema):
     """An entity has a type, a set of subject and or object relations
