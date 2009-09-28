@@ -320,7 +320,7 @@ class FormatConstraint(StaticVocabularyConstraint):
         """
         return cls()
 
-    def vocabulary(self, entity=None, req=None):
+    def vocabulary(self, **kwargs):
         return self.regular_formats
 
     def __str__(self):
