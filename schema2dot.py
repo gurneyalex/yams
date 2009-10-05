@@ -189,10 +189,6 @@ def schema2dot(schema=None, outputfile=None, skiptypes=(),
 def run():
     """main routine when schema2dot is used as a script"""
     from yams.reader import SchemaLoader
-    class DefaultHandler:
-        """we need to handle constraints while loading schema"""
-        def __getattr__(self, dummy):
-            return lambda *args: 'abcdef'
     loader = SchemaLoader()
     try:
         schema_dir = sys.argv[1]
@@ -203,7 +199,7 @@ def run():
         outputfile = sys.argv[2]
     else:
         outputfile = None
-    schema = loader.load(schema_dir, 'Test', DefaultHandler())
+    schema = loader.load([schema_dir], 'Test')
     schema2dot(schema, outputfile)
 
 
