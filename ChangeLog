@@ -1,7 +1,8 @@
 ChangeLog for yams
 ------------------
 
- --
+2009-10-07  --  0.24.4
+    * support new 'name' metadata (for e.g. files)
     * remove deprecation warning on bound constraint: it is actually valuable
       when only one boundary or when boundary inclusion/exclusion has to be
       specified
