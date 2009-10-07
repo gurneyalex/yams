@@ -149,7 +149,11 @@ class metadefinition(type):
             _add_relation(defclass.__relations__, rdef, rname)
         # take base classes'relations into account
         for base in bases:
-            rels.extend(getattr(base, '__relations__', []))
+            for rdef in getattr(base, '__relations__', ()):
+                if not rdef.name in relations or not relations[rdef.name].override:
+                    rels.append(rdef)
+                else:
+                    relations[rdef.name].creation_rank = rdef.creation_rank
         # sort relations by creation rank
         defclass.__relations__ = sorted(rels, key=lambda r: r.creation_rank)
         return defclass
@@ -453,14 +457,15 @@ class ObjectRelation(Relation):
         self.etype = etype
         if self.constraints:
             self.constraints = list(self.constraints)
+        self.override = kwargs.pop('override', False)
         try:
             _check_kwargs(kwargs, REL_PROPERTIES)
         except BadSchemaDefinition, bad:
             # XXX (auc) bad field name + required attribute can lead there instead of schema.py ~ 920
-             bsd_ex = BadSchemaDefinition(('%s in relation to entity %r (also is %r defined ? (check two '
-                                           'lines above in the backtrace))') % (bad.args, etype, etype))
-             setattr(bsd_ex,'tb_offset',2)
-             raise bsd_ex
+            bsd_ex = BadSchemaDefinition(('%s in relation to entity %r (also is %r defined ? (check two '
+                                          'lines above in the backtrace))') % (bad.args, etype, etype))
+            setattr(bsd_ex,'tb_offset',2)
+            raise bsd_ex
         _copy_attributes(attrdict(kwargs), self, REL_PROPERTIES)
 
     def __repr__(self):

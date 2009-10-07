@@ -204,7 +204,7 @@ class SchemaLoader(object):
         # ensure we don't have an iterator
         directories = tuple(directories)
         try:
-            files = self._load_definition_files(directories)
+            self._load_definition_files(directories)
             try:
                 schema = self._build_schema(name, register_base_types,
                                             construction_mode=construction_mode,

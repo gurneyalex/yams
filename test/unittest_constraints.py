@@ -48,7 +48,7 @@ class ConstraintTC(TestCase):
         self.assertEquals(cstr.regexp, '[a-z]+,[A-Z]+')
         self.assertEquals(cstr.flags, 12)
 
-    def test_constraints_with_attribute(self):
+    def test_interval_with_attribute(self):
         cstr = IntervalBoundConstraint(NOW(), Attribute('hop'))
         cstr2 = IntervalBoundConstraint.deserialize(cstr.serialize())
         self.assertEquals(cstr2.minvalue.offset, None)
@@ -63,7 +63,7 @@ class ConstraintTC(TestCase):
                                 'hip', datetime.now() + timedelta(hours=2)))
 
 
-    def test_constraints_with_date(self):
+    def test_interval_with_date(self):
         cstr = IntervalBoundConstraint(TODAY(timedelta(1)),
                                        TODAY(timedelta(3)))
         cstr2 = IntervalBoundConstraint.deserialize(cstr.serialize())
@@ -74,6 +74,26 @@ class ConstraintTC(TestCase):
         self.failIf(cstr2.check(None, 'hip', date.today()))
         # fail, value > maxvalue
         self.failIf(cstr2.check(None, 'hip', date.today() + timedelta(4)))
+
+    def test_bound_with_attribute(self):
+        cstr = BoundConstraint('<=', Attribute('hop'))
+        cstr2 = BoundConstraint.deserialize(cstr.serialize())
+        self.assertEquals(cstr2.boundary.attr, 'hop')
+        self.assertEquals(cstr2.operator, '<=')
+        self.failUnless(cstr2.check(mock_object(hop=date.today()), 'hip', date.today()))
+        # fail, value > maxvalue
+        self.failIf(cstr2.check(mock_object(hop=date.today()),
+                                'hip', date.today() + timedelta(days=1)))
+
+
+    def test_bound_with_date(self):
+        cstr = BoundConstraint('<=', TODAY())
+        cstr2 = BoundConstraint.deserialize(cstr.serialize())
+        self.assertEquals(cstr2.boundary.offset, None)
+        self.assertEquals(cstr2.operator, '<=')
+        self.failUnless(cstr2.check(None, 'hip', date.today()))
+        # fail, value > maxvalue
+        self.failIf(cstr2.check(None, 'hip', date.today() + timedelta(days=1)))
 
 if __name__ == '__main__':
     unittest_main()
