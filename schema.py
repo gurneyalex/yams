@@ -204,8 +204,8 @@ class EntitySchema(ERSchema):
         super(EntitySchema, self).__init__(schema, rdef, *args, **kwargs)
         if rdef is not None:
             # quick access to bounded relation schemas
-            self._subj_relations = {}
-            self._obj_relations = {}
+            self.subjrels = {}
+            self.objrels = {}
             self._specialized_type = rdef.specialized_type
             self._specialized_by = rdef.specialized_by
         else:
@@ -218,28 +218,28 @@ class EntitySchema(ERSchema):
                                  [rs.type for rs in self.object_relations()])
 
     def _rehash(self):
-        self._subj_relations = rehash(self._subj_relations)
-        self._obj_relations = rehash(self._obj_relations)
+        self.subjrels = rehash(self.subjrels)
+        self.objrels = rehash(self.objrels)
 
     # schema building methods #################################################
 
     def add_subject_relation(self, rschema):
         """register the relation schema as possible subject relation"""
-        self._subj_relations[rschema] = rschema
+        self.subjrels[rschema] = rschema
 
     def add_object_relation(self, rschema):
         """register the relation schema as possible object relation"""
-        self._obj_relations[rschema] = rschema
+        self.objrels[rschema] = rschema
 
     def del_subject_relation(self, rtype):
         try:
-            del self._subj_relations[rtype]
+            del self.subjrels[rtype]
         except KeyError:
             pass
 
     def del_object_relation(self, rtype):
         try:
-            del self._obj_relations[rtype]
+            del self.objrels[rtype]
         except KeyError:
             pass
 
@@ -288,39 +288,13 @@ class EntitySchema(ERSchema):
         """return a list of relations that may have this type of entity as
         subject
         """
-        return self._subj_relations.values()
-
-    def has_subject_relation(self, rtype):
-        """if this entity type as a `rtype` subject relation, return its schema
-        else return None
-        """
-        return self._subj_relations.get(rtype)
+        return self.subjrels.values()
 
     def object_relations(self):
         """return a list of relations that may have this type of entity as
         object
         """
-        return self._obj_relations.values()
-
-    def has_object_relation(self, rtype):
-        """if this entity type as a `rtype` object relation, return its schema
-        else return None
-        """
-        return self._obj_relations.get(rtype)
-
-    def subject_relation(self, rtype):
-        """return the relation schema for the rtype subject relation
-
-        Raise `KeyError` if rtype is not a subject relation of this entity type
-        """
-        return self._subj_relations[rtype]
-
-    def object_relation(self, rtype):
-        """return the relation schema for the rtype object relation
-
-        Raise `KeyError` if rtype is not an object relation of this entity type
-        """
-        return self._obj_relations[rtype]
+        return self.objrels.values()
 
     def attribute_definitions(self):
         """return an iterator on attribute definitions
@@ -343,12 +317,13 @@ class EntitySchema(ERSchema):
 
         `rtype` must be a subject final relation
         """
-        rschema = self.subject_relation(rtype)
-        assert rschema.is_final(), (self.type, rtype)
-        objtypes = rschema.objects(self.type)
-        assert len(objtypes) == 1, (self.type, str(rtype),
-                                    [str(ot) for ot in objtypes])
-        return objtypes[0]
+        #rschema = self.subjrels[rtype]
+        #assert rschema.final, (self.type, rtype)
+        #objtypes = rschema.objects(self.type)
+        #assert len(objtypes) == 1, (self.type, str(rtype),
+        #                            [str(ot) for ot in objtypes])
+        #return objtypes[0]
+        return self.subjrels[rtype].objects(self.type)[0]
 
     def subjrproperty(self, rtype, prop):
         """convenience method to access a property of a subject relation"""
@@ -363,30 +338,29 @@ class EntitySchema(ERSchema):
         this schema role
         """
         if role == 'subject':
-            rschema = self.subject_relation(rtype)
+            rschema = self.subjrels[rtype]
             if ttype is None:
                 ttype = rschema.objects(self)[0]
             return rschema.rproperty(self, ttype, prop)
         else:
-            assert role == 'object'
-            rschema = self.object_relation(rtype)
+            rschema = self.objrels[rtype]
             if ttype is None:
                 ttype = rschema.subjects(self)[0]
             return rschema.rproperty(ttype, self, prop)
 
     def rproperty(self, rtype, prop):
         """convenience method to access a property of a final subject relation"""
-        rschema = self.subject_relation(rtype)
+        rschema = self.subjrels[rtype]
         return rschema.rproperty(self, self.destination(rtype), prop)
 
     def set_rproperty(self, rtype, prop, value):
         """convenience method to set the value of a property of a subject relation"""
-        rschema = self.subject_relation(rtype)
+        rschema = self.subjrels[rtype]
         return rschema.set_rproperty(self, self.destination(rtype), prop, value)
 
     def rproperties(self, rtype):
         """convenience method to access properties of a subject relation"""
-        rschema = self.subject_relation(rtype)
+        rschema = self.subjrels[rtype]
         desttype = rschema.objects(self)[0]
         return rschema.rproperties(self, desttype)
 
@@ -410,7 +384,7 @@ class EntitySchema(ERSchema):
         """return true if this entity's schema has an encoding field for the given
         attribute
         """
-        return self.has_subject_relation('%s_%s' % (attr, metadata))
+        return '%s_%s' % (attr, metadata) in self.subjrels
 
     def is_metadata(self, attr):
         """return a metadata for an attribute (None if unspecified)"""
@@ -418,7 +392,7 @@ class EntitySchema(ERSchema):
             attr, metadata = str(attr).rsplit('_', 1)
         except ValueError:
             return None
-        if metadata in KNOWN_METAATTRIBUTES and self.has_subject_relation(attr):
+        if metadata in KNOWN_METAATTRIBUTES and attr in self.subjrels:
             return (attr, metadata)
         return None
 
@@ -441,7 +415,7 @@ class EntitySchema(ERSchema):
                 attr, meta = rschema.type.rsplit('_', -1)
             except ValueError:
                 continue
-            if meta in KNOWN_METAATTRIBUTES and self.has_subject_relation(attr):
+            if meta in KNOWN_METAATTRIBUTES and attr in self.subjrels:
                 metaattrs[rschema] = (meta, attr)
         return metaattrs
 
@@ -525,7 +499,7 @@ class EntitySchema(ERSchema):
         """convenience method to check presence of the UniqueConstraint on a
         relation
         """
-        rschema = self.subject_relation(rtype)
+        rschema = self.subjrels[rtype]
         for constraint in self.constraints(rtype):
             if isinstance(constraint, UniqueConstraint):
                 return True
@@ -638,9 +612,43 @@ class EntitySchema(ERSchema):
                 subschemas.extend(subschema.specialized_by(recursive=True))
         return subschemas
 
-    # bw compat
-    subject_relation_schema = subject_relation
-    object_relation_schema = object_relation
+    @deprecated('use .final attribute')
+    def is_final(self):
+        """return true if the entity is a final entity (and so cannot be used as
+        subject of a relation)
+        """
+        return self.final
+
+    @deprecated('use rtype in .subjrels')
+    def has_subject_relation(self, rtype):
+        """if this entity type as a `rtype` subject relation, return its schema
+        else return None
+        """
+        return self.subjrels.get(rtype)
+
+    @deprecated('use .subjrels[rtype]')
+    def subject_relation(self, rtype):
+        """return the relation schema for the rtype subject relation
+
+        Raise `KeyError` if rtype is not a subject relation of this entity type
+        """
+        return self.subjrels[rtype]
+
+    @deprecated('use rtype in .objrels')
+    def has_object_relation(self, rtype):
+        """if this entity type as a `rtype` object relation, return its schema
+        else return None
+        """
+        return self.objrels.get(rtype)
+
+    @deprecated('use .objrels[rtype]')
+    def object_relation(self, rtype):
+        """return the relation schema for the rtype object relation
+
+        Raise `KeyError` if rtype is not an object relation of this entity type
+        """
+        return self.objrels[rtype]
+
 
 
 class RelationSchema(ERSchema):
@@ -1067,10 +1075,10 @@ class Schema(object):
 
     def del_entity_type(self, etype):
         eschema = self._entities[etype]
-        for rschema in eschema._subj_relations.values():
+        for rschema in eschema.subjrels.values():
             for objtype in rschema.objects(etype):
                 self.del_relation_def(eschema, rschema, objtype)
-        for rschema in eschema._obj_relations.values():
+        for rschema in eschema.objrels.values():
             for subjtype in rschema.subjects(etype):
                 self.del_relation_def(subjtype, rschema, eschema)
         if eschema.specializes():
