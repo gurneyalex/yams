@@ -444,6 +444,7 @@ BASE_CHECKERS = {
     'Date' :     yes,
     'Time' :     yes,
     'Datetime' : yes,
+    'Interval' : yes,
     'String' :   check_string,
     'Int' :      check_int,
     'Float' :    check_float,
