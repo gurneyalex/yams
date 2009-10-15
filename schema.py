@@ -76,8 +76,6 @@ class ERSchema(object):
         """
         if erdef is None:
             return
-        assert schema
-        assert erdef
         self.schema = schema
         self.type = erdef.name
         self.description = erdef.description or ''
@@ -131,12 +129,7 @@ class ERSchema(object):
         :rtype: tuple
         :return: the groups with the given permission
         """
-        assert action in self.ACTIONS, ('%s not in %s' % (action, self.ACTIONS))
-        try:
-            return self._groups[action]
-        except KeyError:
-            return ()
-
+        return self._groups[action]
 
     def has_group(self, action, group):
         """return true if the group is authorized for the given action
@@ -147,7 +140,6 @@ class ERSchema(object):
         :rtype: bool
         :return: flag indicating whether the group has the permission
         """
-        assert action in self.ACTIONS, ('%s not in %s' % (action, self.ACTIONS))
         return group in self._groups[action]
 
     def has_access(self, user, action):
@@ -427,7 +419,6 @@ class EntitySchema(ERSchema):
 
     def indexable_attributes(self):
         """return the relation schema of attribtues to index"""
-        assert not self.is_final()
         for rschema in self.subject_relations():
             if rschema.final:
                 if self.rproperty(rschema, 'fulltextindexed'):
@@ -435,7 +426,6 @@ class EntitySchema(ERSchema):
 
     def fulltext_relations(self):
         """return the (name, role) of relations to index"""
-        assert not self.is_final()
         for rschema in self.subject_relations():
             if not rschema.final and  rschema.fulltext_container == 'subject':
                 yield rschema, 'subject'
@@ -456,7 +446,6 @@ class EntitySchema(ERSchema):
 
     def defaults(self):
         """return an iterator on (attribute name, default value)"""
-        assert not self.is_final()
         for rschema in self.subject_relations():
             if rschema.final:
                 value = self.default(rschema)
@@ -535,7 +524,6 @@ class EntitySchema(ERSchema):
         """check the entity and raises an ValidationError exception if it
         contains some invalid fields (ie some constraints failed)
         """
-        assert not self.is_final()
         errors = {}
         for rschema in self.subject_relations():
             if not rschema.final:
@@ -578,12 +566,10 @@ class EntitySchema(ERSchema):
 
     def check_value(self, value):
         """check the value of a final entity (ie a const value)"""
-        assert self.is_final()
         return self.field_checkers[self](self, value)
 
     def convert_value(self, value):
         """check the value of a final entity (ie a const value)"""
-        assert self.is_final()
         try:
             return self.field_converters[self](value)
         except KeyError:
@@ -878,7 +864,7 @@ class RelationSchema(ERSchema):
         :raise `KeyError`: if etype is not a subject entity type.
         """
         if etype is None:
-            return tuple(self._subj_schemas.keys())
+            return tuple(self._subj_schemas)
         try:
             return tuple(self._obj_schemas[etype])
         except KeyError:
@@ -893,7 +879,7 @@ class RelationSchema(ERSchema):
         :raise `KeyError`: if etype is not an object entity type.
         """
         if etype is None:
-            return tuple(self._obj_schemas.keys())
+            return tuple(self._obj_schemas)
         try:
             return tuple(self._subj_schemas[etype])
         except KeyError:
@@ -901,7 +887,6 @@ class RelationSchema(ERSchema):
 
     def targets(self, etype, role='subject'):
         """return possible target types with <etype> as <x>"""
-        assert role in ('subject', 'object')
         if role == 'subject':
             return self.objects(etype)
         return self.subjects(etype)
@@ -1008,7 +993,6 @@ class Schema(object):
     def rename_entity_type(self, oldname, newname):
         """renames an entity type and update internal structures accordingly
         """
-        assert oldname in self._entities
         eschema = self._entities.pop(oldname)
         eschema.type = newname
         self._entities[newname] = eschema
