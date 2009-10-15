@@ -25,12 +25,12 @@ def schema2sql(dbhelper, schema, skip_entities=(), skip_relations=(), prefix='')
     w = output.append
     for etype in sorted(schema.entities()):
         eschema = schema.eschema(etype)
-        if eschema.is_final() or eschema.type in skip_entities:
+        if eschema.final or eschema.type in skip_entities:
             continue
         w(eschema2sql(dbhelper, eschema, skip_relations, prefix=prefix))
     for rtype in sorted(schema.relations()):
         rschema = schema.rschema(rtype)
-        if rschema.is_final() or rschema.inlined:
+        if rschema.final or rschema.inlined:
             continue
         w(rschema2sql(rschema))
     return '\n'.join(output)
@@ -44,12 +44,12 @@ def dropschema2sql(schema, skip_entities=(), skip_relations=(), prefix=''):
     w = output.append
     for etype in sorted(schema.entities()):
         eschema = schema.eschema(etype)
-        if eschema.is_final() or eschema.type in skip_entities:
+        if eschema.final or eschema.type in skip_entities:
             continue
         w(dropeschema2sql(eschema, skip_relations, prefix=prefix))
     for rtype in sorted(schema.relations()):
         rschema = schema.rschema(rtype)
-        if rschema.is_final() or rschema.inlined:
+        if rschema.final or rschema.inlined:
             continue
         w(droprschema2sql(rschema))
     return '\n'.join(output)
@@ -181,12 +181,12 @@ def grant_schema(schema, user, set_owner=True, skip_entities=(), prefix=''):
     w = output.append
     for etype in sorted(schema.entities()):
         eschema = schema.eschema(etype)
-        if eschema.is_final() or etype in skip_entities:
+        if eschema.final or etype in skip_entities:
             continue
         w(grant_eschema(eschema, user, set_owner, prefix=prefix))
     for rtype in sorted(schema.relations()):
         rschema = schema.rschema(rtype)
-        if rschema.is_final() or rschema.inlined:
+        if rschema.final or rschema.inlined:
             continue
         w(grant_rschema(rschema, user, set_owner))
     return '\n'.join(output)

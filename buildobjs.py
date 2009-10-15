@@ -433,7 +433,7 @@ def _actual_types(schema, etype):
 
 def _pow_etypes(schema):
     for eschema in schema.entities():
-        if eschema.is_final():
+        if eschema.final:
             continue
         yield eschema.type
 

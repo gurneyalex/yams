@@ -77,7 +77,7 @@ class SchemaVisitor(object):
         self._edges = None
 
     def should_display_schema(self, erschema):
-        return not (erschema.is_final() or erschema in self.skiptypes)
+        return not (erschema.final or erschema in self.skiptypes)
 
     def should_display_attr(self, rschema):
         return not rschema in self.skiptypes
