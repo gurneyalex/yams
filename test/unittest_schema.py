@@ -209,7 +209,7 @@ class EntitySchemaTC(BaseSchemaTC):
         self.assertEquals(eint.final, True)
         self.assertEquals(eperson.subjrels['nom'].final, True)
         #self.assertEquals(eperson.is_final('concerne'), False)
-        self.assertEquals(eperson.subject_relation('concerne').is_final(), False)
+        self.assertEquals(eperson.subjrels['concerne'].final, False)
 
     def test_is_metadata(self):
         self.assertEquals(eperson.is_metadata('promo'), None)
@@ -258,7 +258,7 @@ class EntitySchemaTC(BaseSchemaTC):
         self.assertEquals(rels, expected)
         rels = [schem.type for schem in eaffaire.object_relations()]
         self.assertEquals(rels, expected)
-        self.assertEquals(eaffaire.object_relation('concerne').type,
+        self.assertEquals(eaffaire.objrels['concerne'].type,
                          'concerne')
 
     def test_destination_type(self):
