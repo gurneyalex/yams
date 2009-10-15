@@ -15,6 +15,7 @@ from logilab.common import attrdict
 from logilab.common.decorators import cached
 from logilab.common.compat import sorted
 from logilab.common.interface import implements
+from logilab.common.deprecation import deprecated
 
 import yams
 from yams import (BASE_TYPES, MARKER, ValidationError, BadSchemaDefinition,
@@ -210,7 +211,7 @@ class EntitySchema(ERSchema):
         else:
             self._specialized_type = None
             self._specialized_by = []
-
+        self.final = self.type in BASE_TYPES
     def __repr__(self):
         return '<%s %s - %s>' % (self.type,
                                  [rs.type for rs in self.subject_relations()],
@@ -244,7 +245,7 @@ class EntitySchema(ERSchema):
 
     def get_default_groups(self):
         """   get default action -> groups mapping  """
-        if self.is_final():
+        if self.final:
             # no permissions needed for final entities, access to them
             # is defined through relations
             return {'read': ('managers', 'users', 'guests',)}
@@ -255,12 +256,6 @@ class EntitySchema(ERSchema):
                     'add': ('managers', 'users',)}
 
     # IEntitySchema interface #################################################
-
-    def is_final(self):
-        """return true if the entity is a final entity
-        (and so cannot be used as subject of a relation)
-        """
-        return self.type in BASE_TYPES
 
     def is_subobject(self, strict=False):
         """return True if this entity type is contained by another. If strict,
@@ -338,7 +333,7 @@ class EntitySchema(ERSchema):
         * schema of the destination entity type
         """
         for rschema in self.ordered_relations():
-            if not rschema.is_final():
+            if not rschema.final:
                 continue
             eschema = rschema.objects(self)[0]
             yield rschema, eschema
@@ -406,7 +401,7 @@ class EntitySchema(ERSchema):
         * a string telling if this is a 'subject' or 'object' relation
         """
         for rschema in self.ordered_relations():
-            if includefinal or not rschema.is_final():
+            if includefinal or not rschema.final:
                 yield rschema, rschema.objects(self), 'subject'
         for rschema in self.object_relations():
             yield rschema, rschema.subjects(self), 'object'
@@ -462,7 +457,7 @@ class EntitySchema(ERSchema):
         """return the relation schema of attribtues to index"""
         assert not self.is_final()
         for rschema in self.subject_relations():
-            if rschema.is_final():
+            if rschema.final:
                 if self.rproperty(rschema, 'fulltextindexed'):
                     yield rschema
 
@@ -470,7 +465,7 @@ class EntitySchema(ERSchema):
         """return the (name, role) of relations to index"""
         assert not self.is_final()
         for rschema in self.subject_relations():
-            if not rschema.is_final() and  rschema.fulltext_container == 'subject':
+            if not rschema.final and  rschema.fulltext_container == 'subject':
                 yield rschema, 'subject'
         for rschema in self.object_relations():
             if rschema.fulltext_container == 'object':
@@ -491,7 +486,7 @@ class EntitySchema(ERSchema):
         """return an iterator on (attribute name, default value)"""
         assert not self.is_final()
         for rschema in self.subject_relations():
-            if rschema.is_final():
+            if rschema.final:
                 value = self.default(rschema)
                 if value is not None:
                     yield rschema, value
@@ -571,7 +566,7 @@ class EntitySchema(ERSchema):
         assert not self.is_final()
         errors = {}
         for rschema in self.subject_relations():
-            if not rschema.is_final():
+            if not rschema.final:
                 continue
             aschema = self.destination(rschema)
             # don't care about rhs cardinality, always '*' (if it make senses)
@@ -706,17 +701,17 @@ class RelationSchema(ERSchema):
 
     def update(self, subjschema, objschema, rdef):
         """Allow this relation between the two given types schema"""
-        if subjschema.is_final():
+        if subjschema.final:
             msg = 'type %s can\'t be used as subject in a relation' % subjschema
             raise BadSchemaDefinition(msg)
         # check final consistency:
         # * a final relation only points to final entity types
         # * a non final relation only points to non final entity types
-        final = objschema.is_final()
+        final = objschema.final
         for eschema in self.objects():
             if eschema is objschema:
                 continue
-            if final != eschema.is_final():
+            if final != eschema.final:
                 if final:
                     frschema, nfrschema = objschema, eschema
                 else:
@@ -807,7 +802,7 @@ class RelationSchema(ERSchema):
         target entity's type
         """
         propdefs = self._RPROPERTIES.copy()
-        if not self.is_final():
+        if not self.final:
             propdefs.update(self._NONFINAL_RPROPERTIES)
         else:
             propdefs.update(self._FINAL_RPROPERTIES)
@@ -861,14 +856,6 @@ class RelationSchema(ERSchema):
 
     # IRelationSchema interface ###############################################
 
-    def is_final(self):
-        """return true if this relation has final object entity's types
-
-        (we enforce that a relation can't point to both final and non final
-        entity's type)
-        """
-        return self.final
-
     def associations(self):
         """return a list of (subject, [objects]) defining between
         which types this relation may exists
@@ -918,6 +905,15 @@ class RelationSchema(ERSchema):
             if cstr.type() == cstrtype:
                 return cstr
         return None
+
+    @deprecated('use .final attribute')
+    def is_final(self):
+        """return true if this relation has final object entity's types
+
+        (we enforce that a relation can't point to both final and non final
+        entity's type)
+        """
+        return self.final
 
 
 class Schema(object):
@@ -1086,7 +1082,7 @@ class Schema(object):
 
     def infer_specialization_rules(self):
         for rschema in self.relations():
-            if rschema.is_final() or rschema in self.no_specialization_inference:
+            if rschema.final or rschema in self.no_specialization_inference:
                 continue
             for subject, object in rschema.rdefs():
                 subjeschemas = [subject] + subject.specialized_by(recursive=True)
@@ -1105,7 +1101,7 @@ class Schema(object):
         `infer_specialization_rules`
         """
         for rschema in self.relations():
-            if rschema.is_final():
+            if rschema.final:
                 continue
             for subject, object in rschema.rdefs():
                 if rschema.rproperty(subject, object, 'infered'):
@@ -1188,7 +1184,7 @@ class Schema(object):
         :return: defined relation's types (str) or schemas (`RelationSchema`)
         """
         for rschema in self.relations():
-            if rschema.is_final():
+            if rschema.final:
                 if schema:
                     yield rschema
                 else:
@@ -1201,7 +1197,7 @@ class Schema(object):
         :return: defined relation's types (str) or schemas (`RelationSchema`)
         """
         for rschema in self.relations():
-            if not rschema.is_final():
+            if not rschema.final:
                 if schema:
                     yield rschema
                 else:

@@ -49,7 +49,7 @@ class UniqueConstraint(BaseConstraint):
         return 'unique'
 
     def check_consistency(self, subjschema, objschema, rdef):
-        if not objschema.is_final():
+        if not objschema.final:
             raise BadSchemaDefinition("unique constraint doesn't apply to non "
                                       "final entity type")
 
@@ -79,7 +79,7 @@ class SizeConstraint(BaseConstraint):
         return res
 
     def check_consistency(self, subjschema, objschema, rdef):
-        if not objschema.is_final():
+        if not objschema.final:
             raise BadSchemaDefinition("size constraint doesn't apply to non "
                                       "final entity type")
         if not objschema in ('String', 'Bytes', 'Password'):
@@ -145,7 +145,7 @@ class RegexpConstraint(BaseConstraint):
         return 'regexp %s' % self.serialize()
 
     def check_consistency(self, subjschema, objschema, rdef):
-        if not objschema.is_final():
+        if not objschema.final:
             raise BadSchemaDefinition("regexp constraint doesn't apply to non "
                                       "final entity type")
         if not objschema in ('String', 'Password'):
@@ -194,7 +194,7 @@ class BoundConstraint(BaseConstraint):
         return 'value %s' % self.serialize()
 
     def check_consistency(self, subjschema, objschema, rdef):
-        if not objschema.is_final():
+        if not objschema.final:
             raise BadSchemaDefinition("bound constraint doesn't apply to non "
                                       "final entity type")
 
@@ -235,7 +235,7 @@ class IntervalBoundConstraint(BaseConstraint):
         return 'value [%s]' % self.serialize()
 
     def check_consistency(self, subjschema, objschema, rdef):
-        if not objschema.is_final():
+        if not objschema.final:
             raise BadSchemaDefinition("interval bound constraint doesn't apply "
                                       "to non final entity type")
 
@@ -303,7 +303,7 @@ class FormatConstraint(StaticVocabularyConstraint):
         pass
 
     def check_consistency(self, subjschema, objschema, rdef):
-        if not objschema.is_final():
+        if not objschema.final:
             raise BadSchemaDefinition("unique constraint doesn't apply to non "
                                       "final entity type")
         if not objschema == 'String':

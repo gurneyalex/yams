@@ -203,11 +203,11 @@ class EntitySchemaTC(BaseSchemaTC):
         self.assertEquals(edivision.specialized_by(), [])
 
     def test_is_final(self):
-        self.assertEquals(eperson.is_final(), False)
-        self.assertEquals(enote.is_final(), False)
-        self.assertEquals(estring.is_final(), True)
-        self.assertEquals(eint.is_final(), True)
-        self.assertEquals(eperson.subject_relation('nom').is_final(), True)
+        self.assertEquals(eperson.final, False)
+        self.assertEquals(enote.final, False)
+        self.assertEquals(estring.final, True)
+        self.assertEquals(eint.final, True)
+        self.assertEquals(eperson.subjrels['nom'].final, True)
         #self.assertEquals(eperson.is_final('concerne'), False)
         self.assertEquals(eperson.subject_relation('concerne').is_final(), False)
 
