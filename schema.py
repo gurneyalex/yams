@@ -276,13 +276,11 @@ class EntitySchema(ERSchema):
                 return True
         return False
 
+    @cached
     def ordered_relations(self):
         """ return subject relation in an ordered way"""
-        result = []
-        for rschema in self._subj_relations.values():
-            otype = rschema.objects(self)[0]
-            result.append((rschema.rproperty(self, otype, 'order'), rschema))
-        return [r[1] for r in sorted(result)]
+        return sorted(self.subjrels.values(),
+                      key=lambda x: x.rproperty(self, x.objects(self)[0], 'order'))
 
     def subject_relations(self):
         """return a list of relations that may have this type of entity as
