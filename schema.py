@@ -214,10 +214,11 @@ class EntitySchema(ERSchema):
         try:
             self.subjrels = rehash(self.subjrels)
             self.objrels = rehash(self.objrels)
-        except:
+        except AttributeError:
             # yams < 0.25 pyro compat
             self.subjrels = rehash(self._subj_relations)
             self.objrels = rehash(self._obj_relations)
+            self.final = self.is_final()
 
     # schema building methods #################################################
 
@@ -607,7 +608,7 @@ class EntitySchema(ERSchema):
         """return true if the entity is a final entity (and so cannot be used as
         subject of a relation)
         """
-        return self.final
+        return self.type in BASE_TYPES
 
     @deprecated('use rtype in .subjrels')
     def has_subject_relation(self, rtype):
