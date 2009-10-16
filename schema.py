@@ -204,14 +204,20 @@ class EntitySchema(ERSchema):
             self._specialized_type = None
             self._specialized_by = []
         self.final = self.type in BASE_TYPES
+
     def __repr__(self):
         return '<%s %s - %s>' % (self.type,
                                  [rs.type for rs in self.subject_relations()],
                                  [rs.type for rs in self.object_relations()])
 
     def _rehash(self):
-        self.subjrels = rehash(self.subjrels)
-        self.objrels = rehash(self.objrels)
+        try:
+            self.subjrels = rehash(self.subjrels)
+            self.objrels = rehash(self.objrels)
+        except:
+            # yams < 0.25 pyro compat
+            self.subjrels = rehash(self._subj_relations)
+            self.objrels = rehash(self._obj_relations)
 
     # schema building methods #################################################
 
