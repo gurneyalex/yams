@@ -371,10 +371,10 @@ class EntitySchema(ERSchema):
             yield rschema, rschema.subjects(self), 'object'
 
     def has_metadata(self, attr, metadata):
-        """return true if this entity's schema has an encoding field for the given
-        attribute
+        """return metadata's relation schema if this entity has the given
+        `metadata` field for the given `attr` attribute
         """
-        return '%s_%s' % (attr, metadata) in self.subjrels
+        return  self.subjrels.get('%s_%s' % (attr, metadata))
 
     def is_metadata(self, attr):
         """return a metadata for an attribute (None if unspecified)"""
