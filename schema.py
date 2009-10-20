@@ -1174,36 +1174,6 @@ class Schema(object):
         except KeyError:
             raise KeyError('No relation named %s in schema'%rtype)
 
-    def final_relations(self):
-        """return the list of possible final relation'types
-
-        :rtype: list
-        :return: defined relation's types (str) or schemas (`RelationSchema`)
-        """
-        for rschema in self.relations():
-            if rschema.final:
-                if schema:
-                    yield rschema
-                else:
-                    yield rschema.type
-
-    def nonfinal_relations(self):
-        """return the list of possible final relation'types
-
-        :rtype: list
-        :return: defined relation's types (str) or schemas (`RelationSchema`)
-        """
-        for rschema in self.relations():
-            if not rschema.final:
-                if schema:
-                    yield rschema
-                else:
-                    yield rschema.type
-
-    # bw compat
-    relation_schema = rschema
-    entity_schema = eschema
-
 
 import logging
 from logilab.common.logging_ext import set_log_methods
