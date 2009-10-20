@@ -464,7 +464,7 @@ class ObjectRelation(Relation):
             # XXX (auc) bad field name + required attribute can lead there instead of schema.py ~ 920
             bsd_ex = BadSchemaDefinition(('%s in relation to entity %r (also is %r defined ? (check two '
                                           'lines above in the backtrace))') % (bad.args, etype, etype))
-            setattr(bsd_ex,'tb_offset',2)
+            bsd_ex.tb_offset = 2
             raise bsd_ex
         _copy_attributes(attrdict(kwargs), self, REL_PROPERTIES)
 
