@@ -1,5 +1,9 @@
 ChangeLog for yams
 ------------------
+--
+    * api cleanup
+    * optimization
+    * fix Interval support
 
 2009-10-07  --  0.24.4
     * support new 'name' metadata (for e.g. files)
