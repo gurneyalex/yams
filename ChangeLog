@@ -1,35 +1,54 @@
 ChangeLog for yams
 ------------------
---
+
+2009-10-21  --  0.25.0
     * api cleanup
+
     * optimization
+
     * fix Interval support
+
+
 
 2009-10-07  --  0.24.4
     * support new 'name' metadata (for e.g. files)
+
     * remove deprecation warning on bound constraint: it is actually valuable
       when only one boundary or when boundary inclusion/exclusion has to be
       specified
 
 
+
 2009-09-01  --  0.24.2
     * check for duplicated relation type
+
     * when a relation type is explicitly defined in a schema, it should takes
       precedence other those infered from relation def
 
+
+
 2009-08-31  --  0.24.1
     * schema inheritance fixes
+
     * fix schema import pb
+
+
 
 2009-08-07  --  0.24.0
     * new Attribute, NOW and TODAY classes to handle more complex (interval
       bound) constraints
+
     * new owl2yams script
+
     * added RichString base type
+
     * maxsize / vocabulary constraint consistency
+
+
 
 2009-06-03  --  0.23.0
     * stop setting default values in underlying sql schema
+
 
 
 2009-05-04  --  0.22.0
