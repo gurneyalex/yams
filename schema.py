@@ -79,8 +79,6 @@ class ERSchema(object):
         self.schema = schema
         self.type = erdef.name
         self.description = erdef.description or ''
-        # mapping from action to groups
-        self._groups = erdef.__permissions__.copy()
 
     def __cmp__(self, other):
         return cmp(self.type, getattr(other, 'type', other))
@@ -104,6 +102,71 @@ class ERSchema(object):
 
     def __str__(self):
         return self.type
+
+    def has_access(self, user, action):
+        """return true if the user has the given permission on entity of this
+        type
+
+        :type user: `ginco.common.utils.User`
+        :param user: a Erudi user instance
+
+        :type action: str
+        :param action: the name of a permission
+
+        :rtype: bool
+        :return: flag indicating whether the user has the permission
+        """
+        return user.matching_groups(self.get_groups(action))
+
+# Schema objects definition ###################################################
+
+KNOWN_METAATTRIBUTES = set(('format', 'encoding', 'name'))
+
+class EntitySchema(ERSchema):
+    """An entity has a type, a set of subject and or object relations
+    the entity schema defines the possible relations for a given type and some
+    constraints on those relations.
+    """
+    __implements__ = IEntitySchema
+
+    ACTIONS = ('read', 'add', 'update', 'delete')
+    field_checkers = BASE_CHECKERS
+    field_converters = BASE_CONVERTERS
+
+    # XXX set default values for those attributes on the class level since
+    # they may be missing from schemas obtained by pyro
+    _specialized_type = None
+    _specialized_by = []
+
+    def __init__(self, schema=None, rdef=None, *args, **kwargs):
+        super(EntitySchema, self).__init__(schema, rdef, *args, **kwargs)
+        if rdef is not None:
+            # quick access to bounded relation schemas
+            self.subjrels = {}
+            self.objrels = {}
+            self._specialized_type = rdef.specialized_type
+            self._specialized_by = rdef.specialized_by
+            self.final = self.type in BASE_TYPES
+            # mapping from action to groups
+            self._groups = rdef.__permissions__.copy()
+        else:
+            self._specialized_type = None
+            self._specialized_by = []
+
+    def __repr__(self):
+        return '<%s %s - %s>' % (self.type,
+                                 [rs.type for rs in self.subject_relations()],
+                                 [rs.type for rs in self.object_relations()])
+
+    def _rehash(self):
+        try:
+            self.subjrels = rehash(self.subjrels)
+            self.objrels = rehash(self.objrels)
+        except AttributeError:
+            # yams < 0.25 pyro compat
+            self.subjrels = rehash(self._subj_relations)
+            self.objrels = rehash(self._obj_relations)
+            self.final = self.is_final()
 
     def set_groups(self, action, groups):
         """set the groups allowed to perform <action> on entities of this type
@@ -139,21 +202,6 @@ class ERSchema(object):
         """
         return group in self._groups[action]
 
-    def has_access(self, user, action):
-        """return true if the user has the given permission on entity of this
-        type
-
-        :type user: `ginco.common.utils.User`
-        :param user: a Erudi user instance
-
-        :type action: str
-        :param action: the name of a permission
-
-        :rtype: bool
-        :return: flag indicating whether the user has the permission
-        """
-        return user.matching_groups(self.get_groups(action))
-
     def check_permissions_definition(self):
         """set default action -> groups mapping"""
         # already initialized, check everything is fine
@@ -161,54 +209,6 @@ class ERSchema(object):
             assert isinstance(groups, tuple), \
                    ('permission for action %s of %s isn\'t a tuple as '
                     'expected' % (action, self.type))
-
-# Schema objects definition ###################################################
-
-KNOWN_METAATTRIBUTES = set(('format', 'encoding', 'name'))
-
-class EntitySchema(ERSchema):
-    """An entity has a type, a set of subject and or object relations
-    the entity schema defines the possible relations for a given type and some
-    constraints on those relations.
-    """
-    __implements__ = IEntitySchema
-
-    ACTIONS = ('read', 'add', 'update', 'delete')
-    field_checkers = BASE_CHECKERS
-    field_converters = BASE_CONVERTERS
-
-    # XXX set default values for those attributes on the class level since
-    # they may be missing from schemas obtained by pyro
-    _specialized_type = None
-    _specialized_by = []
-
-    def __init__(self, schema=None, rdef=None, *args, **kwargs):
-        super(EntitySchema, self).__init__(schema, rdef, *args, **kwargs)
-        if rdef is not None:
-            # quick access to bounded relation schemas
-            self.subjrels = {}
-            self.objrels = {}
-            self._specialized_type = rdef.specialized_type
-            self._specialized_by = rdef.specialized_by
-            self.final = self.type in BASE_TYPES
-        else:
-            self._specialized_type = None
-            self._specialized_by = []
-
-    def __repr__(self):
-        return '<%s %s - %s>' % (self.type,
-                                 [rs.type for rs in self.subject_relations()],
-                                 [rs.type for rs in self.object_relations()])
-
-    def _rehash(self):
-        try:
-            self.subjrels = rehash(self.subjrels)
-            self.objrels = rehash(self.objrels)
-        except AttributeError:
-            # yams < 0.25 pyro compat
-            self.subjrels = rehash(self._subj_relations)
-            self.objrels = rehash(self._obj_relations)
-            self.final = self.is_final()
 
     # schema building methods #################################################
 
@@ -638,7 +638,8 @@ class RelationSchema(ERSchema):
                     'constraints': (),
                     'order': 9999,
                     'description': '',
-                    'infered': False,}
+                    'infered': False,
+                    'permissions': None}
     _NONFINAL_RPROPERTIES = {'composite': None}
     _FINAL_RPROPERTIES = {'default': None,
                           'uid': False,
@@ -816,6 +817,8 @@ class RelationSchema(ERSchema):
         self._rproperties[key] = {}
         for prop, default in self.rproperty_defs(key[1]).iteritems():
             rdefval = getattr(rdef, prop, MARKER)
+            if rdefval is MARKER and prop == 'permissions':
+                rdefval = rdef.get_permissions()
             if rdefval is MARKER:
                 if prop == 'cardinality':
                     default = (object in BASE_TYPES) and '?1' or '**'
