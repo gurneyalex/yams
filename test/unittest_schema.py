@@ -3,6 +3,7 @@
 
 from logilab.common.testlib import TestCase, unittest_main
 
+from copy import copy, deepcopy
 from tempfile import mktemp
 
 from yams.buildobjs import register_base_types, EntityType, RelationType, RelationDefinition
@@ -159,7 +160,6 @@ class EntitySchemaTC(BaseSchemaTC):
         self.assertListEquals(l, ['Affaire', 'Note', 'Person', 'Societe'])
 
     def test_hash(self):
-        from copy import copy
         d = {}
         d[eperson] = 'p'
         d[enote] = 'n'
@@ -175,7 +175,6 @@ class EntitySchemaTC(BaseSchemaTC):
         self.failUnlessEqual(d[copy(enote)], 'Note')
 
     def test_deepcopy_with_regexp_constraints(self):
-        from copy import deepcopy
         eaffaire.set_rproperty('ref', 'constraints', [RegexpConstraint(r'[A-Z]+\d+')])
         rgx_cstr, = eaffaire.constraints('ref')
         eaffaire2 = deepcopy(schema).eschema('Affaire')
@@ -185,7 +184,6 @@ class EntitySchemaTC(BaseSchemaTC):
         self.assertEquals(rgx_cstr2._rgx, rgx_cstr._rgx)
 
     def test_deepcopy(self):
-        from copy import deepcopy
         global schema
         schema = deepcopy(schema)
         self.failIf(eperson is schema['Person'])
@@ -193,6 +191,10 @@ class EntitySchemaTC(BaseSchemaTC):
         self.failUnlessEqual('Person', schema['Person'])
         self.failUnlessEqual(eperson.subject_relations(), schema['Person'].subject_relations())
         self.failUnlessEqual(eperson.object_relations(), schema['Person'].object_relations())
+        self.assertEquals(schema.eschema('Person').final, False)
+        self.assertEquals(schema.eschema('String').final, True)
+        self.assertEquals(schema.rschema('ref').final, True)
+        self.assertEquals(schema.rschema('concerne').final, False)
 
     def test_deepcopy_specialization(self):
         schema2 = deepcopy(SchemaLoader().load([self.datadir], 'Test'))
@@ -220,8 +222,7 @@ class EntitySchemaTC(BaseSchemaTC):
 
     def test_defaults(self):
         self.assertEquals(list(eperson.defaults()), [])
-        self.assertRaises(AssertionError,
-                          estring.defaults().next)
+        self.assertRaises(StopIteration, estring.defaults().next)
 
     def test_vocabulary(self):
         self.assertEquals(eperson.vocabulary('promo'), ('bon', 'pasbon'))
@@ -265,7 +266,8 @@ class EntitySchemaTC(BaseSchemaTC):
         """check subject relations a returned in the same order as in the
         schema definition"""
         self.assertEquals(eperson.destination('nom'), 'String')
-        self.assertRaises(AssertionError, eperson.destination, 'travaille')
+        self.assertRaises(AssertionError, eperson.destination, 'concerne')
+        self.assertEquals(eperson.destination('travaille'), 'Societe')
 
 
 class RelationSchemaTC(BaseSchemaTC):
@@ -281,7 +283,6 @@ class RelationSchemaTC(BaseSchemaTC):
         self.failUnless(rconcerne != rnom)
 
     def test_hash(self):
-        from copy import copy
         d = {}
         d[rconcerne] = 'p'
         d[rnom] = 'n'

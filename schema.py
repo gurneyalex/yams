@@ -200,10 +200,10 @@ class EntitySchema(ERSchema):
             self.objrels = {}
             self._specialized_type = rdef.specialized_type
             self._specialized_by = rdef.specialized_by
+            self.final = self.type in BASE_TYPES
         else:
             self._specialized_type = None
             self._specialized_by = []
-        self.final = self.type in BASE_TYPES
 
     def __repr__(self):
         return '<%s %s - %s>' % (self.type,
