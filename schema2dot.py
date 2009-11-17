@@ -129,7 +129,7 @@ class OneHopESchemaVisitor(SchemaVisitor):
         edges = set()
         nodes.add((eschema.type, eschema))
         for rschema in eschema.subject_relations():
-            if self.should_display_schema(rschema):
+            if not self.should_display_schema(rschema):
                 continue
             for teschema in rschema.objects(eschema.type):
                 nodes.add((teschema.type, teschema))
@@ -137,7 +137,7 @@ class OneHopESchemaVisitor(SchemaVisitor):
                     continue
                 edges.add((eschema.type, teschema.type, rschema))
         for rschema in eschema.object_relations():
-            if self.should_display_schema(rschema):
+            if not self.should_display_schema(rschema):
                 continue
             for teschema in rschema.subjects(eschema.type):
                 nodes.add((teschema.type, teschema))
