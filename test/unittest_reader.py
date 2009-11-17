@@ -62,7 +62,7 @@ class SchemaLoaderTC(TestCase):
     def test_eschema(self):
         eschema = schema.eschema('Societe')
         self.assertEquals(eschema.description, '')
-        self.assertEquals(eschema.is_final(), False)
+        self.assertEquals(eschema.final, False)
         self.assertListEquals(sorted(eschema.subject_relations()),
                               ['ad1', 'ad2', 'ad3', 'cp', 'evaluee',
                                'fax', 'nom', 'rncs', 'subj_wildcard', 'tel', 'ville',
@@ -72,7 +72,7 @@ class SchemaLoaderTC(TestCase):
 
         eschema = schema.eschema('Eetype')
         self.assertEquals(eschema.description, 'define an entity type, used to build the application schema')
-        self.assertEquals(eschema.is_final(), False)
+        self.assertEquals(eschema.final, False)
         self.assertListEquals(sorted(str(r) for r in eschema.subject_relations()),
                               ['description', 'final', 'initial_state', 'meta',
                                'name', 'subj_wildcard'])
@@ -81,7 +81,7 @@ class SchemaLoaderTC(TestCase):
 
         eschema = schema.eschema('Boolean')
         self.assertEquals(eschema.description, '')
-        self.assertEquals(eschema.is_final(), True)
+        self.assertEquals(eschema.final, True)
         self.assertListEquals(sorted(eschema.subject_relations()),
                               [])
         self.assertListEquals(sorted(eschema.object_relations()),
@@ -152,28 +152,28 @@ class SchemaLoaderTC(TestCase):
         rschema = schema.rschema('evaluee')
         self.assertEquals(rschema.symetric, False)
         self.assertEquals(rschema.description, '')
-        self.assertEquals(rschema.is_final(), False)
+        self.assertEquals(rschema.final, False)
         self.assertListEquals(sorted(rschema.subjects()), ['Person', 'Societe'])
         self.assertListEquals(sorted(rschema.objects()), ['Note'])
 
         rschema = schema.rschema('sym_rel')
         self.assertEquals(rschema.symetric, True)
         self.assertEquals(rschema.description, '')
-        self.assertEquals(rschema.is_final(), False)
+        self.assertEquals(rschema.final, False)
         self.assertListEquals(sorted(rschema.subjects()), ['Affaire', 'Person'])
         self.assertListEquals(sorted(rschema.objects()), ['Affaire', 'Person'])
 
         rschema = schema.rschema('initial_state')
         self.assertEquals(rschema.symetric, False)
         self.assertEquals(rschema.description, 'indicate which state should be used by default when an entity using states is created')
-        self.assertEquals(rschema.is_final(), False)
+        self.assertEquals(rschema.final, False)
         self.assertListEquals(sorted(rschema.subjects()), ['Eetype'])
         self.assertListEquals(sorted(rschema.objects()), ['State'])
 
         rschema = schema.rschema('name')
         self.assertEquals(rschema.symetric, False)
         self.assertEquals(rschema.description, '')
-        self.assertEquals(rschema.is_final(), True)
+        self.assertEquals(rschema.final, True)
         self.assertListEquals(sorted(rschema.subjects()), ['Company', 'Division', 'EPermission', 'Eetype', 'State', 'Subcompany', 'Subdivision'])
         self.assertListEquals(sorted(rschema.objects()), ['String'])
 
@@ -277,7 +277,7 @@ class SchemaLoaderTC(TestCase):
 ##         rschema = schema.rschema('see_also')
 ##         self.assertEquals(rschema.symetric, False)
 ##         self.assertEquals(rschema.description, '')
-##         self.assertEquals(rschema.is_final(), False)
+##         self.assertEquals(rschema.final, False)
 ##         self.assertListEquals(sorted(rschema.subjects()), ['Employee'])
 ##         self.assertListEquals(sorted(rschema.objects()), ['Company', 'Division'])
 ##
