@@ -62,7 +62,7 @@ class SpecializationTC(TestCase):
         self.assertEquals(subsubdivision.specialized_by(False), [])
 
     def test_relations_infered(self):
-        entities = [str(e) for e in self.schema.entities() if not e.is_final()]
+        entities = [str(e) for e in self.schema.entities() if not e.final]
         relations = sorted([r for r in self.schema.relations() if not r.final])
         self.assertListEquals(sorted(entities), ['Company', 'Division', 'Person',
                                                  'Student', 'SubCompany', 'SubDivision', 'SubSubDivision'])
