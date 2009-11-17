@@ -254,7 +254,7 @@ class SchemaLoader(object):
                 if not rschema.rdefs():
                     schema.del_relation_type(rschema)
         # set permissions on entities and relations
-        for erschema in schema.entities() + schema.relations():
+        for erschema in schema.entities():
             erschema.check_permissions_definition()
         schema.infer_specialization_rules()
         return schema

@@ -29,7 +29,8 @@ RTYPE_PROPERTIES = ('symetric', 'inlined', 'fulltext_container',
                     'meta') # XXX meta is deprecated
 RDEF_PROPERTIES = ('cardinality', 'constraints', 'composite',
                    'order',  'default', 'uid', 'indexed', 'uid',
-                   'fulltextindexed', 'internationalizable')
+                   'fulltextindexed', 'internationalizable',
+                   '__permissions__',)
 
 REL_PROPERTIES = RTYPE_PROPERTIES+RDEF_PROPERTIES + ('description',)
 
@@ -88,10 +89,16 @@ def register_base_types(schema):
                           __permissions__={'read': ('managers', 'users', 'guests',)})
         schema.add_entity_type(edef)
 
+# XXX use a "frozendict"
+_default_relperms = {'read': ('managers', 'users', 'guests',),
+                     'delete': ('managers', 'users'),
+                     'add': ('managers', 'users',)}
+
 class Relation(object):
     """Abstract class which have to be defined before the metadefinition
     meta-class.
     """
+    __permissions__ = MARKER
 
 # first class schema definition objects #######################################
 
@@ -100,6 +107,7 @@ class Definition(object):
 
     meta = MARKER
     description = MARKER
+    __permissions__ = MARKER
 
     def __init__(self, name=None):
         self.name = (name or getattr(self, 'name', None)
@@ -123,6 +131,22 @@ class Definition(object):
         expanding wildcard if necessary.
         """
         raise NotImplementedError()
+
+    @iclassmethod
+    def get_permissions(cls):
+        if cls.__permissions__ is MARKER:
+            return _default_relperms
+        return cls.__permissions__
+
+    @classmethod
+    def set_permissions(cls, perms):
+        cls.__permissions__ = perms
+
+    @classmethod
+    def set_action_permissions(cls, action, actionperms):
+        permissions = cls.get_permissions().copy()
+        permissions[action] = actionperms
+        cls.__permissions__ = permissions
 
 
 class XXX_backward_permissions_compat(type):
@@ -309,18 +333,12 @@ class EntityType(Definition):
                 yield rdef
 
 
-
 class RelationType(Definition):
     __metaclass__ = XXX_backward_permissions_compat
 
     symetric = MARKER
     inlined = MARKER
     fulltext_container = MARKER
-
-    # XXX use a "frozendict"
-    __permissions__ = {'read': ('managers', 'users', 'guests',),
-                       'delete': ('managers', 'users'),
-                       'add': ('managers', 'users',)}
 
     def __init__(self, name=None, **kwargs):
         """kwargs must have values in RTYPE_PROPERTIES"""
@@ -393,7 +411,7 @@ class RelationDefinition(Definition):
         if kwargs.pop('meta', None):
             warn('meta is deprecated', DeprecationWarning)
         _check_kwargs(kwargs, RDEF_PROPERTIES + ('description',))
-        _copy_attributes(attrdict(kwargs), self, RDEF_PROPERTIES + ('description',))
+        _copy_attributes(attrdict(**kwargs), self, RDEF_PROPERTIES + ('description',))
         if self.constraints:
             self.constraints = list(self.constraints)
 
@@ -447,9 +465,13 @@ class RelationDefinition(Definition):
         rschema = schema.rschema(name)
         if self.subject == '**' or self.object == '**':
             warn('** is deprecated, use * (%s)' % rtype, DeprecationWarning)
+        if self.__permissions__ is MARKER:
+            permissions = rtype.get_permissions()
+        else:
+            permissions = self.__permissions__
         for subj in _actual_types(schema, self.subject):
             for obj in _actual_types(schema, self.object):
-                rdef = RelationDefinition(subj, name, obj)
+                rdef = RelationDefinition(subj, name, obj, __permissions__=permissions)
                 _copy_attributes(self, rdef, RDEF_PROPERTIES + ('description',))
                 schema.add_relation_def(rdef)
 
@@ -500,7 +522,7 @@ class ObjectRelation(Relation):
                                           'lines above in the backtrace))') % (bad.args, etype, etype))
             bsd_ex.tb_offset = 2
             raise bsd_ex
-        _copy_attributes(attrdict(kwargs), self, REL_PROPERTIES)
+        self.__dict__.update(kwargs)
 
     def __repr__(self):
         return '%(name)s %(etype)s' % self.__dict__
