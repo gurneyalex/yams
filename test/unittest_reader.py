@@ -243,8 +243,8 @@ class SchemaLoaderTC(TestCase):
 
         rschema = schema.rschema('nom')
         self.assertEquals(rschema._groups, {'read': ('managers', 'users', 'guests'),
-                                            'add': ('managers', 'users', 'guests'),
-                                            'delete': ('managers', 'users', 'guests')})
+                                            'add': ('managers', 'users'),
+                                            'delete': ('managers', 'users')})
 
         rschema = schema.rschema('require_permission')
         self.assertEquals(rschema._groups, {'read': ('managers', 'users', 'guests'),

@@ -22,10 +22,10 @@ __all__ = ('ObjectRelation', 'SubjectRelation', 'BothWayRelation',
            'SubjectRelation', 'ObjectRelation', 'BothWayRelation',
            'RichString', ) + tuple(BASE_TYPES)
 
-ETYPE_PROPERTIES = ('description', 'permissions',
+ETYPE_PROPERTIES = ('description', '__permissions__',
                     'meta') # XXX meta is deprecated
 # don't put description inside, handled "manualy"
-RTYPE_PROPERTIES = ('symetric', 'inlined', 'fulltext_container', 'permissions',
+RTYPE_PROPERTIES = ('symetric', 'inlined', 'fulltext_container',
                     'meta') # XXX meta is deprecated
 RDEF_PROPERTIES = ('cardinality', 'constraints', 'composite',
                    'order',  'default', 'uid', 'indexed', 'uid',
@@ -84,9 +84,9 @@ def _copy_attributes(fromobj, toobj, attributes):
 
 def register_base_types(schema):
     for etype in BASE_TYPES:
-        edef = EntityType(name=etype)
-        schema.add_entity_type(edef).set_default_groups()
-
+        edef = EntityType(name=etype,
+                          __permissions__={'read': ('managers', 'users', 'guests',)})
+        schema.add_entity_type(edef)
 
 class Relation(object):
     """Abstract class which have to be defined before the metadefinition
@@ -125,7 +125,29 @@ class Definition(object):
         raise NotImplementedError()
 
 
-class metadefinition(type):
+class XXX_backward_permissions_compat(type):
+    def __new__(mcs, name, bases, classdict):
+        if 'permissions' in classdict:
+            classdict['__permissions__'] = classdict.pop('permissions')
+            warn('[0.26.0] permissions is deprecated, use __permissions__ instead (class %s)' % name,
+                 DeprecationWarning, stacklevel=2)
+        return super(XXX_backward_permissions_compat, mcs).__new__(mcs, name, bases, classdict)
+
+    # XXX backward compatiblity
+    def get_permissions(cls):
+        warn('[0.26.0] %s.permissions is deprecated, use .__permissions__ instead'
+             % cls.__name__, DeprecationWarning, stacklevel=2)
+        return cls.__permissions__
+
+    def set_permissions(cls, newperms):
+        warn('[0.26.0] %s.permissions is deprecated, use .__permissions__ instead'
+             % cls.__name__, DeprecationWarning, stacklevel=2)
+        cls.__permissions__ = newperms
+
+    permissions = property(get_permissions, set_permissions)
+
+
+class metadefinition(XXX_backward_permissions_compat):
     """Metaclass that builds the __relations__ attribute of
     EntityType's subclasses.
     """
@@ -159,7 +181,6 @@ class metadefinition(type):
         return defclass
 
 
-
 class EntityType(Definition):
     # FIXME reader magic forbids to define a docstring...
     #"""an entity has attributes and can be linked to other entities by
@@ -176,13 +197,18 @@ class EntityType(Definition):
     #"""
 
     __metaclass__ = metadefinition
+    # XXX use a "frozendict"
+    __permissions__ = {
+        'read': ('managers', 'users', 'guests',),
+        'update': ('managers', 'owners',),
+        'delete': ('managers', 'owners'),
+        'add': ('managers', 'users',)
+        }
 
     def __init__(self, name=None, **kwargs):
         super(EntityType, self).__init__(name)
         _check_kwargs(kwargs, ETYPE_PROPERTIES)
-        _copy_attributes(attrdict(kwargs), self, ETYPE_PROPERTIES)
-        # if not hasattr(self, 'relations'):
-        #self.relations = list(self.__relations__)
+        self.__dict__.update(kwargs)
         self.specialized_type = self.__class__.__dict__.get('__specializes__')
 
     def __str__(self):
@@ -283,18 +309,26 @@ class EntityType(Definition):
                 yield rdef
 
 
+
 class RelationType(Definition):
+    __metaclass__ = XXX_backward_permissions_compat
+
     symetric = MARKER
     inlined = MARKER
     fulltext_container = MARKER
+
+    # XXX use a "frozendict"
+    __permissions__ = {'read': ('managers', 'users', 'guests',),
+                       'delete': ('managers', 'users'),
+                       'add': ('managers', 'users',)}
 
     def __init__(self, name=None, **kwargs):
         """kwargs must have values in RTYPE_PROPERTIES"""
         super(RelationType, self).__init__(name)
         if kwargs.pop('meta', None):
             warn('meta is deprecated', DeprecationWarning, stacklevel=2)
-        _check_kwargs(kwargs, RTYPE_PROPERTIES + ('description',))
-        _copy_attributes(attrdict(kwargs), self, RTYPE_PROPERTIES + ('description',))
+        _check_kwargs(kwargs, RTYPE_PROPERTIES + ('description', '__permissions__'))
+        self.__dict__.update(kwargs)
 
     def __str__(self):
         return 'relation type %r' % self.name
@@ -560,7 +594,7 @@ class RichString(String):
 # various derivated classes with some predefined values XXX deprecated
 
 class MetaEntityType(EntityType):
-    permissions = {
+    __permissions__ = {
         'read':   ('managers', 'users', 'guests',),
         'add':    ('managers',),
         'update': ('managers', 'owners',),
@@ -571,7 +605,7 @@ class MetaUserEntityType(EntityType):
     pass
 
 class MetaRelationType(RelationType):
-    permissions = {
+    __permissions__ = {
         'read':   ('managers', 'users', 'guests',),
         'add':    ('managers',),
         'delete': ('managers',),
@@ -582,7 +616,7 @@ class MetaUserRelationType(RelationType):
 
 class MetaAttributeRelationType(RelationType):
     # just set permissions to None so default permissions are set
-    permissions = MARKER
+    __permissions__ = MARKER
 
 
 __all__ += ('MetaEntityType', 'MetaUserEntityType',
