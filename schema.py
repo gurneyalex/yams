@@ -80,10 +80,7 @@ class ERSchema(object):
         self.type = erdef.name
         self.description = erdef.description or ''
         # mapping from action to groups
-        try:
-            self._groups = erdef.permissions.copy()
-        except AttributeError:
-            self._groups = {}
+        self._groups = erdef.__permissions__.copy()
 
     def __cmp__(self, other):
         return cmp(self.type, getattr(other, 'type', other))
@@ -157,20 +154,13 @@ class ERSchema(object):
         """
         return user.matching_groups(self.get_groups(action))
 
-    def set_default_groups(self):
+    def check_permissions_definition(self):
         """set default action -> groups mapping"""
-        if self._groups:
-            # already initialized, check everything is fine
-            for action, groups in self._groups.items():
-                assert isinstance(groups, tuple), \
-                       ('permission for action %s of %s isn\'t a tuple as '
-                        'expected' % (action, self.type))
-        else:
-            self._groups = self.get_default_groups()
-
-    def get_default_groups(self):
-        """provide default action -> groups mapping"""
-        raise NotImplementedError()
+        # already initialized, check everything is fine
+        for action, groups in self._groups.items():
+            assert isinstance(groups, tuple), \
+                   ('permission for action %s of %s isn\'t a tuple as '
+                    'expected' % (action, self.type))
 
 # Schema objects definition ###################################################
 
@@ -200,10 +190,10 @@ class EntitySchema(ERSchema):
             self.objrels = {}
             self._specialized_type = rdef.specialized_type
             self._specialized_by = rdef.specialized_by
+            self.final = self.type in BASE_TYPES
         else:
             self._specialized_type = None
             self._specialized_by = []
-        self.final = self.type in BASE_TYPES
 
     def __repr__(self):
         return '<%s %s - %s>' % (self.type,
@@ -241,18 +231,6 @@ class EntitySchema(ERSchema):
             del self.objrels[rtype]
         except KeyError:
             pass
-
-    def get_default_groups(self):
-        """   get default action -> groups mapping  """
-        if self.final:
-            # no permissions needed for final entities, access to them
-            # is defined through relations
-            return {'read': ('managers', 'users', 'guests',)}
-        else:
-            return {'read': ('managers', 'users', 'guests',),
-                    'update': ('managers', 'owners',),
-                    'delete': ('managers', 'owners'),
-                    'add': ('managers', 'users',)}
 
     # IEntitySchema interface #################################################
 
@@ -314,13 +292,11 @@ class EntitySchema(ERSchema):
 
         `rtype` must be a subject final relation
         """
-        #rschema = self.subjrels[rtype]
-        #assert rschema.final, (self.type, rtype)
-        #objtypes = rschema.objects(self.type)
-        #assert len(objtypes) == 1, (self.type, str(rtype),
-        #                            [str(ot) for ot in objtypes])
-        #return objtypes[0]
-        return self.subjrels[rtype].objects(self.type)[0]
+        rschema = self.subjrels[rtype]
+        objtypes = rschema.objects(self.type)
+        assert len(objtypes) == 1, (self.type, str(rtype),
+                                    [str(ot) for ot in objtypes])
+        return objtypes[0]
 
     def subjrproperty(self, rtype, prop):
         """convenience method to access a property of a subject relation"""
@@ -782,16 +758,6 @@ class RelationSchema(ERSchema):
             assert not self._obj_schemas and not self._subj_schemas
             return True
         return False
-
-    def get_default_groups(self):
-        if self.final:
-            return {'read': ('managers', 'users', 'guests'),
-                    'delete': ('managers', 'users', 'guests'),
-                    'add': ('managers', 'users', 'guests')}
-        else:
-            return {'read': ('managers', 'users', 'guests',),
-                    'delete': ('managers', 'users'),
-                    'add': ('managers', 'users',)}
 
     # relation definitions properties handling ################################
 

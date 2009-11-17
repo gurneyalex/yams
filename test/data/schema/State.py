@@ -8,7 +8,7 @@ class State(EntityType):
     """used to associate simple states to an entity
     type and/or to define workflows
     """
-    permissions = {
+    __permissions__ = {
         'read':   ('managers', 'users', 'guests',),
         'add':    ('managers', 'users',),
         'delete': ('managers', 'owners',),
@@ -29,18 +29,18 @@ class State(EntityType):
 
 class state_of(RelationType):
     """link a state to one or more entity type"""
-    permissions = RESTRICTED_RTYPE_PERMS
+    __permissions__ = RESTRICTED_RTYPE_PERMS
 
 class next_state(RelationType):
     """define a workflow by associating a state to possible following states
     """
-    permissions = RESTRICTED_RTYPE_PERMS
+    __permissions__ = RESTRICTED_RTYPE_PERMS
 
 class initial_state(RelationType):
     """indicate which state should be used by default when an entity using states
     is created
     """
-    permissions = {
+    __permissions__ = {
         'read':   ('managers', 'users', 'guests',),
         'add':    ('managers', 'users',),
         'delete': ('managers', 'users',),
@@ -49,7 +49,7 @@ class initial_state(RelationType):
 
 class Eetype(EntityType):
     """define an entity type, used to build the application schema"""
-    permissions = {
+    __permissions__ = {
         'read':   ('managers', 'users', 'guests',),
         'add':    ('managers',),
         'delete': ('managers',),

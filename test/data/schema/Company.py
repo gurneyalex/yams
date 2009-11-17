@@ -24,7 +24,7 @@ class require_permission(RelationType):
     security definition of the entity's type to be useful.
     """
     fulltext_container = 'subject'
-    permissions = {
+    __permissions__ = {
         'read':   ('managers', 'users', 'guests'),
         'add':    ('managers',),
         'delete': ('managers',),
@@ -39,7 +39,7 @@ class missing_require_permission(RelationDefinition):
 class EPermission(EntityType):
     """entity type that may be used to construct some advanced security configuration
     """
-    permissions = {
+    __permissions__ = {
         'read':   ('managers', 'users', 'guests',),
         'add':    ('managers',),
         'delete': ('managers',),
