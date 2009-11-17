@@ -404,8 +404,12 @@ class EntitySchema(ERSchema):
         """return the relation schema of attribtues to index"""
         for rschema in self.subject_relations():
             if rschema.final:
-                if self.rproperty(rschema, 'fulltextindexed'):
-                    yield rschema
+                try:
+                    if self.rproperty(rschema, 'fulltextindexed'):
+                        yield rschema
+                except KeyError:
+                    # fulltextindexed is only available on String / Bytes
+                    continue
 
     def fulltext_relations(self):
         """return the (name, role) of relations to index"""
@@ -797,7 +801,7 @@ class RelationSchema(ERSchema):
 
     def rproperty(self, subject, object, property):
         """return the property for a relation definition"""
-        return self.rproperties(subject, object).get(property)
+        return self.rproperties(subject, object)[property]
 
     def set_rproperty(self, subject, object, pname, value):
         """set value for a subject relation specific property"""
