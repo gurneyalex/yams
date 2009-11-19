@@ -86,7 +86,9 @@ def _copy_attributes(fromobj, toobj, attributes):
 def register_base_types(schema):
     for etype in BASE_TYPES:
         edef = EntityType(name=etype,
-                          __permissions__={'read': ('managers', 'users', 'guests',)})
+                          # unused actually
+                          __permissions__={'read': (), 'add': (), 'delete': (),
+                                           'update': ()})
         schema.add_entity_type(edef)
 
 # XXX use a "frozendict"
