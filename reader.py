@@ -251,7 +251,7 @@ class SchemaLoader(object):
         if remove_unused_rtypes:
             # remove relation types without definitions
             for rschema in schema.relations():
-                if not rschema.rdefs():
+                if not rschema.rdefs:
                     schema.del_relation_type(rschema)
         # set permissions on entities and relations
         for erschema in schema.entities() + schema.relations():
