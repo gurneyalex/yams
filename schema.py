@@ -24,6 +24,19 @@ from yams.interfaces import (ISchema, IRelationSchema, IEntitySchema,
                              IVocabularyConstraint)
 from yams.constraints import BASE_CHECKERS, BASE_CONVERTERS, UniqueConstraint
 
+def check_permission_definitions(schema):
+    """check permissions are correctly defined"""
+    # already initialized, check everything is fine
+    for action, groups in schema.permissions.items():
+        assert action in schema.ACTIONS, \
+               'unknown action %s for %s' % (action, schema)
+        assert isinstance(groups, tuple), \
+               ('permission for action %s of %s isn\'t a tuple as '
+                'expected' % (action, schema))
+    for action in schema.ACTIONS:
+        assert action in schema.permissions, \
+               'missing expected permissions for action %s for %s' % (action, schema)
+
 def rehash(dictionary):
     """this function manually builds a copy of `dictionary` but forces
     hash values to be recomputed. Note that dict(d) or d.copy() don't
@@ -64,7 +77,6 @@ def _format_properties(props):
 class ERSchema(object):
     """Base class shared by entity and relation schema."""
 
-    ACTIONS = ()
 
     def __init__(self, schema=None, erdef=None):
         """
@@ -103,26 +115,28 @@ class ERSchema(object):
     def __str__(self):
         return self.type
 
-    def has_access(self, user, action):
-        """return true if the user has the given permission on entity of this
-        type
 
-        :type user: `ginco.common.utils.User`
-        :param user: a Erudi user instance
+class PermissionMixIn(object):
+    """mixin class for permissions handling"""
+    def action_permissions(self, action):
+        return self.permissions[action]
 
-        :type action: str
-        :param action: the name of a permission
+    def set_action_permissions(self, action, permissions):
+        assert type(permissions) is tuple, (
+            'permissions is expected to be a tuple not %s' % type(permissions))
+        assert action in self.ACTIONS, ('%s not in %s' % (action, self.ACTIONS))
+        self.permissions[action] = permissions
 
-        :rtype: bool
-        :return: flag indicating whether the user has the permission
-        """
-        return user.matching_groups(self.get_groups(action))
+    def check_permission_definitions(self):
+        """check permissions are correctly defined"""
+        check_permission_definitions(self)
+
 
 # Schema objects definition ###################################################
 
 KNOWN_METAATTRIBUTES = set(('format', 'encoding', 'name'))
 
-class EntitySchema(ERSchema):
+class EntitySchema(PermissionMixIn, ERSchema):
     """An entity has a type, a set of subject and or object relations
     the entity schema defines the possible relations for a given type and some
     constraints on those relations.
@@ -147,8 +161,7 @@ class EntitySchema(ERSchema):
             self._specialized_type = rdef.specialized_type
             self._specialized_by = rdef.specialized_by
             self.final = self.type in BASE_TYPES
-            # mapping from action to groups
-            self._groups = rdef.__permissions__.copy()
+            self.permissions = rdef.__permissions__.copy()
         else:
             self._specialized_type = None
             self._specialized_by = []
@@ -167,48 +180,6 @@ class EntitySchema(ERSchema):
             self.subjrels = rehash(self._subj_relations)
             self.objrels = rehash(self._obj_relations)
             self.final = self.is_final()
-
-    def set_groups(self, action, groups):
-        """set the groups allowed to perform <action> on entities of this type
-
-        :Parameters:
-         - `action`: (str) the name of a permission
-         - `groups`: (tuple) the groups with the given permission
-        """
-        assert type(groups) is tuple, ('groups is expected to be a tuple not %s' % type(groups))
-        assert action in self.ACTIONS, ('%s not in %s' % (action, self.ACTIONS))
-        self._groups[action] = groups
-
-    def get_groups(self, action):
-        """return the groups authorized to perform <action> on entities of
-        this type
-
-        :type action: str
-        :param action: the name of a permission
-
-        :rtype: tuple
-        :return: the groups with the given permission
-        """
-        return self._groups[action]
-
-    def has_group(self, action, group):
-        """return true if the group is authorized for the given action
-
-        :type action: str
-        :param action: the name of a permission
-
-        :rtype: bool
-        :return: flag indicating whether the group has the permission
-        """
-        return group in self._groups[action]
-
-    def check_permissions_definition(self):
-        """set default action -> groups mapping"""
-        # already initialized, check everything is fine
-        for action, groups in self._groups.items():
-            assert isinstance(groups, tuple), \
-                   ('permission for action %s of %s isn\'t a tuple as '
-                    'expected' % (action, self.type))
 
     # schema building methods #################################################
 
@@ -633,20 +604,6 @@ class RelationSchema(ERSchema):
      - + <-> 1..n <-> one or more
      - * <-> 0..n <-> zero or more
     """
-    ACTIONS = ('read', 'add', 'delete')
-    _RPROPERTIES = {'cardinality': None,
-                    'constraints': (),
-                    'order': 9999,
-                    'description': '',
-                    'infered': False,
-                    'permissions': None}
-    _NONFINAL_RPROPERTIES = {'composite': None}
-    _FINAL_RPROPERTIES = {'default': None,
-                          'uid': False,
-                          'indexed': False}
-    _STRING_RPROPERTIES = {'fulltextindexed': False,
-                           'internationalizable': False}
-    _BYTES_RPROPERTIES = {'fulltextindexed': False}
 
     __implements__ = IRelationSchema
 
@@ -878,6 +835,12 @@ class RelationSchema(ERSchema):
         return None
 
     @deprecated('use .final attribute')
+
+    def check_permission_definitions(self):
+        """check permissions are correctly defined"""
+        for rdef in self.rdefs.itervalues():
+            rdef.check_permission_definitions()
+
     def is_final(self):
         """return true if this relation has final object entity's types
 
@@ -885,6 +848,83 @@ class RelationSchema(ERSchema):
         entity's type)
         """
         return self.final
+
+
+class RelationDefinitionSchema(PermissionMixIn):
+    """a relation definition is fully caracterized relation, eg
+
+         <subject type> <relation type> <object type>
+    """
+    ACTIONS = ('read', 'add', 'delete')
+    _RPROPERTIES = {'cardinality': None,
+                    'constraints': (),
+                    'order': 9999,
+                    'description': '',
+                    'infered': False,
+                    'permissions': None}
+    _NONFINAL_RPROPERTIES = {'composite': None}
+    _FINAL_RPROPERTIES = {'default': None,
+                          'uid': False,
+                          'indexed': False}
+    _STRING_RPROPERTIES = {'fulltextindexed': False,
+                           'internationalizable': False}
+    _BYTES_RPROPERTIES = {'fulltextindexed': False}
+
+    def __init__(self, subject, rtype, object, values=None):
+        if values is not None:
+            self.__dict__.update(values)
+        self.subject = subject
+        self.rtype = rtype
+        self.object = object
+
+    def __str__(self):
+        if self.object.final:
+            return 'attribute %s.%s[%s]' % (
+            self.subject, self.rtype, self.object)
+        return 'relation %s %s %s' % (
+            self.subject, self.rtype, self.object)
+
+    def __repr__(self):
+        return '<%s at @%#x>' % (self, id(self))
+
+    def __getitem__(self, key):
+        warnings.warn('[0.26] use attribute notation',
+                      DeprecationWarning, stacklevel=2)
+        try:
+            return getattr(self, key)
+        except AttributeError:
+            raise KeyError
+    def get(self, key, default=None):
+        return getattr(self, key, default)
+
+    @property
+    def final(self):
+        return self.rtype.final
+
+    def dump(self, subject, object):
+        return RelationDefinitionSchema(subject, self.rtype, object,
+                                        self.__dict__)
+
+    def role_cardinality(self, role):
+        return self.cardinality[role == 'object']
+
+    def constraint_by_type(self, cstrtype):
+        for cstr in self.constraints:
+            if cstr.type() == cstrtype:
+                return cstr
+        return None
+
+    def constraint_by_class(self, cls):
+        for cstr in self.constraints:
+            if isinstance(cstr, cls):
+                return cstr
+        return None
+
+    def constraint_by_interface(self, iface):
+        for cstr in self.constraints:
+            if implements(cstr, iface):
+                return cstr
+        return None
 
 
 class Schema(object):
@@ -1062,9 +1102,9 @@ class Schema(object):
                         # don't try to add an already defined relation
                         if rschema.has_rdef(subjschema, objschema):
                             continue
-                        rdef = attrdict(rschema.rproperties(subject, object))
-                        rdef['infered'] = True
-                        rschema.update(subjschema, objschema, rdef)
+                        thisrdef = rdef.dump(subjschema, objschema)
+                        thisrdef.infered = True
+                        rschema._add_rdef(thisrdef)
 
     def remove_infered_definitions(self):
         """remove any infered definitions added by
