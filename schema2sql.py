@@ -95,7 +95,7 @@ def eschema2sql(dbhelper, eschema, skip_relations=(), prefix=''):
     # create index
     for i in xrange(len(attrs)):
         rschema, attrschema = attrs[i]
-        if attrschema is None or eschema.rproperty(rschema.type, 'indexed'):
+        if attrschema is None or eschema.rdef(rschema).indexed:
             w(dbhelper.sql_create_index(table, prefix + rschema.type))
     w('')
     return '\n'.join(output)
@@ -104,8 +104,8 @@ def eschema2sql(dbhelper, eschema, skip_relations=(), prefix=''):
 def aschema2sql(dbhelper, eschema, rschema, aschema, creating=True, indent=''):
     """write an attribute schema as SQL statements to stdout"""
     attr = rschema.type
-    constraints = rschema.rproperty(eschema.type, aschema.type, 'constraints')
-    sqltype = type_from_constraints(dbhelper, aschema.type, constraints,
+    rdef = rschema.rdef(eschema.type, aschema.type)
+    sqltype = type_from_constraints(dbhelper, aschema.type, rdef.constraints,
                                     creating)
     if SET_DEFAULT:
         default = eschema.default(attr)
@@ -119,9 +119,9 @@ def aschema2sql(dbhelper, eschema, rschema, aschema, creating=True, indent=''):
             # XXX ignore default for other type
             # this is expected for NOW / TODAY
     if creating:
-        if eschema.rproperty(attr, 'uid'):
+        if rdef.uid:
             sqltype += ' PRIMARY KEY'
-        elif rschema.rproperty(eschema.type, aschema.type, 'cardinality')[0] == '1':
+        elif rdef.cardinality[0] == '1':
             # don't set NOT NULL if backend isn't able to change it later
             if dbhelper.alter_column_support:
                 sqltype += ' NOT NULL'

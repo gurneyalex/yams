@@ -29,7 +29,8 @@ class Person(EntityType):
     salary = Float()
 
     travaille = SubjectRelation('Societe',
-                                __permissions__={'delete': ('managers',)})
+                                __permissions__={'delete': ('managers',),
+                                                 'read': (), 'add': ()})
     evaluee = SubjectRelation('Note')
 
 
