@@ -150,11 +150,12 @@ class Definition(object):
 
 
 class XXX_backward_permissions_compat(type):
+    stacklevel = 2
     def __new__(mcs, name, bases, classdict):
         if 'permissions' in classdict:
             classdict['__permissions__'] = classdict.pop('permissions')
             warn('[0.26.0] permissions is deprecated, use __permissions__ instead (class %s)' % name,
-                 DeprecationWarning, stacklevel=2)
+                 DeprecationWarning, stacklevel=mcs.stacklevel)
         return super(XXX_backward_permissions_compat, mcs).__new__(mcs, name, bases, classdict)
 
     # XXX backward compatiblity
@@ -175,6 +176,7 @@ class metadefinition(XXX_backward_permissions_compat):
     """Metaclass that builds the __relations__ attribute of
     EntityType's subclasses.
     """
+    stacklevel = 3
     def __new__(mcs, name, bases, classdict):
         classdict['__relations__'] = rels = []
         relations = {}
