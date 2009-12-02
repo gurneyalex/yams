@@ -252,7 +252,10 @@ class EntityType(Definition):
         them to the `defined` dictionnary.
         """
         name = getattr(cls, 'name', cls.__name__)
-        assert name not in defined, "type '%s' was already defined" % name
+        assert cls is not defined.get(name), 'duplicate registration: %s' % name
+        assert name not in defined, \
+            "type '%s' was already defined here %s, new definition here %s" % \
+            (name, defined[name].__module__, cls)
         cls._defined = defined # XXX may be used later (eg .add_relation())
         defined[name] = cls
         for relation in cls.__relations__:
