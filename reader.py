@@ -81,6 +81,7 @@ class PyFileReader(object):
             modname, module = self._loaded[filepath]
         except KeyError:
             modname, module = self.exec_file(filepath)
+        processed_object = set()
         for name, obj in vars(module).items():
             if name.startswith('_'):
                 continue
@@ -88,8 +89,11 @@ class PyFileReader(object):
                 isdef = issubclass(obj, buildobjs.Definition)
             except TypeError:
                 continue
-            if isdef and obj.__module__ == modname:
-                self.loader.add_definition(self, obj)
+            if (not isdef) or obj.__module__ != modname or \
+                obj in processed_object:
+                continue
+            self.loader.add_definition(self, obj)
+            processed_object.add(obj)
 
     def import_erschema(self, ertype, schemamod=None, instantiate=True):
         warn('import_erschema is deprecated, use explicit import once schema '
