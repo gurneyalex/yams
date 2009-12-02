@@ -130,8 +130,9 @@ class metadefinition(type):
     EntityType's subclasses.
     """
     def __new__(mcs, name, bases, classdict):
-        classdict['__relations__'] = rels = []
-        relations = {}
+
+        rels = classdict.setdefault('__relations__', [])
+        relations = dict((rdef.name, rdef) for rdef in rels)
         for rname, rdef in classdict.items():
             if isinstance(rdef, Relation):
                 # relation's name **must** be removed from class namespace
@@ -209,13 +210,22 @@ class EntityType(Definition):
 
     @classmethod
     def _ensure_relation_type(cls, relation):
+        """Check the type the relation
+        
+        return False if the class is not yet finalized
+        (XXX raise excep instead ?)"""
         rtype = RelationType(relation.name)
         _copy_attributes(relation, rtype, RTYPE_PROPERTIES)
-        defined = cls._defined
-        if relation.name in defined:
-            _copy_attributes(rtype, defined[relation.name], RTYPE_PROPERTIES)
+        #assert hasattr(cls, '_defined'), "Type definition for %s not yet expanded. you can't register new type through it" % cls
+        if hasattr(cls, '_defined'):
+            defined = cls._defined
+            if relation.name in defined:
+                _copy_attributes(rtype, defined[relation.name], RTYPE_PROPERTIES)
+            else:
+                defined[relation.name] = rtype
+            return True
         else:
-            defined[relation.name] = rtype
+            return False
 
     @classmethod
     def expand_relation_definitions(cls, defined, schema):
@@ -251,12 +261,14 @@ class EntityType(Definition):
     def add_relation(cls, rdef, name=None):
         if name:
             rdef.name = name
-        cls._ensure_relation_type(rdef)
-        _add_relation(cls.__relations__, rdef, name)
-        if isinstance(rdef, RichString) and not rdef in cls._defined:
-            format_attr_name = (name or rdef.name) + '_format'
-            rdef = cls.get_relations(format_attr_name).next()
-            cls._ensure_relation_type(rdef)
+        if cls._ensure_relation_type(rdef):
+            _add_relation(cls.__relations__, rdef, name)
+            if isinstance(rdef, RichString) and not rdef in cls._defined:
+                format_attr_name = (name or rdef.name) + '_format'
+                rdef = cls.get_relations(format_attr_name).next()
+                cls._ensure_relation_type(rdef)
+        else:
+           _add_relation(cls.__relations__, rdef, name=name)
 
     @classmethod
     def insert_relation_after(cls, afterrelname, name, rdef):
