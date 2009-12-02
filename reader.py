@@ -13,7 +13,7 @@ __docformat__ = "restructuredtext en"
 import sys
 import types
 from os import listdir
-from os.path import exists, join, splitext, basename
+from os.path import exists, join, splitext, basename, abspath
 from warnings import warn
 
 from logilab.common.testlib import mock_object
@@ -123,7 +123,7 @@ class PyFileReader(object):
         if modname in sys.modules:
             module = sys.modules[modname]
             # NOTE: don't test raw equality to avoid .pyc / .py comparisons
-            assert module.__file__.startswith(filepath), (filepath, module.__file__)
+            assert module.__file__.startswith(abspath(filepath)), (filepath, module.__file__)
         else:
             # XXX until bw compat is gone, put context into builtins to allow proper
             # control of deprecation warning
