@@ -505,6 +505,25 @@ class SchemaLoaderTC2(TestCase):
         loader.add_definition(None, RT1)
         self.assertEquals(loader.defined['RT1'], RT1)
 
+    def test_unfinalized_manipulation(self):
+        expected_attributes = ['base_arg_a', 'base_arg_b', 'new_arg_a', 
+                               'new_arg_b']
+        expected_relations = ['base_o_obj', 'base_o_sub', 'base_obj',
+                              'base_sub', 'new_o_obj', 'new_o_sub', 'new_obj',
+                              'new_sub']
+
+        SchemaLoader.main_schema_directory = 'schema_unfinalized_manipulation'
+        schema = SchemaLoader().load([DATADIR], 'Test')
+        self.assertIn('MyEntity', schema.entities())
+        my_entity = schema['MyEntity']
+        attributes_def = my_entity.attribute_definitions()
+        attributes = sorted(attr[0].type for attr in attributes_def)
+        self.assertEquals( attributes, expected_attributes)
+        relations_def = my_entity.relation_definitions()
+        relations = sorted( rel[0].type for rel in relations_def)
+        self.assertEquals( relations, expected_relations)
+
+
 if __name__ == '__main__':
     unittest_main()
 
