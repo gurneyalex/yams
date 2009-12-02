@@ -334,13 +334,12 @@ class EntitySchema(ERSchema):
         """convenience method to access a property of a relation according to
         this schema role
         """
-        if role == 'subject':
-            rschema = self.subjrels[rtype]
+        rschema = self.schema.rschema(rtype)
+        if role == 'subject' or rschema.symetric:
             if ttype is None:
                 ttype = rschema.objects(self)[0]
             return rschema.rproperty(self, ttype, prop)
         else:
-            rschema = self.objrels[rtype]
             if ttype is None:
                 ttype = rschema.subjects(self)[0]
             return rschema.rproperty(ttype, self, prop)
