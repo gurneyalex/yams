@@ -1,7 +1,18 @@
 ChangeLog for yams
 ------------------
 
+  --
+
+
+    * Small improvement of error message
+
+    * Allow the use of add_relation on a declaration defined in the same file
+
+    * Fix a bug when multiple reference to the same declaration exist
+
 2009-10-21  --  0.25.0
+
+
     * api cleanup
 
     * optimization
