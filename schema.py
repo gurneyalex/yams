@@ -756,6 +756,7 @@ class RelationSchema(ERSchema):
         allowable properties when the relation has `desttype` as target entity's
         type
         """
+        desttype = self.schema.eschema(desttype)
         return RelationDefinitionSchema.rproperty_defs(desttype)
 
     def init_rproperties(self, subject, object, buildrdef):
@@ -894,10 +895,14 @@ class RelationDefinitionSchema(PermissionMixIn):
 
     def __init__(self, subject, rtype, object, values=None):
         if values is not None:
-            self.__dict__.update(values)
+            self.update(values)
         self.subject = subject
         self.rtype = rtype
         self.object = object
+
+    def update(self, values):
+        # XXX check we're copying existent properties
+        self.__dict__.update(values)
 
     def __str__(self):
         if self.object.final:
@@ -916,6 +921,9 @@ class RelationDefinitionSchema(PermissionMixIn):
             return getattr(self, key)
         except AttributeError:
             raise KeyError
+
+    def as_triple(self):
+        return (self.subject, self.rtype, self.object)
 
     @classmethod
     def rproperty_defs(cls, desttype):
