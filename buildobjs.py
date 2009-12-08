@@ -85,10 +85,12 @@ def _copy_attributes(fromobj, toobj, attributes):
 
 def register_base_types(schema):
     for etype in BASE_TYPES:
-        edef = EntityType(name=etype,
-                          # unused actually
-                          __permissions__={'read': (), 'add': (), 'delete': (),
-                                           'update': ()})
+        edef = EntityType(
+            name=etype,
+            # unused actually
+            # XXX add a group in read perms to satisfy schema constraints in cw
+            __permissions__={'read': ('users',), 'add': (), 'delete': (),
+                             'update': ()})
         schema.add_entity_type(edef)
 
 # XXX use a "frozendict"
@@ -265,7 +267,7 @@ class EntityType(Definition):
     @classmethod
     def _ensure_relation_type(cls, relation):
         """Check the type the relation
-        
+
         return False if the class is not yet finalized
         (XXX raise excep instead ?)"""
         rtype = RelationType(relation.name)
