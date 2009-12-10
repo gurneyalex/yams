@@ -1,4 +1,4 @@
-"""write a schema as sql
+#~ """write a schema as&2 sql
 
 :organization: Logilab
 :copyright: 2004-2009 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
@@ -68,7 +68,7 @@ def dropeschema2sql(eschema, skip_relations=(), prefix=''):
     """return sql to drop an entity type's table"""
     # not necessary to drop indexes, that's implictly done when dropping
     # the table
-    return 'DROP TABLE %s;' % eschema.type
+    return 'DROP TABLE %s;' % (prefix + eschema.type)
 
 
 def eschema2sql(dbhelper, eschema, skip_relations=(), prefix=''):
