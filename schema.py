@@ -869,7 +869,6 @@ class RelationSchema(ERSchema):
     @deprecated('[0.26] use .rdef(subject, object).<property> = value')
     def set_rproperty(self, subject, object, pname, value):
         """set value for a subject relation specific property"""
-        assert pname in self.rproperty_defs(object)
         setattr(self.rdefs[(subject, object)], pname, value)
 
 
