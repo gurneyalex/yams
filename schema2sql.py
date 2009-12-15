@@ -1,5 +1,5 @@
 """write a schema as sql
-"""
+
 :organization: Logilab
 :copyright: 2004-2009 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
 :contact: http://www.logilab.fr/ -- mailto:contact@logilab.fr
