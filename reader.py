@@ -127,7 +127,7 @@ class PyFileReader(object):
         if modname in sys.modules:
             module = sys.modules[modname]
             # NOTE: don't test raw equality to avoid .pyc / .py comparisons
-            assert module.__file__.startswith(abspath(filepath)), (filepath, module.__file__)
+            assert abspath(module.__file__).startswith(abspath(filepath)), (filepath, module.__file__)
         else:
             # XXX until bw compat is gone, put context into builtins to allow proper
             # control of deprecation warning
