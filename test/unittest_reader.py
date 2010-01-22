@@ -491,6 +491,10 @@ class SchemaLoaderTC2(TestCase):
         relations = sorted( rel[0].type for rel in relations_def)
         self.assertEquals( relations, expected_relations)
 
+    def test_post_build_callback(self):
+        SchemaLoader.main_schema_directory = 'post_build_callback'
+        schema = SchemaLoader().load([DATADIR], 'Test')
+        self.assertIn('Toto', schema.entities())
 
 if __name__ == '__main__':
     unittest_main()
