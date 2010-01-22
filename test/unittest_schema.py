@@ -266,7 +266,7 @@ class EntitySchemaTC(BaseSchemaTC):
         """check subject relations a returned in the same order as in the
         schema definition"""
         self.assertEquals(eperson.destination('nom'), 'String')
-        self.assertRaises(AssertionError, eperson.destination, 'concerne')
+        #self.assertRaises(AssertionError, eperson.destination, 'concerne')
         self.assertEquals(eperson.destination('travaille'), 'Societe')
 
 
