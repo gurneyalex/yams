@@ -75,11 +75,11 @@ class SpecializationTC(TestCase):
                     }
         done = set()
         drschema, krschema, wrschema = relations
-        for subjobj in krschema.rdefs():
+        for subjobj in krschema.rdefs:
             subject, object = subjobj
             done.add(subjobj)
             self.failUnless(subjobj in expected)
-            self.assertEquals(krschema.rproperty(subject, object, 'infered'),
+            self.assertEquals(krschema.rdef(subject, object).infered,
                               expected[subjobj])
         self.assertEquals(len(set(expected) - done), 0, 'missing %s' % (set(expected) - done))
         expected = {('Person', 'Company'): False,
@@ -92,11 +92,11 @@ class SpecializationTC(TestCase):
                     ('Student', 'SubCompany'): True,
                     }
         done = set()
-        for subjobj in wrschema.rdefs():
+        for subjobj in wrschema.rdefs:
             subject, object = subjobj
             done.add(subjobj)
             self.failUnless(subjobj in expected)
-            self.assertEquals(wrschema.rproperty(subject, object, 'infered'),
+            self.assertEquals(wrschema.rdef(subject, object).infered,
                               expected[subjobj])
         self.assertEquals(len(set(expected) - done), 0, 'missing %s' % (set(expected) - done))
 
@@ -110,22 +110,22 @@ class SpecializationTC(TestCase):
                     }
         done = set()
         drschema, krschema, wrschema = relations
-        for subjobj in krschema.rdefs():
+        for subjobj in krschema.rdefs:
             subject, object = subjobj
             done.add(subjobj)
             self.failUnless(subjobj in expected)
-            self.assertEquals(krschema.rproperty(subject, object, 'infered'),
+            self.assertEquals(krschema.rdef(subject, object).infered,
                               expected[subjobj])
         self.assertEquals(len(set(expected) - done), 0, 'missing %s' % (set(expected) - done))
         expected = {('Person', 'Company'): False,
                     ('Student', 'Company'): False,
                    }
         done = set()
-        for subjobj in wrschema.rdefs():
+        for subjobj in wrschema.rdefs:
             subject, object = subjobj
             done.add(subjobj)
             self.failUnless(subjobj in expected)
-            self.assertEquals(wrschema.rproperty(subject, object, 'infered'),
+            self.assertEquals(wrschema.rdef(subject, object).infered,
                               expected[subjobj])
         self.assertEquals(len(set(expected) - done), 0, 'missing %s' % (set(expected) - done))
 

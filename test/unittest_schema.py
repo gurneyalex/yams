@@ -59,20 +59,19 @@ class BaseSchemaTC(TestCase):
             except KeyError:
                 schema.add_relation_type(RelationType(_type))
             schema.add_relation_def(RelationDefinition(_from, _type, _to, order=i))
-        schema.rschema('nom').set_rproperty('Person', 'String', 'cardinality','11') # not null
+        schema.rschema('nom').rdef('Person', 'String').cardinality = '11' # not null
 
-        enote.set_rproperty('type', 'constraints',
-                             [StaticVocabularyConstraint((u'bon', u'pasbon',
-                                                                  u'bof', u'peux mieux faire'))])
-        enote.set_rproperty('date', 'cardinality', '11')
+        enote.rdef('type').constraints = [StaticVocabularyConstraint((u'bon', u'pasbon',
+                                                                      u'bof', u'peux mieux faire'))]
+        enote.rdef('date').cardinality = '11'
 
-        eaffaire.set_rproperty('sujet', 'constraints', [SizeConstraint(128)])
-        eaffaire.set_rproperty('ref', 'constraints', [SizeConstraint(12), RegexpConstraint(r'[A-Z]+\d+')])
-        eperson.set_rproperty('nom', 'constraints', [SizeConstraint(20, 10)])
-        eperson.set_rproperty('prenom', 'constraints', [SizeConstraint(64)])
-        eperson.set_rproperty('tel', 'constraints', [IntervalBoundConstraint(maxvalue=999999)])
-        eperson.set_rproperty('fax', 'constraints', [IntervalBoundConstraint(minvalue=12, maxvalue=999999)])
-        eperson.set_rproperty('promo', 'constraints', [StaticVocabularyConstraint( (u'bon', u'pasbon'))])
+        eaffaire.rdef('sujet').constraints = [SizeConstraint(128)]
+        eaffaire.rdef('ref').constraints = [SizeConstraint(12), RegexpConstraint(r'[A-Z]+\d+')]
+        eperson.rdef('nom').constraints = [SizeConstraint(20, 10)]
+        eperson.rdef('prenom').constraints = [SizeConstraint(64)]
+        eperson.rdef('tel').constraints = [IntervalBoundConstraint(maxvalue=999999)]
+        eperson.rdef('fax').constraints = [IntervalBoundConstraint(minvalue=12, maxvalue=999999)]
+        eperson.rdef('promo').constraints = [StaticVocabularyConstraint( (u'bon', u'pasbon'))]
 
         estring = schema.eschema('String')
         eint = schema.eschema('Int')
@@ -175,10 +174,10 @@ class EntitySchemaTC(BaseSchemaTC):
         self.failUnlessEqual(d[copy(enote)], 'Note')
 
     def test_deepcopy_with_regexp_constraints(self):
-        eaffaire.set_rproperty('ref', 'constraints', [RegexpConstraint(r'[A-Z]+\d+')])
-        rgx_cstr, = eaffaire.constraints('ref')
+        eaffaire.rdef('ref').constraints = [RegexpConstraint(r'[A-Z]+\d+')]
+        rgx_cstr, = eaffaire.rdef('ref').constraints
         eaffaire2 = deepcopy(schema).eschema('Affaire')
-        rgx_cstr2, = eaffaire2.constraints('ref')
+        rgx_cstr2, = eaffaire2.rdef('ref').constraints
         self.assertEquals(rgx_cstr2.regexp, rgx_cstr.regexp)
         self.assertEquals(rgx_cstr2.flags, rgx_cstr.flags)
         self.assertEquals(rgx_cstr2._rgx, rgx_cstr._rgx)
@@ -225,21 +224,21 @@ class EntitySchemaTC(BaseSchemaTC):
         self.assertRaises(StopIteration, estring.defaults().next)
 
     def test_vocabulary(self):
-        self.assertEquals(eperson.vocabulary('promo'), ('bon', 'pasbon'))
-        self.assertRaises(KeyError,
-                          eperson.vocabulary, 'what?')
-        self.assertRaises(AssertionError,
-                          eperson.vocabulary, 'nom')
+        #self.assertEquals(eperson.vocabulary('promo')
+        self.assertEquals(eperson.rdef('promo').constraint_by_interface(IVocabularyConstraint).vocabulary(),
+                          ('bon', 'pasbon'))
+        # self.assertRaises(AssertionError,
+        #                   eperson.vocabulary, 'nom')
 
     def test_indexable_attributes(self):
-        eperson.set_rproperty('nom', 'fulltextindexed', True)
-        eperson.set_rproperty('prenom', 'fulltextindexed', True)
+        eperson.rdef('nom').fulltextindexed = True
+        eperson.rdef('prenom').fulltextindexed = True
         self.assertEquals(list(eperson.indexable_attributes()), ['nom', 'prenom'])
 
 
     def test_goodValues_relation_default(self):
         """check good values of entity does not raise an exception"""
-        eperson.set_rproperty('nom', 'default', 'No name')
+        eperson.rdef('nom').default = 'No name'
         self.assertEquals(eperson.default('nom'), 'No name')
 
     def test_subject_relations(self):
@@ -375,8 +374,8 @@ class SchemaTC(BaseSchemaTC):
         relations.sort()
         self.assertEquals(relations, all_relations)
 
-        self.assertEquals(len(eperson.rproperty('nom', 'constraints')), 1)
-        self.assertEquals(len(eperson.rproperty('prenom', 'constraints')), 1)
+        self.assertEquals(len(eperson.rdef('nom').constraints), 1)
+        self.assertEquals(len(eperson.rdef('prenom').constraints), 1)
 
     def test_schema_check_relations(self):
         """test behaviour with some incorrect relations"""
@@ -422,7 +421,7 @@ class SchemaTC(BaseSchemaTC):
 
     def test_rename_entity_type(self):
         affaire = schema.eschema('Affaire')
-        orig_rprops = affaire.rproperties('concerne')
+        orig_rprops = affaire.rdef('concerne')
         schema.rename_entity_type('Affaire', 'Workcase')
         self.assertUnorderedIterableEquals(schema._entities.keys(),
                              ['Boolean', 'Bytes', 'Date', 'Datetime', 'Float',
@@ -435,7 +434,7 @@ class SchemaTC(BaseSchemaTC):
         self.assertRaises(KeyError, schema.eschema, 'Affaire')
         workcase = schema.eschema('Workcase')
         schema.__test__ = True
-        self.assertEquals(workcase.rproperties('concerne'), orig_rprops)
+        self.assertEquals(workcase.rdef('concerne'), orig_rprops)
 
 
 class SymetricTC(TestCase):

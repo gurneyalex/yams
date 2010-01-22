@@ -1,5 +1,6 @@
 from yams.buildobjs import (EntityType, SubjectRelation, ObjectRelation,
-                            String, Int, Float, Date, Boolean)
+                            String, Int, Float, Date, Boolean,
+                            RelationDefinition, RelationType)
 
 class Affaire(EntityType):
     sujet = String(maxsize=128)
@@ -27,9 +28,10 @@ class Person(EntityType):
     test   = Boolean()
     salary = Float()
 
-    travaille = SubjectRelation('Societe')
+    travaille = SubjectRelation('Societe',
+                                __permissions__={'delete': ('managers',),
+                                                 'read': (), 'add': ()})
     evaluee = SubjectRelation('Note')
-    concerne = SubjectRelation('Affaire')
 
 
 class Societe(EntityType):
@@ -65,4 +67,21 @@ class pkginfo(EntityType):
     author_email = String(maxsize=100, required=True)
     mailinglist = String(maxsize=100)
     debian_handler = String(vocabulary=('machin', 'bidule'))
+
+
+class evaluee(RelationType):
+    __permissions__ = {
+        'read': ('managers',),
+        'add': ('managers',),
+        'delete': ('managers',),
+        }
+
+class concerne(RelationDefinition):
+    subject = 'Person'
+    object = 'Affaire'
+    __permissions__ = {
+        'read': ('managers',),
+        'add': ('managers',),
+        'delete': ('managers',),
+        }
 
