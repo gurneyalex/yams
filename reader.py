@@ -168,6 +168,8 @@ class PyFileReader(object):
                             continue
                         warn('%s: please explicitly import %s (%s)'
                              % (filepath, pname, name), DeprecationWarning)
+                elif name == 'post_build_callback' and callable(obj):
+                    self.loader.post_build_callbacks.append(obj)
             for key in self.context:
                 fglobals.pop(key, None)
             fglobals['__file__'] = filepath
@@ -203,6 +205,7 @@ class SchemaLoader(object):
         """
         self.defined = {}
         self.loaded_files = []
+        self.post_build_callbacks = []
         self._pyreader = PyFileReader(self)
         sys.modules[__name__].context = self
         # ensure we don't have an iterator
@@ -226,6 +229,8 @@ class SchemaLoader(object):
                            for directory in directories]
             cleanup_sys_modules(directories)
         schema.loaded_files = self.loaded_files
+        for cb in self.post_build_callbacks:
+            cb(schema)
         return schema
 
     def _load_definition_files(self, directories):
