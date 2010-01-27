@@ -1,7 +1,7 @@
 """Classes to define generic Entities/Relations schemas.
 
 :organization: Logilab
-:copyright: 2003-2009 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
+:copyright: 2003-2010 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
 :contact: http://www.logilab.fr/ -- mailto:contact@logilab.fr
 :license: General Public License version 2 - http://www.gnu.org/licenses
 """
@@ -227,6 +227,11 @@ class EntitySchema(PermissionMixIn, ERSchema):
             for subschema in subschemas[:]:
                 subschemas.extend(subschema.specialized_by(recursive=True))
         return subschemas
+
+    def has_relation(self, rtype, role):
+        if role == 'subject':
+            return rtype in rschema.subjrels
+        return rtype in rschema.objrels
 
     def subject_relations(self):
         """return a list of relations that may have this type of entity as
