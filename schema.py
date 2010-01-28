@@ -230,8 +230,8 @@ class EntitySchema(PermissionMixIn, ERSchema):
 
     def has_relation(self, rtype, role):
         if role == 'subject':
-            return rtype in rschema.subjrels
-        return rtype in rschema.objrels
+            return rtype in self.subjrels
+        return rtype in self.objrels
 
     def subject_relations(self):
         """return a list of relations that may have this type of entity as
