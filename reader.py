@@ -205,7 +205,6 @@ class SchemaLoader(object):
         """
         self.defined = {}
         self.loaded_files = []
-        self.post_build_callbacks = []
         self._pyreader = PyFileReader(self)
         sys.modules[__name__].context = self
         # ensure we don't have an iterator
@@ -229,8 +228,6 @@ class SchemaLoader(object):
                            for directory in directories]
             cleanup_sys_modules(directories)
         schema.loaded_files = self.loaded_files
-        for cb in self.post_build_callbacks:
-            cb(schema)
         return schema
 
     def _load_definition_files(self, directories):
@@ -241,6 +238,7 @@ class SchemaLoader(object):
     def _build_schema(self, name, register_base_types=True,
                       construction_mode='strict', remove_unused_rtypes=False):
         """build actual schema from definition objects, and return it"""
+        self.post_build_callbacks = []
         schema = self.schemacls(name or 'NoName', construction_mode=construction_mode)
         if register_base_types:
             buildobjs.register_base_types(schema)
@@ -257,8 +255,11 @@ class SchemaLoader(object):
             if isinstance(definition, type):
                 definition = definition()
             definition.expand_relation_definitions(self.defined, schema)
+        # call 'post_build_callback' functions found in schema modules
+        for cb in self.post_build_callbacks:
+            cb(schema)
+        # optionaly remove relation types without definitions
         if remove_unused_rtypes:
-            # remove relation types without definitions
             for rschema in schema.relations():
                 if not rschema.rdefs():
                     schema.del_relation_type(rschema)
