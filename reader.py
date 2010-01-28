@@ -4,7 +4,7 @@ Use either a sql derivated language for entities and relation definitions
 files or a direct python definition file.
 
 :organization: Logilab
-:copyright: 2004-2009 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
+:copyright: 2004-2010 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
 :contact: http://www.logilab.fr/ -- mailto:contact@logilab.fr
 :license: General Public License version 2 - http://www.gnu.org/licenses
 """
@@ -168,8 +168,6 @@ class PyFileReader(object):
                             continue
                         warn('%s: please explicitly import %s (%s)'
                              % (filepath, pname, name), DeprecationWarning)
-                elif name == 'post_build_callback' and callable(obj):
-                    self.loader.post_build_callbacks.append(obj)
             for key in self.context:
                 fglobals.pop(key, None)
             fglobals['__file__'] = filepath
@@ -178,6 +176,8 @@ class PyFileReader(object):
             sys.modules[modname] = module
             if package:
                 setattr(sys.modules[package], modname.split('.')[-1], module)
+        if hasattr(module, 'post_build_callback'):
+            self.loader.post_build_callbacks.append(module.post_build_callback)
         self._loaded[filepath] = (modname, module)
         return self._loaded[filepath]
 
