@@ -1,7 +1,7 @@
 """Classes to define generic Entities/Relations schemas.
 
 :organization: Logilab
-:copyright: 2003-2009 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
+:copyright: 2003-2010 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
 :contact: http://www.logilab.fr/ -- mailto:contact@logilab.fr
 :license: General Public License version 2 - http://www.gnu.org/licenses
 """
@@ -891,7 +891,7 @@ class RelationSchema(ERSchema):
         except KeyError:
             raise KeyError("%s don't have %s as subject" % (self, etype))
 
-    def targets(self, etype, role='subject'):
+    def targets(self, etype=None, role='subject'):
         """return possible target types with <etype> as <x>"""
         if role == 'subject':
             return self.objects(etype)
