@@ -206,6 +206,7 @@ class SchemaLoader(object):
         self.defined = {}
         self.loaded_files = []
         self._pyreader = PyFileReader(self)
+        self.post_build_callbacks = []
         sys.modules[__name__].context = self
         # ensure we don't have an iterator
         directories = tuple(directories)
@@ -238,7 +239,6 @@ class SchemaLoader(object):
     def _build_schema(self, name, register_base_types=True,
                       construction_mode='strict', remove_unused_rtypes=False):
         """build actual schema from definition objects, and return it"""
-        self.post_build_callbacks = []
         schema = self.schemacls(name or 'NoName', construction_mode=construction_mode)
         if register_base_types:
             buildobjs.register_base_types(schema)
