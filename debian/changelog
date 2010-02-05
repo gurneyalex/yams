@@ -1,8 +1,14 @@
+yams (0.26.0-1) unstable; urgency=low
+
+  * new upstream release
+
+ -- Aurélien Campéas <aurelien.campeas@logilab.fr>  Thu, 28 Jan 2010 14:00:00 +0100
+
 yams (0.25.1-1) unstable; urgency=low
 
   * new upstream release
 
- -- Pierre-Yves David <pierre-yves.david@logilab.fr>  Tue, 12 Jan 2010 16:52:14 +0200
+ -- Pierre-Yves David <pierre-yves.david@logilab.fr>  Tue, 12 Jan 2010 16:52:14 +0100
 
 yams (0.25.0-1) unstable; urgency=low
 
