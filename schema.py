@@ -18,8 +18,7 @@ from logilab.common.interface import implements
 from logilab.common.deprecation import deprecated
 
 import yams
-from yams import (BASE_TYPES, MARKER, ValidationError, BadSchemaDefinition,
-                  use_py_datetime)
+from yams import BASE_TYPES, MARKER, ValidationError, BadSchemaDefinition
 from yams.interfaces import (ISchema, IRelationSchema, IEntitySchema,
                              IVocabularyConstraint)
 from yams.constraints import BASE_CHECKERS, BASE_CONVERTERS, UniqueConstraint

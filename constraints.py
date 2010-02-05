@@ -343,8 +343,6 @@ class MultipleStaticVocabularyConstraint(StaticVocabularyConstraint):
 # special classes to be used w/ constraints accepting values as argument(s):
 # IntervalBoundConstraint
 
-# XXX suppose using datetime, not mx.DateTime (but ok since mx.DateTime will be
-# dropped at some point)
 import datetime # needed for timedelta evaluation
 
 def actual_value(value, entity):
