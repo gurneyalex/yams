@@ -36,8 +36,8 @@ class SchemaDotPropsHandler(object):
 
     def edge_properties(self, rschema, subjnode, objnode):
         """return default DOT drawing options for a relation schema"""
-        # symetric rels are handled differently, let yams decide what's best
-        if rschema.symetric:
+        # symmetric rels are handled differently, let yams decide what's best
+        if rschema.symmetric:
             kwargs = {'label': rschema.type,
                       'color': '#887788', 'style': 'dashed',
                       'dir': 'both', 'arrowhead': 'normal', 'arrowtail': 'normal'}
@@ -86,7 +86,7 @@ class SchemaVisitor(object):
         if (rschema, setype, tetype) in self._done:
             return False
         self._done.add((rschema, setype, tetype))
-        if rschema.symetric:
+        if rschema.symmetric:
             self._done.add((rschema, tetype, setype))
         return True
 

@@ -147,28 +147,28 @@ class SchemaLoaderTC(TestCase):
 
     def test_rschema(self):
         rschema = schema.rschema('evaluee')
-        self.assertEquals(rschema.symetric, False)
+        self.assertEquals(rschema.symmetric, False)
         self.assertEquals(rschema.description, '')
         self.assertEquals(rschema.final, False)
         self.assertListEquals(sorted(rschema.subjects()), ['Person', 'Societe'])
         self.assertListEquals(sorted(rschema.objects()), ['Note'])
 
         rschema = schema.rschema('sym_rel')
-        self.assertEquals(rschema.symetric, True)
+        self.assertEquals(rschema.symmetric, True)
         self.assertEquals(rschema.description, '')
         self.assertEquals(rschema.final, False)
         self.assertListEquals(sorted(rschema.subjects()), ['Affaire', 'Person'])
         self.assertListEquals(sorted(rschema.objects()), ['Affaire', 'Person'])
 
         rschema = schema.rschema('initial_state')
-        self.assertEquals(rschema.symetric, False)
+        self.assertEquals(rschema.symmetric, False)
         self.assertEquals(rschema.description, 'indicate which state should be used by default when an entity using states is created')
         self.assertEquals(rschema.final, False)
         self.assertListEquals(sorted(rschema.subjects()), ['Eetype'])
         self.assertListEquals(sorted(rschema.objects()), ['State'])
 
         rschema = schema.rschema('name')
-        self.assertEquals(rschema.symetric, False)
+        self.assertEquals(rschema.symmetric, False)
         self.assertEquals(rschema.description, '')
         self.assertEquals(rschema.final, True)
         self.assertListEquals(sorted(rschema.subjects()), ['Company', 'Division', 'EPermission', 'Eetype', 'State', 'Subcompany', 'Subdivision'])
@@ -290,7 +290,7 @@ class SchemaLoaderTC(TestCase):
 
 ##     def test_nonregr_using_tuple_as_relation_target(self):
 ##         rschema = schema.rschema('see_also')
-##         self.assertEquals(rschema.symetric, False)
+##         self.assertEquals(rschema.symmetric, False)
 ##         self.assertEquals(rschema.description, '')
 ##         self.assertEquals(rschema.final, False)
 ##         self.assertListEquals(sorted(rschema.subjects()), ['Employee'])
@@ -466,7 +466,7 @@ class SchemaLoaderTC2(TestCase):
                           '1*')
         self.assertEquals(rel.rdef('Anotherentity', 'Anentity').cardinality,
                           '1*')
-        self.assertEquals(rel.symetric, True)
+        self.assertEquals(rel.symmetric, True)
         self.assertEquals(rel.inlined, True)
 
     def test_imports(self):
