@@ -361,8 +361,8 @@ class SchemaTC(BaseSchemaTC):
         self.assertRaisesMsg(BadSchemaDefinition, "using unknown type 'Afire' in relation evaluee"  ,
                              schema.add_relation_def, RelationDefinition('Afire', 'evaluee', 'Note'))
 ## XXX what is this ?
-##        self.assertRaisesMsg(BadSchemaDefinition, 'the "symetric" property should appear on every definition of relation evaluee' ,
-##                             schema.add_relation_def, RelationDefinition('Affaire', 'evaluee', 'Note', symetric=True))
+##        self.assertRaisesMsg(BadSchemaDefinition, 'the "symmetric" property should appear on every definition of relation evaluee' ,
+##                             schema.add_relation_def, RelationDefinition('Affaire', 'evaluee', 'Note', symmetric=True))
 
     def test_schema_relations(self):
         all_relations = ['TEST', 'concerne', 'travaille', 'evaluee',
@@ -444,7 +444,7 @@ class SymetricTC(TestCase):
         ebug = schema.add_entity_type(EntityType('Bug'))
         estory = schema.add_entity_type(EntityType('Story'))
         eproject = schema.add_entity_type(EntityType('Project'))
-        schema.add_relation_type(RelationType('see_also', symetric=True))
+        schema.add_relation_type(RelationType('see_also', symmetric=True))
 
     def test_association_types(self):
         schema.add_relation_def(RelationDefinition('Bug', 'see_also', 'Bug'))

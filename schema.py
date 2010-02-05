@@ -634,8 +634,8 @@ class RelationSchema(ERSchema):
 
     def __init__(self, schema=None, rdef=None, **kwargs):
         if rdef is not None:
-            # if this relation is symetric/inlined
-            self.symetric = rdef.symetric or False
+            # if this relation is symmetric/inlined
+            self.symmetric = rdef.symmetric or False
             self.inlined = rdef.inlined or False
             # if full text content of subject/object entity should be added
             # to other side entity (the container)
@@ -685,7 +685,7 @@ class RelationSchema(ERSchema):
         if constraints:
             for cstr in constraints:
                 cstr.check_consistency(subjschema, objschema, rdef)
-        if (subjschema, objschema) in self.rdefs and self.symetric:
+        if (subjschema, objschema) in self.rdefs and self.symmetric:
             return
         # update our internal struct
         self.final = final
@@ -697,7 +697,7 @@ class RelationSchema(ERSchema):
         # update our internal struct
         self.rdefs[(rdef.subject, rdef.object)] = rdef
         self._update(rdef.subject, rdef.object)
-        if self.symetric:
+        if self.symmetric:
             self._update(rdef.object, rdef.subject)
             if rdef.object != rdef.subject:
                 self.rdefs[(rdef.object, rdef.subject)] = rdef
@@ -707,7 +707,7 @@ class RelationSchema(ERSchema):
                 'subject' % rdef)
         # update entity types schema
         rdef.subject.add_subject_relation(self)
-        if self.symetric:
+        if self.symmetric:
             rdef.object.add_subject_relation(self)
         else:
             rdef.object.add_object_relation(self)
@@ -740,7 +740,7 @@ class RelationSchema(ERSchema):
         except KeyError:
             pass
         try:
-            if self.symetric and subjschema != objschema and not _recursing:
+            if self.symmetric and subjschema != objschema and not _recursing:
                 self.del_relation_def(objschema, subjschema, True)
         except KeyError:
             pass

@@ -8,7 +8,7 @@ class Affaire(EntityType):
 
     concerne = SubjectRelation('Societe')
     obj_wildcard = SubjectRelation('*')
-    sym_rel = SubjectRelation('Person', symetric=True)
+    sym_rel = SubjectRelation('Person', symmetric=True)
     inline_rel = SubjectRelation('Person', inlined=True, cardinality='?*')
     subj_wildcard = ObjectRelation('*')
 

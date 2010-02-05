@@ -25,7 +25,7 @@ __all__ = ('ObjectRelation', 'SubjectRelation', 'BothWayRelation',
 ETYPE_PROPERTIES = ('description', '__permissions__',
                     'meta') # XXX meta is deprecated
 # don't put description inside, handled "manualy"
-RTYPE_PROPERTIES = ('symetric', 'inlined', 'fulltext_container',
+RTYPE_PROPERTIES = ('symmetric', 'inlined', 'fulltext_container',
                     'meta') # XXX meta is deprecated
 RDEF_PROPERTIES = ('cardinality', 'constraints', 'composite',
                    'order',  'default', 'uid', 'indexed', 'uid',
@@ -158,7 +158,11 @@ class XXX_backward_permissions_compat(type):
     def __new__(mcs, name, bases, classdict):
         if 'permissions' in classdict:
             classdict['__permissions__'] = classdict.pop('permissions')
-            warn('[0.26.0] permissions is deprecated, use __permissions__ instead (class %s)' % name,
+            warn('[yams 0.27.0] permissions is deprecated, use __permissions__ instead (class %s)' % name,
+                 DeprecationWarning, stacklevel=mcs.stacklevel)
+        if 'symetric' in classdict:
+            classdict['symmetric'] = classdict.pop('symetric')
+            warn('[yams 0.27.0] symetric has been respelled symmetric (class %s)' % name,
                  DeprecationWarning, stacklevel=mcs.stacklevel)
         return super(XXX_backward_permissions_compat, mcs).__new__(mcs, name, bases, classdict)
 
@@ -357,7 +361,7 @@ class EntityType(Definition):
 class RelationType(Definition):
     __metaclass__ = XXX_backward_permissions_compat
 
-    symetric = MARKER
+    symmetric = MARKER
     inlined = MARKER
     fulltext_container = MARKER
 
@@ -408,14 +412,14 @@ class RelationDefinition(Definition):
     # FIXME reader magic forbids to define a docstring...
     #"""a relation is defined by a name, the entity types that can be
     #subject or object the relation, the cardinality, the constraints
-    #and the symetric property.
+    #and the symmetric property.
     #"""
 
     subject = MARKER
     object = MARKER
     cardinality = MARKER
     constraints = MARKER
-    symetric = MARKER
+    symmetric = MARKER
     inlined = MARKER
 
     def __init__(self, subject=None, name=None, object=None, **kwargs):
@@ -431,6 +435,10 @@ class RelationDefinition(Definition):
         super(RelationDefinition, self).__init__(name)
         if kwargs.pop('meta', None):
             warn('meta is deprecated', DeprecationWarning)
+        if 'symetric' in kwargs:
+            warn('[yams 0.27.0] symetric has been respelled symmetric',
+                 DeprecationWarning, stacklevel=2)
+            kwargs['symmetric'] = kwargs.pop('symetric')
         _check_kwargs(kwargs, RDEF_PROPERTIES + ('description',))
         _copy_attributes(attrdict(**kwargs), self, RDEF_PROPERTIES + ('description',))
         if self.constraints:
@@ -447,6 +455,11 @@ class RelationDefinition(Definition):
         """
         name = getattr(cls, 'name', cls.__name__)
         rtype = RelationType(name)
+        if hasattr(cls, 'symetric'):
+            cls.symmetric = cls.symetric
+            del cls.symetric
+            warn('[yams 0.27.0] symetric has been respelled symmetric (class %s)' % name,
+                 DeprecationWarning)
         _copy_attributes(cls, rtype, RTYPE_PROPERTIES)
         if name in defined:
             _copy_attributes(rtype, defined[name], RTYPE_PROPERTIES)
@@ -535,6 +548,10 @@ class ObjectRelation(Relation):
         if self.constraints:
             self.constraints = list(self.constraints)
         self.override = kwargs.pop('override', False)
+        if 'symetric' in kwargs:
+            kwargs['symmetric'] = kwargs.pop('symetric')
+            warn('[yams 0.27.0] symetric has been respelled symmetric',
+                 DeprecationWarning, stacklevel=2)
         try:
             _check_kwargs(kwargs, REL_PROPERTIES)
         except BadSchemaDefinition, bad:
