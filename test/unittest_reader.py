@@ -12,9 +12,6 @@ from yams.schema import Schema
 from yams.reader import SchemaLoader
 from yams.constraints import StaticVocabularyConstraint, SizeConstraint
 
-from yams import schema
-schema.use_py_datetime()
-
 sys.path.insert(0, osp.join(osp.dirname(__file__)))
 
 DATADIR = osp.abspath(osp.join(osp.dirname(__file__), 'data'))
