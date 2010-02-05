@@ -819,7 +819,7 @@ class RelationSchema(ERSchema):
         except KeyError:
             raise KeyError("%s don't have %s as subject" % (self, etype))
 
-    def targets(self, etype, role='subject'):
+    def targets(self, etype=None, role='subject'):
         """return possible target types with <etype> as <x>"""
         if role == 'subject':
             return self.objects(etype)
