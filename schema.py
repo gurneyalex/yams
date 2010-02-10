@@ -917,7 +917,7 @@ class RelationDefinitionSchema(PermissionMixIn):
         return '<%s at @%#x>' % (self, id(self))
 
     def __getitem__(self, key):
-        warnings.warn('[0.26] use attribute notation',
+        warnings.warn('[yams 0.27] use attribute notation',
                       DeprecationWarning, stacklevel=2)
         try:
             return getattr(self, key)

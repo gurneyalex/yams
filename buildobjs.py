@@ -168,12 +168,12 @@ class XXX_backward_permissions_compat(type):
 
     # XXX backward compatiblity
     def get_permissions(cls):
-        warn('[0.26.0] %s.permissions is deprecated, use .__permissions__ instead'
+        warn('[yams 0.27.0] %s.permissions is deprecated, use .__permissions__ instead'
              % cls.__name__, DeprecationWarning, stacklevel=2)
         return cls.__permissions__
 
     def set_permissions(cls, newperms):
-        warn('[0.26.0] %s.permissions is deprecated, use .__permissions__ instead'
+        warn('[yams 0.27.0] %s.permissions is deprecated, use .__permissions__ instead'
              % cls.__name__, DeprecationWarning, stacklevel=2)
         cls.__permissions__ = newperms
 
@@ -369,7 +369,7 @@ class RelationType(Definition):
         """kwargs must have values in RTYPE_PROPERTIES"""
         super(RelationType, self).__init__(name)
         if kwargs.pop('meta', None):
-            warn('meta is deprecated', DeprecationWarning, stacklevel=2)
+            warn('[yams 0.25] meta is deprecated', DeprecationWarning, stacklevel=2)
         _check_kwargs(kwargs, RTYPE_PROPERTIES + ('description', '__permissions__'))
         self.__dict__.update(kwargs)
 
@@ -434,7 +434,7 @@ class RelationDefinition(Definition):
             self.object = self.__class__.object
         super(RelationDefinition, self).__init__(name)
         if kwargs.pop('meta', None):
-            warn('meta is deprecated', DeprecationWarning)
+            warn('[yams 0.25] meta is deprecated', DeprecationWarning)
         if 'symetric' in kwargs:
             warn('[yams 0.27.0] symetric has been respelled symmetric',
                  DeprecationWarning, stacklevel=2)
@@ -498,7 +498,7 @@ class RelationDefinition(Definition):
             self.constraints = ()
         rschema = schema.rschema(name)
         if self.subject == '**' or self.object == '**':
-            warn('** is deprecated, use * (%s)' % rtype, DeprecationWarning)
+            warn('[yams 0.25] ** is deprecated, use * (%s)' % rtype, DeprecationWarning)
         if self.__permissions__ is MARKER:
             permissions = rtype.get_permissions()
         else:
