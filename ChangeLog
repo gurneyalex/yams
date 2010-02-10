@@ -1,20 +1,35 @@
 ChangeLog for yams
 ------------------
- --
+
+2010-02-10  --  0.27.0
+    * symetric respelled to symmetric
+
+    * permissions renamed __permissions__ in schema python files
+
+    * permissions are now handled by relation definition, no more
+      by the relation type
+
+    * introduce (finally) RelationDefinition objects into schema
+      instead of simple rproperties on the relation type. Update
+      the api consequently.
+
+
+
+2010-01-28  --  0.26.0
     * #19467 add post_build_callback support
 
-2010/01/12  -- 0.25.1
 
+
+2010-01-12  --  0.25.1
     * Small improvement of error message
 
     * Allow the use of add_relation on a declaration defined in the same file
 
     * Fix a bug when multiple reference to the same declaration exist
 
-	
+
+
 2009-10-21  --  0.25.0
-
-
     * api cleanup
 
     * optimization
