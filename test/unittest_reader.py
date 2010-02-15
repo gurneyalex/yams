@@ -225,7 +225,7 @@ class SchemaLoaderTC(TestCase):
                            'delete': ('managers',),
                            'add': ('managers',)})
         self.assertEquals(rschema.rdef('Affaire', 'Societe').permissions,
-                          buildobjs._DEFAULT_RELPERMS)
+                          buildobjs.DEFAULT_RELPERMS)
         rschema = schema.rschema('travaille')
         self.assertEquals(rschema.rdef('Person', 'Societe').permissions,
                           {'read': (), 'add': (), 'delete': ('managers',)})
@@ -233,7 +233,7 @@ class SchemaLoaderTC(TestCase):
     def test_attributes_permissions(self):
         rschema = schema.rschema('name')
         self.assertEquals(rschema.rdef('Company', 'String').permissions,
-                          buildobjs._DEFAULT_ATTRPERMS)
+                          buildobjs.DEFAULT_ATTRPERMS)
         rschema = schema.rschema('tel')
         self.assertEquals(rschema.rdef('Person', 'Int').permissions,
                           {'read': (),
