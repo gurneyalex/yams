@@ -94,11 +94,11 @@ def register_base_types(schema):
         schema.add_entity_type(edef)
 
 # XXX use a "frozendict"
-_DEFAULT_RELPERMS = {'read': ('managers', 'users', 'guests',),
+DEFAULT_RELPERMS = {'read': ('managers', 'users', 'guests',),
                      'delete': ('managers', 'users'),
                      'add': ('managers', 'users',)}
 
-_DEFAULT_ATTRPERMS = {'read': ('managers', 'users', 'guests',),
+DEFAULT_ATTRPERMS = {'read': ('managers', 'users', 'guests',),
                       'update': ('managers', 'owners'),
                       }
 
@@ -144,8 +144,8 @@ class Definition(object):
     def get_permissions(cls, final=False):
         if cls.__permissions__ is MARKER:
             if final:
-                return _DEFAULT_ATTRPERMS
-            return _DEFAULT_RELPERMS
+                return DEFAULT_ATTRPERMS
+            return DEFAULT_RELPERMS
         return cls.__permissions__
 
     @classmethod
