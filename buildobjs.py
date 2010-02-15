@@ -363,6 +363,15 @@ class EntityType(Definition):
             if rdef.name == name:
                 yield rdef
 
+    @classmethod
+    def get_relation(cls, name):
+        """get relation definitions by name (may have multiple definitions with
+        the same name if the relation is both a subject and object relation)
+        """
+        relations = tuple(cls.get_relations(name))
+        assert len(relations) == 1, "can't use get_relation for relation with multiple definitions"
+        return relations[0]
+
 
 class RelationType(Definition):
     __metaclass__ = XXX_backward_permissions_compat
