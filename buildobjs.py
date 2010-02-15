@@ -94,9 +94,13 @@ def register_base_types(schema):
         schema.add_entity_type(edef)
 
 # XXX use a "frozendict"
-_default_relperms = {'read': ('managers', 'users', 'guests',),
+_DEFAULT_RELPERMS = {'read': ('managers', 'users', 'guests',),
                      'delete': ('managers', 'users'),
                      'add': ('managers', 'users',)}
+
+_DEFAULT_ATTRPERMS = {'read': ('managers', 'users', 'guests',),
+                      'update': ('managers', 'owners'),
+                      }
 
 class Relation(object):
     """Abstract class which have to be defined before the metadefinition
@@ -137,9 +141,11 @@ class Definition(object):
         raise NotImplementedError()
 
     @iclassmethod
-    def get_permissions(cls):
+    def get_permissions(cls, final=False):
         if cls.__permissions__ is MARKER:
-            return _default_relperms
+            if final:
+                return _DEFAULT_ATTRPERMS
+            return _DEFAULT_RELPERMS
         return cls.__permissions__
 
     @classmethod
@@ -500,7 +506,8 @@ class RelationDefinition(Definition):
         if self.subject == '**' or self.object == '**':
             warn('[yams 0.25] ** is deprecated, use * (%s)' % rtype, DeprecationWarning)
         if self.__permissions__ is MARKER:
-            permissions = rtype.get_permissions()
+            final = iter(_actual_types(schema, self.object)).next() in BASE_TYPES
+            permissions = rtype.get_permissions(final)
         else:
             permissions = self.__permissions__
         for subj in _actual_types(schema, self.subject):

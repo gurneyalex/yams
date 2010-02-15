@@ -1,6 +1,9 @@
 ChangeLog for yams
 ------------------
 
+--
+ * proper attribute permissions: should now use 'update' instead of 'add'/'delete'
+
 2010-02-10  --  0.27.0
     * symetric respelled to symmetric
 

@@ -22,15 +22,19 @@ class Person(EntityType):
     adel   = String(maxsize=128)
     ass    = String(maxsize=128)
     web    = String(maxsize=128)
-    tel    = Int()
+    tel    = Int(__permissions__={'read': (),
+                                  'add': ('managers',),
+                                  'update': ('managers',)})
     fax    = Int()
     datenaiss = Date()
     test   = Boolean()
     salary = Float()
 
     travaille = SubjectRelation('Societe',
-                                __permissions__={'delete': ('managers',),
-                                                 'read': (), 'add': ()})
+                                __permissions__={'read': (),
+                                                 'add': (),
+                                                 'delete': ('managers',),
+                                                 })
     evaluee = SubjectRelation('Note')
 
 
