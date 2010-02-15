@@ -1,10 +1,8 @@
-import yams
-yams.use_py_datetime()
+from logilab.common.testlib import TestCase, unittest_main, mock_object
+
 from yams.constraints import *
 # after import *
 from datetime import datetime, date, timedelta
-
-from logilab.common.testlib import TestCase, unittest_main, mock_object
 
 class ConstraintTC(TestCase):
 
