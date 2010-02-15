@@ -210,41 +210,6 @@ class SchemaLoaderTC(TestCase):
         self.assertEquals(rschema.inlined, True)
 
     def test_relation_permissions(self):
-        rschema = schema.rschema('state_of')
-        self.assertEquals(rschema.rdef('State', 'Eetype').permissions,
-                          {'read': ('managers', 'users', 'guests'),
-                           'delete': ('managers',),
-                           'add': ('managers',)})
-
-        rschema = schema.rschema('next_state')
-        self.assertEquals(rschema.rdef('State', 'State').permissions,
-                          {'read':   ('managers', 'users', 'guests',),
-                           'add':    ('managers',),
-                           'delete': ('managers',)})
-
-        rschema = schema.rschema('initial_state')
-        self.assertEquals(rschema.rdef('Eetype', 'State').permissions,
-                          {'read':   ('managers', 'users', 'guests',),
-                           'add':    ('managers', 'users',),
-                           'delete': ('managers', 'users',)})
-
-        rschema = schema.rschema('nom')
-        self.assertEquals(rschema.rdef('Person', 'String').permissions,
-                          {'read': ('managers', 'users', 'guests'),
-                           'add': ('managers', 'users'),
-                           'delete': ('managers', 'users')})
-        self.assertEquals(rschema.rdef('Societe', 'String').permissions,
-                          {'read': ('managers', 'users', 'guests'),
-                           'add': ('managers', 'users'),
-                           'delete': ('managers', 'users')})
-
-        rschema = schema.rschema('require_permission')
-        self.assertEquals(rschema.rdef('Company', 'EPermission').permissions,
-                          {'read': ('managers', 'users', 'guests'),
-                           'add': ('managers', ),
-                           'delete': ('managers',)})
-
-    def test_relation_definition_permissions(self):
         rschema = schema.rschema('evaluee')
         self.assertEquals(rschema.rdef('Person', 'Note').permissions,
                           {'read': ('managers',),
@@ -260,10 +225,20 @@ class SchemaLoaderTC(TestCase):
                            'delete': ('managers',),
                            'add': ('managers',)})
         self.assertEquals(rschema.rdef('Affaire', 'Societe').permissions,
-                          buildobjs._default_relperms)
+                          buildobjs._DEFAULT_RELPERMS)
         rschema = schema.rschema('travaille')
         self.assertEquals(rschema.rdef('Person', 'Societe').permissions,
                           {'read': (), 'add': (), 'delete': ('managers',)})
+
+    def test_attributes_permissions(self):
+        rschema = schema.rschema('name')
+        self.assertEquals(rschema.rdef('Company', 'String').permissions,
+                          buildobjs._DEFAULT_ATTRPERMS)
+        rschema = schema.rschema('tel')
+        self.assertEquals(rschema.rdef('Person', 'Int').permissions,
+                          {'read': (),
+                           'add': ('managers',),
+                           'update': ('managers',)})
 
 
     def test_entity_permissions(self):

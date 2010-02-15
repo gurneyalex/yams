@@ -27,8 +27,15 @@ def check_permission_definitions(schema):
     """check permissions are correctly defined"""
     # already initialized, check everything is fine
     for action, groups in schema.permissions.items():
-        assert action in schema.ACTIONS, \
-               'unknown action %s for %s' % (action, schema)
+        # bw compat
+        if action in ('add', 'delete') and isinstance(schema, RelationDefinitionSchema) and schema.final:
+            warnings.warn('[yams 0.28] %s: "delete"/"add" permissions on attribute '
+                          'have been replaced by "update"' % schema,
+                          DeprecationWarning)
+            schema.permissions['update'] = schema.permissions['add']
+        else:
+            assert action in schema.ACTIONS, \
+                   'unknown action %s for %s' % (action, schema)
         assert isinstance(groups, tuple), \
                ('permission for action %s of %s isn\'t a tuple as '
                 'expected' % (action, schema))
@@ -771,7 +778,7 @@ class RelationSchema(ERSchema):
         for prop, default in rdef.rproperties().iteritems():
             rdefval = getattr(buildrdef, prop, MARKER)
             if rdefval is MARKER and prop == 'permissions':
-                rdefval = buildrdef.get_permissions().copy()
+                rdefval = buildrdef.get_permissions(self.final).copy()
             if rdefval is MARKER:
                 if prop == 'cardinality':
                     default = (object in BASE_TYPES) and '?1' or '**'
@@ -880,7 +887,7 @@ class RelationDefinitionSchema(PermissionMixIn):
 
          <subject type> <relation type> <object type>
     """
-    ACTIONS = ('read', 'add', 'delete')
+
     _RPROPERTIES = {'cardinality': None,
                     'constraints': (),
                     'order': 9999,
@@ -901,6 +908,13 @@ class RelationDefinitionSchema(PermissionMixIn):
         self.subject = subject
         self.rtype = rtype
         self.object = object
+
+    @property
+    def ACTIONS(self):
+        if self.rtype.final:
+            return ('read', 'update')
+        else:
+            return ('read', 'add', 'delete')
 
     def update(self, values):
         # XXX check we're copying existent properties
