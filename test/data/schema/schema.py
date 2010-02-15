@@ -1,5 +1,6 @@
 from yams.buildobjs import (EntityType, SubjectRelation, ObjectRelation,
-                            String, Int, Float, Date, Boolean)
+                            String, Int, Float, Date, Boolean,
+                            RelationDefinition, RelationType)
 
 class Affaire(EntityType):
     sujet = String(maxsize=128)
@@ -7,7 +8,7 @@ class Affaire(EntityType):
 
     concerne = SubjectRelation('Societe')
     obj_wildcard = SubjectRelation('*')
-    sym_rel = SubjectRelation('Person', symetric=True)
+    sym_rel = SubjectRelation('Person', symmetric=True)
     inline_rel = SubjectRelation('Person', inlined=True, cardinality='?*')
     subj_wildcard = ObjectRelation('*')
 
@@ -21,15 +22,20 @@ class Person(EntityType):
     adel   = String(maxsize=128)
     ass    = String(maxsize=128)
     web    = String(maxsize=128)
-    tel    = Int()
+    tel    = Int(__permissions__={'read': (),
+                                  'add': ('managers',),
+                                  'update': ('managers',)})
     fax    = Int()
     datenaiss = Date()
     test   = Boolean()
     salary = Float()
 
-    travaille = SubjectRelation('Societe')
+    travaille = SubjectRelation('Societe',
+                                __permissions__={'read': (),
+                                                 'add': (),
+                                                 'delete': ('managers',),
+                                                 })
     evaluee = SubjectRelation('Note')
-    concerne = SubjectRelation('Affaire')
 
 
 class Societe(EntityType):
@@ -65,4 +71,21 @@ class pkginfo(EntityType):
     author_email = String(maxsize=100, required=True)
     mailinglist = String(maxsize=100)
     debian_handler = String(vocabulary=('machin', 'bidule'))
+
+
+class evaluee(RelationType):
+    __permissions__ = {
+        'read': ('managers',),
+        'add': ('managers',),
+        'delete': ('managers',),
+        }
+
+class concerne(RelationDefinition):
+    subject = 'Person'
+    object = 'Affaire'
+    __permissions__ = {
+        'read': ('managers',),
+        'add': ('managers',),
+        'delete': ('managers',),
+        }
 

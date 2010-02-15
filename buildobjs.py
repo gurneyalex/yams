@@ -1,7 +1,7 @@
 """Classes used to build a schema.
 
 :organization: Logilab
-:copyright: 2003-2009 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
+:copyright: 2003-2010 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
 :contact: http://www.logilab.fr/ -- mailto:contact@logilab.fr
 :license: General Public License version 2 - http://www.gnu.org/licenses
 """
@@ -22,14 +22,15 @@ __all__ = ('ObjectRelation', 'SubjectRelation', 'BothWayRelation',
            'SubjectRelation', 'ObjectRelation', 'BothWayRelation',
            'RichString', ) + tuple(BASE_TYPES)
 
-ETYPE_PROPERTIES = ('description', 'permissions',
+ETYPE_PROPERTIES = ('description', '__permissions__',
                     'meta') # XXX meta is deprecated
 # don't put description inside, handled "manualy"
-RTYPE_PROPERTIES = ('symetric', 'inlined', 'fulltext_container', 'permissions',
+RTYPE_PROPERTIES = ('symmetric', 'inlined', 'fulltext_container',
                     'meta') # XXX meta is deprecated
 RDEF_PROPERTIES = ('cardinality', 'constraints', 'composite',
                    'order',  'default', 'uid', 'indexed', 'uid',
-                   'fulltextindexed', 'internationalizable')
+                   'fulltextindexed', 'internationalizable',
+                   '__permissions__',)
 
 REL_PROPERTIES = RTYPE_PROPERTIES+RDEF_PROPERTIES + ('description',)
 
@@ -84,14 +85,28 @@ def _copy_attributes(fromobj, toobj, attributes):
 
 def register_base_types(schema):
     for etype in BASE_TYPES:
-        edef = EntityType(name=etype)
-        schema.add_entity_type(edef).set_default_groups()
+        edef = EntityType(
+            name=etype,
+            # unused actually
+            # XXX add a group in read perms to satisfy schema constraints in cw
+            __permissions__={'read': ('users',), 'add': (), 'delete': (),
+                             'update': ()})
+        schema.add_entity_type(edef)
 
+# XXX use a "frozendict"
+_DEFAULT_RELPERMS = {'read': ('managers', 'users', 'guests',),
+                     'delete': ('managers', 'users'),
+                     'add': ('managers', 'users',)}
+
+_DEFAULT_ATTRPERMS = {'read': ('managers', 'users', 'guests',),
+                      'update': ('managers', 'owners'),
+                      }
 
 class Relation(object):
     """Abstract class which have to be defined before the metadefinition
     meta-class.
     """
+    __permissions__ = MARKER
 
 # first class schema definition objects #######################################
 
@@ -100,6 +115,7 @@ class Definition(object):
 
     meta = MARKER
     description = MARKER
+    __permissions__ = MARKER
 
     def __init__(self, name=None):
         self.name = (name or getattr(self, 'name', None)
@@ -124,11 +140,57 @@ class Definition(object):
         """
         raise NotImplementedError()
 
+    @iclassmethod
+    def get_permissions(cls, final=False):
+        if cls.__permissions__ is MARKER:
+            if final:
+                return _DEFAULT_ATTRPERMS
+            return _DEFAULT_RELPERMS
+        return cls.__permissions__
 
-class metadefinition(type):
+    @classmethod
+    def set_permissions(cls, perms):
+        cls.__permissions__ = perms
+
+    @classmethod
+    def set_action_permissions(cls, action, actionperms):
+        permissions = cls.get_permissions().copy()
+        permissions[action] = actionperms
+        cls.__permissions__ = permissions
+
+
+class XXX_backward_permissions_compat(type):
+    stacklevel = 2
+    def __new__(mcs, name, bases, classdict):
+        if 'permissions' in classdict:
+            classdict['__permissions__'] = classdict.pop('permissions')
+            warn('[yams 0.27.0] permissions is deprecated, use __permissions__ instead (class %s)' % name,
+                 DeprecationWarning, stacklevel=mcs.stacklevel)
+        if 'symetric' in classdict:
+            classdict['symmetric'] = classdict.pop('symetric')
+            warn('[yams 0.27.0] symetric has been respelled symmetric (class %s)' % name,
+                 DeprecationWarning, stacklevel=mcs.stacklevel)
+        return super(XXX_backward_permissions_compat, mcs).__new__(mcs, name, bases, classdict)
+
+    # XXX backward compatiblity
+    def get_permissions(cls):
+        warn('[yams 0.27.0] %s.permissions is deprecated, use .__permissions__ instead'
+             % cls.__name__, DeprecationWarning, stacklevel=2)
+        return cls.__permissions__
+
+    def set_permissions(cls, newperms):
+        warn('[yams 0.27.0] %s.permissions is deprecated, use .__permissions__ instead'
+             % cls.__name__, DeprecationWarning, stacklevel=2)
+        cls.__permissions__ = newperms
+
+    permissions = property(get_permissions, set_permissions)
+
+
+class metadefinition(XXX_backward_permissions_compat):
     """Metaclass that builds the __relations__ attribute of
     EntityType's subclasses.
     """
+    stacklevel = 3
     def __new__(mcs, name, bases, classdict):
 
         rels = classdict.setdefault('__relations__', [])
@@ -160,7 +222,6 @@ class metadefinition(type):
         return defclass
 
 
-
 class EntityType(Definition):
     # FIXME reader magic forbids to define a docstring...
     #"""an entity has attributes and can be linked to other entities by
@@ -177,13 +238,18 @@ class EntityType(Definition):
     #"""
 
     __metaclass__ = metadefinition
+    # XXX use a "frozendict"
+    __permissions__ = {
+        'read': ('managers', 'users', 'guests',),
+        'update': ('managers', 'owners',),
+        'delete': ('managers', 'owners'),
+        'add': ('managers', 'users',)
+        }
 
     def __init__(self, name=None, **kwargs):
         super(EntityType, self).__init__(name)
         _check_kwargs(kwargs, ETYPE_PROPERTIES)
-        _copy_attributes(attrdict(kwargs), self, ETYPE_PROPERTIES)
-        # if not hasattr(self, 'relations'):
-        #self.relations = list(self.__relations__)
+        self.__dict__.update(kwargs)
         self.specialized_type = self.__class__.__dict__.get('__specializes__')
 
     def __str__(self):
@@ -211,7 +277,7 @@ class EntityType(Definition):
     @classmethod
     def _ensure_relation_type(cls, relation):
         """Check the type the relation
-        
+
         return False if the class is not yet finalized
         (XXX raise excep instead ?)"""
         rtype = RelationType(relation.name)
@@ -299,7 +365,9 @@ class EntityType(Definition):
 
 
 class RelationType(Definition):
-    symetric = MARKER
+    __metaclass__ = XXX_backward_permissions_compat
+
+    symmetric = MARKER
     inlined = MARKER
     fulltext_container = MARKER
 
@@ -307,9 +375,9 @@ class RelationType(Definition):
         """kwargs must have values in RTYPE_PROPERTIES"""
         super(RelationType, self).__init__(name)
         if kwargs.pop('meta', None):
-            warn('meta is deprecated', DeprecationWarning, stacklevel=2)
-        _check_kwargs(kwargs, RTYPE_PROPERTIES + ('description',))
-        _copy_attributes(attrdict(kwargs), self, RTYPE_PROPERTIES + ('description',))
+            warn('[yams 0.25] meta is deprecated', DeprecationWarning, stacklevel=2)
+        _check_kwargs(kwargs, RTYPE_PROPERTIES + ('description', '__permissions__'))
+        self.__dict__.update(kwargs)
 
     def __str__(self):
         return 'relation type %r' % self.name
@@ -350,14 +418,14 @@ class RelationDefinition(Definition):
     # FIXME reader magic forbids to define a docstring...
     #"""a relation is defined by a name, the entity types that can be
     #subject or object the relation, the cardinality, the constraints
-    #and the symetric property.
+    #and the symmetric property.
     #"""
 
     subject = MARKER
     object = MARKER
     cardinality = MARKER
     constraints = MARKER
-    symetric = MARKER
+    symmetric = MARKER
     inlined = MARKER
 
     def __init__(self, subject=None, name=None, object=None, **kwargs):
@@ -372,9 +440,13 @@ class RelationDefinition(Definition):
             self.object = self.__class__.object
         super(RelationDefinition, self).__init__(name)
         if kwargs.pop('meta', None):
-            warn('meta is deprecated', DeprecationWarning)
+            warn('[yams 0.25] meta is deprecated', DeprecationWarning)
+        if 'symetric' in kwargs:
+            warn('[yams 0.27.0] symetric has been respelled symmetric',
+                 DeprecationWarning, stacklevel=2)
+            kwargs['symmetric'] = kwargs.pop('symetric')
         _check_kwargs(kwargs, RDEF_PROPERTIES + ('description',))
-        _copy_attributes(attrdict(kwargs), self, RDEF_PROPERTIES + ('description',))
+        _copy_attributes(attrdict(**kwargs), self, RDEF_PROPERTIES + ('description',))
         if self.constraints:
             self.constraints = list(self.constraints)
 
@@ -389,6 +461,11 @@ class RelationDefinition(Definition):
         """
         name = getattr(cls, 'name', cls.__name__)
         rtype = RelationType(name)
+        if hasattr(cls, 'symetric'):
+            cls.symmetric = cls.symetric
+            del cls.symetric
+            warn('[yams 0.27.0] symetric has been respelled symmetric (class %s)' % name,
+                 DeprecationWarning)
         _copy_attributes(cls, rtype, RTYPE_PROPERTIES)
         if name in defined:
             _copy_attributes(rtype, defined[name], RTYPE_PROPERTIES)
@@ -427,10 +504,15 @@ class RelationDefinition(Definition):
             self.constraints = ()
         rschema = schema.rschema(name)
         if self.subject == '**' or self.object == '**':
-            warn('** is deprecated, use * (%s)' % rtype, DeprecationWarning)
+            warn('[yams 0.25] ** is deprecated, use * (%s)' % rtype, DeprecationWarning)
+        if self.__permissions__ is MARKER:
+            final = iter(_actual_types(schema, self.object)).next() in BASE_TYPES
+            permissions = rtype.get_permissions(final)
+        else:
+            permissions = self.__permissions__
         for subj in _actual_types(schema, self.subject):
             for obj in _actual_types(schema, self.object):
-                rdef = RelationDefinition(subj, name, obj)
+                rdef = RelationDefinition(subj, name, obj, __permissions__=permissions)
                 _copy_attributes(self, rdef, RDEF_PROPERTIES + ('description',))
                 schema.add_relation_def(rdef)
 
@@ -473,6 +555,10 @@ class ObjectRelation(Relation):
         if self.constraints:
             self.constraints = list(self.constraints)
         self.override = kwargs.pop('override', False)
+        if 'symetric' in kwargs:
+            kwargs['symmetric'] = kwargs.pop('symetric')
+            warn('[yams 0.27.0] symetric has been respelled symmetric',
+                 DeprecationWarning, stacklevel=2)
         try:
             _check_kwargs(kwargs, REL_PROPERTIES)
         except BadSchemaDefinition, bad:
@@ -481,7 +567,7 @@ class ObjectRelation(Relation):
                                           'lines above in the backtrace))') % (bad.args, etype, etype))
             bsd_ex.tb_offset = 2
             raise bsd_ex
-        _copy_attributes(attrdict(kwargs), self, REL_PROPERTIES)
+        self.__dict__.update(kwargs)
 
     def __repr__(self):
         return '%(name)s %(etype)s' % self.__dict__
@@ -575,7 +661,7 @@ class RichString(String):
 # various derivated classes with some predefined values XXX deprecated
 
 class MetaEntityType(EntityType):
-    permissions = {
+    __permissions__ = {
         'read':   ('managers', 'users', 'guests',),
         'add':    ('managers',),
         'update': ('managers', 'owners',),
@@ -586,7 +672,7 @@ class MetaUserEntityType(EntityType):
     pass
 
 class MetaRelationType(RelationType):
-    permissions = {
+    __permissions__ = {
         'read':   ('managers', 'users', 'guests',),
         'add':    ('managers',),
         'delete': ('managers',),
@@ -597,7 +683,7 @@ class MetaUserRelationType(RelationType):
 
 class MetaAttributeRelationType(RelationType):
     # just set permissions to None so default permissions are set
-    permissions = MARKER
+    __permissions__ = MARKER
 
 
 __all__ += ('MetaEntityType', 'MetaUserEntityType',

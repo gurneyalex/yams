@@ -10,7 +10,7 @@ class Anotherentity(EntityType):
 class rel(RelationType):
     composite = 'subject'
     cardinality = '1*'
-    symetric = True
+    symmetric = True
 
 class __rel(RelationType):
     name = 'rel'

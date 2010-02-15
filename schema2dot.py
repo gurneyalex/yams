@@ -29,37 +29,37 @@ class SchemaDotPropsHandler(object):
         """return default DOT drawing options for an entity schema"""
         label = ['{',eschema.type,'|']
         label.append(r'\l'.join(rel.type for rel in eschema.ordered_relations()
-                                if rel.final and self.visitor.should_display_attr(rel)))
+                                if rel.final and self.visitor.should_display_attr(eschema, rel)))
         label.append(r'\l}') # trailing \l ensure alignement of the last one
         return {'label' : ''.join(label), 'shape' : "record",
                 'fontname' : "Courier", 'style' : "filled"}
 
     def edge_properties(self, rschema, subjnode, objnode):
         """return default DOT drawing options for a relation schema"""
-        # symetric rels are handled differently, let yams decide what's best
-        if rschema.symetric:
+        # symmetric rels are handled differently, let yams decide what's best
+        if rschema.symmetric:
             kwargs = {'label': rschema.type,
                       'color': '#887788', 'style': 'dashed',
                       'dir': 'both', 'arrowhead': 'normal', 'arrowtail': 'normal'}
         else:
             kwargs = {'label': rschema.type,
                       'color' : 'black',  'style' : 'filled'}
-            composite = rschema.rproperty(subjnode, objnode, 'composite')
-            if composite == 'subject':
+            rdef = rschema.rdef(subjnode, objnode)
+            composite = rdef.composite
+            if rdef.composite == 'subject':
                 kwargs['arrowhead'] = 'none'
                 kwargs['arrowtail'] = 'diamond'
-            elif composite == 'object':
+            elif rdef.composite == 'object':
                 kwargs['arrowhead'] = 'diamond'
                 kwargs['arrowtail'] = 'none'
             else:
                 kwargs['arrowhead'] = 'normal'
                 kwargs['arrowtail'] = 'none'
-            cards = rschema.rproperty(subjnode, objnode, 'cardinality')
             # UML like cardinalities notation, omitting 1..1
-            if cards[1] != '1':
-                kwargs['taillabel'] = CARD_MAP[cards[1]]
-            if cards[0] != '1':
-                kwargs['headlabel'] = CARD_MAP[cards[0]]
+            if rdef.cardinality[1] != '1':
+                kwargs['taillabel'] = CARD_MAP[rdef.cardinality[1]]
+            if rdef.cardinality[0] != '1':
+                kwargs['headlabel'] = CARD_MAP[rdef.cardinality[0]]
             kwargs['color'] = self.nextcolor()
         kwargs['fontcolor'] = kwargs['color']
         # dot label decoration is just awful (1 line underlining the label
@@ -79,14 +79,14 @@ class SchemaVisitor(object):
     def should_display_schema(self, erschema):
         return not (erschema.final or erschema in self.skiptypes)
 
-    def should_display_attr(self, rschema):
+    def should_display_attr(self, eschema, rschema):
         return not rschema in self.skiptypes
 
     def display_rel(self, rschema, setype, tetype):
         if (rschema, setype, tetype) in self._done:
             return False
         self._done.add((rschema, setype, tetype))
-        if rschema.symetric:
+        if rschema.symmetric:
             self._done.add((rschema, tetype, setype))
         return True
 
@@ -114,7 +114,7 @@ class FullSchemaVisitor(SchemaVisitor):
         for rschema in self.schema.relations():
             if not self.should_display_schema(rschema):
                 continue
-            for setype, tetype in rschema._rproperties:
+            for setype, tetype in rschema.rdefs:
                 if not (setype in self._eindex and tetype in self._eindex):
                     continue
                 if not self.display_rel(rschema, setype, tetype):
