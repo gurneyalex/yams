@@ -237,7 +237,6 @@ class SchemaLoaderTC(TestCase):
         rschema = schema.rschema('tel')
         self.assertEquals(rschema.rdef('Person', 'Int').permissions,
                           {'read': (),
-                           'add': ('managers',),
                            'update': ('managers',)})
 
 
