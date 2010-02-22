@@ -23,7 +23,6 @@ class Person(EntityType):
     ass    = String(maxsize=128)
     web    = String(maxsize=128)
     tel    = Int(__permissions__={'read': (),
-                                  'add': ('managers',),
                                   'update': ('managers',)})
     fax    = Int()
     datenaiss = Date()
