@@ -475,12 +475,13 @@ class EntitySchema(PermissionMixIn, ERSchema):
 
     ## validation ######################
 
-    def check(self, entity, creation=False, _=unicode):
+    def check(self, entity, creation=False, _=unicode, relations=None):
         """check the entity and raises an ValidationError exception if it
         contains some invalid fields (ie some constraints failed)
         """
         errors = {}
-        for rschema in self.subject_relations():
+        relations = relations or self.subject_relations()
+        for rschema in relations:
             if not rschema.final:
                 continue
             aschema = self.destination(rschema)

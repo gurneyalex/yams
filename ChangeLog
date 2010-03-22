@@ -1,6 +1,9 @@
 ChangeLog for yams
 ------------------
 
+	--
+    * EntitySchema.check() accepts an explicit set of relations to check
+
 2010-02-26  --  0.28.0
     * proper attribute permissions: should now use 'update' instead of 'add'/'delete'
 
