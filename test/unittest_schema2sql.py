@@ -5,7 +5,7 @@ import os.path as osp
 from cStringIO import StringIO
 
 from logilab.common.testlib import TestCase, unittest_main
-from logilab.common.adbh import get_adv_func_helper
+from logilab.database import get_db_helper
 
 from yams.reader import SchemaLoader
 from yams import schema2sql
@@ -245,7 +245,7 @@ CREATE INDEX works_for_relation_to_idx ON works_for_relation(eid_to);
 class SQLSchemaTC(TestCase):
 
     def test_known_values(self):
-        dbhelper = get_adv_func_helper('postgres')
+        dbhelper = get_db_helper('postgres')
         output = schema2sql.schema2sql(dbhelper, schema)
         self.assertTextEquals(EXPECTED_DATA_NO_DROP.strip(), output.strip())
 
