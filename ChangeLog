@@ -1,8 +1,11 @@
 ChangeLog for yams
 ------------------
 
-	--
+--
     * EntitySchema.check() accepts an explicit set of relations to check
+
+    * provides a new role_name function to generate qualified name to put
+      in validation errors
 
 2010-02-26  --  0.28.0
     * proper attribute permissions: should now use 'update' instead of 'add'/'delete'

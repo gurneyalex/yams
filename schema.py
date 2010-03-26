@@ -23,6 +23,9 @@ from yams.interfaces import (ISchema, IRelationSchema, IEntitySchema,
                              IVocabularyConstraint)
 from yams.constraints import BASE_CHECKERS, BASE_CONVERTERS, UniqueConstraint
 
+def role_name(rtype, role):
+    return '%s-%s' % (rtype, role)
+
 def check_permission_definitions(schema):
     """check permissions are correctly defined"""
     # already initialized, check everything is fine
@@ -485,6 +488,7 @@ class EntitySchema(PermissionMixIn, ERSchema):
             if not rschema.final:
                 continue
             aschema = self.destination(rschema)
+            qname = role_name(rschema, 'subject')
             rdef = rschema.rdef(self, aschema)
             # don't care about rhs cardinality, always '*' (if it make senses)
             card = rdef.cardinality[0]
@@ -497,26 +501,26 @@ class EntitySchema(PermissionMixIn, ERSchema):
                 if creation and required:
                     # missing required attribute with no default on creation
                     # is not autorized
-                    errors[rschema.type] = _('required attribute')
+                    errors[qname] = _('required attribute')
                 # on edition, missing attribute is considered as no changes
                 continue
             # skip other constraint if value is None and None is allowed
             if value is None:
                 if required:
-                    errors[rschema.type] = _('required attribute')
+                    errors[qname] = _('required attribute')
                 continue
             if not aschema.check_value(value):
-                errors[rschema.type] = _('incorrect value (%(value)s) for type "%(type)s"') % {
+                errors[qname] = _('incorrect value (%(value)s) for type "%(type)s"') % {
                     'value':value, 'type': _(aschema.type)}
                 if isinstance(value, str):
-                    errors[rschema.type] = '%s; you might want to try unicode'  % errors[rschema.type]
+                    errors[qname] += '; you might want to try unicode'
                 continue
             # ensure value has the correct python type
             entity[rschema] = value = aschema.convert_value(value)
             # check arbitrary constraints
             for constraint in rdef.constraints:
                 if not constraint.check(entity, rschema, value):
-                    errors[rschema.type] = _('%(cstr)s constraint failed for value %(value)r') % {
+                    errors[qname] = _('%(cstr)s constraint failed for value %(value)r') % {
                         'cstr': constraint, 'value': value}
         if errors:
             raise ValidationError(entity, errors)
