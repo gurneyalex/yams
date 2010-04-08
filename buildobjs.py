@@ -95,12 +95,12 @@ def register_base_types(schema):
 
 # XXX use a "frozendict"
 DEFAULT_RELPERMS = {'read': ('managers', 'users', 'guests',),
-                     'delete': ('managers', 'users'),
-                     'add': ('managers', 'users',)}
+                    'delete': ('managers', 'users'),
+                    'add': ('managers', 'users',)}
 
 DEFAULT_ATTRPERMS = {'read': ('managers', 'users', 'guests',),
-                      'update': ('managers', 'owners'),
-                      }
+                     'update': ('managers', 'owners'),
+                     }
 
 class Relation(object):
     """Abstract class which have to be defined before the metadefinition
