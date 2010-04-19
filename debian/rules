@@ -11,12 +11,12 @@
 # Uncomment this to turn on verbose mode.
 #export DH_VERBOSE=1
 build: build-stamp
-build-stamp: 
+build-stamp:
 	dh_testdir
-	python setup.py -q build
+	NO_SETUPTOOLS=1 python setup.py -q build
 	touch build-stamp
 
-clean: 
+clean:
 	dh_testdir
 	dh_testroot
 	rm -f build-stamp configure-stamp
@@ -30,7 +30,7 @@ install: build
 	dh_testroot
 	dh_clean -k
 	dh_installdirs
-	python setup.py -q install --no-compile --prefix=debian/python-yams/usr/ --install-headers=debian/python-yams/usr/include/
+	NO_SETUPTOOLS=1 python setup.py -q install --no-compile --prefix=debian/python-yams/usr/ --install-headers=debian/python-yams/usr/include/
 	# remove test directory (installed in a separated package)
 	rm -rf debian/python-yams/usr/lib/python*/site-packages/yams/test
 	# install tests
@@ -39,8 +39,8 @@ install: build
 
 # Build architecture-independent files here.
 binary-indep: build install
-	dh_testdir 
-	dh_testroot 
+	dh_testdir
+	dh_testroot
 	dh_install -i
 	dh_pysupport -i
 	dh_python -i
@@ -53,7 +53,7 @@ binary-indep: build install
 	dh_compress -i -X.py -X.ini -X.xml -Xtest
 	dh_fixperms -i
 	dh_installdeb -i
-	dh_gencontrol -i 
+	dh_gencontrol -i
 	dh_md5sums -i
 	dh_builddeb -i
 
