@@ -1,61 +1,49 @@
 #!/usr/bin/env python
-# pylint: disable-msg=W0404,W0622,W0704,W0613,W0403,W0622
-# Copyright (c) 2003-2007 LOGILAB S.A. (Paris, FRANCE).
-# http://www.logilab.fr/ -- mailto:contact@logilab.fr
-#
-# This program is free software; you can redistribute it and/or modify it under
-# the terms of the GNU General Public License as published by the Free Software
-# Foundation; either version 2 of the License, or (at your option) any later
-# version.
-#
-# This program is distributed in the hope that it will be useful, but WITHOUT
-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-# FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License along with
-# this program; if not, write to the Free Software Foundation, Inc.,
-# 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-""" Generic Setup script, takes package info from __pkginfo__.py file """
+# pylint: disable-msg=W0404,W0622,W0704,W0613,W0152
+"""Generic Setup script, takes package info from __pkginfo__.py file.
+
+:copyright: 2003-2010 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
+:contact: http://www.logilab.fr/ -- mailto:contact@logilab.fr
+:license: GNU Lesser General Public License, v2.1 - http://www.gnu.org/licenses
+"""
+__docformat__ = "restructuredtext en"
 
 import os
 import sys
 import shutil
-from distutils.core import setup
-from distutils import command
-from distutils.command import install_lib
 from os.path import isdir, exists, join, walk
 
+try:
+    if os.environ.get('NO_SETUPTOOLS'):
+        raise ImportError()
+    from setuptools import setup
+    from setuptools.command import install_lib
+    USE_SETUPTOOLS = 1
+except ImportError:
+    from distutils.core import setup
+    from distutils.command import install_lib
+    USE_SETUPTOOLS = 0
+
+
+sys.modules.pop('__pkginfo__', None)
 # import required features
 from __pkginfo__ import modname, version, license, short_desc, long_desc, \
      web, author, author_email
 # import optional features
-try:
-    from __pkginfo__ import distname
-except ImportError:
-    distname = modname
-try:
-    from __pkginfo__ import scripts
-except ImportError:
-    scripts = []
-try:
-    from __pkginfo__ import data_files
-except ImportError:
-    data_files = None
-try:
-    from __pkginfo__ import subpackage_of
-except ImportError:
-    subpackage_of = None
-try:
-    from __pkginfo__ import include_dirs
-except ImportError:
-    include_dirs = []
-try:
-    from __pkginfo__ import ext_modules
-except ImportError:
-    ext_modules = None
+import __pkginfo__
+distname = getattr(__pkginfo__, 'distname', modname)
+scripts = getattr(__pkginfo__, 'scripts', [])
+data_files = getattr(__pkginfo__, 'data_files', None)
+subpackage_of = getattr(__pkginfo__, 'subpackage_of', None)
+include_dirs = getattr(__pkginfo__, 'include_dirs', [])
+ext_modules = getattr(__pkginfo__, 'ext_modules', None)
+install_requires = getattr(__pkginfo__, 'install_requires', None)
+dependency_links = getattr(__pkginfo__, 'dependency_links', None)
 
-BASE_BLACKLIST = ('CVS', 'debian', 'dist', 'build', '__buildlog')
-IGNORED_EXTENSIONS = ('.pyc', '.pyo', '.elc')
+STD_BLACKLIST = ('CVS', '.svn', '.hg', 'debian', 'dist', 'build')
+
+IGNORED_EXTENSIONS = ('.pyc', '.pyo', '.elc', '~')
+
 
 
 def ensure_scripts(linux_scripts):
@@ -88,8 +76,9 @@ def get_packages(directory, prefix):
     return result
 
 def export(from_dir, to_dir,
-           blacklist=BASE_BLACKLIST,
-           ignore_ext=IGNORED_EXTENSIONS):
+           blacklist=STD_BLACKLIST,
+           ignore_ext=IGNORED_EXTENSIONS,
+           verbose=True):
     """make a mirror of from_dir in to_dir, omitting directories and files
     listed in the black list
     """
@@ -106,9 +95,10 @@ def export(from_dir, to_dir,
                 continue
             if filename[-1] == '~':
                 continue
-            src = '%s/%s' % (directory, filename)
+            src = join(directory, filename)
             dest = to_dir + src[len(from_dir):]
-            print >> sys.stderr, src, '->', dest
+            if verbose:
+                print >> sys.stderr, src, '->', dest
             if os.path.isdir(src):
                 if not exists(dest):
                     os.mkdir(dest)
@@ -126,12 +116,20 @@ def export(from_dir, to_dir,
     walk(from_dir, make_mirror, None)
 
 
-EMPTY_FILE = '"""generated file, don\'t modify or your data will be lost"""\n'
+EMPTY_FILE = '''"""generated file, don\'t modify or your data will be lost"""
+try:
+    __import__('pkg_resources').declare_namespace(__name__)
+except ImportError:
+    pass
+'''
 
-class BuildScripts(command.install_lib.install_lib):
-
+class MyInstallLib(install_lib.install_lib):
+    """extend install_lib command to handle  package __init__.py and
+    include_dirs variable if necessary
+    """
     def run(self):
-        command.install_lib.install_lib.run(self)
+        """overridden from install_lib class"""
+        install_lib.install_lib.run(self)
         # create Products.__init__.py if needed
         if subpackage_of:
             product_init = join(self.install_dir, subpackage_of, '__init__.py')
@@ -148,30 +146,48 @@ class BuildScripts(command.install_lib.install_lib):
                 base = modname
             for directory in include_dirs:
                 dest = join(self.install_dir, base, directory)
-                export(directory, dest)
+                export(directory, dest, verbose=False)
 
 def install(**kwargs):
     """setup entry point"""
+    try:
+        if USE_SETUPTOOLS:
+            sys.argv.remove('--force-manifest')
+    except:
+        pass
+    try:
+        if not USE_SETUPTOOLS:
+            # install-layout option was introduced in 2.5.3-1~exp1
+            if sys.versioninfo < (2, 5, 4):
+                sys.argv.remove('--install-layout=deb')
+                print "W: remove '--install-layout=deb' option"
+    except:
+        pass
     if subpackage_of:
         package = subpackage_of + '.' + modname
         kwargs['package_dir'] = {package : '.'}
         packages = [package] + get_packages(os.getcwd(), package)
+        if USE_SETUPTOOLS:
+            kwargs['namespace_packages'] = [subpackage_of]
     else:
         kwargs['package_dir'] = {modname : '.'}
         packages = [modname] + get_packages(os.getcwd(), modname)
+    if USE_SETUPTOOLS and install_requires:
+        kwargs['install_requires'] = install_requires
+        kwargs['dependency_links'] = dependency_links
     kwargs['packages'] = packages
     return setup(name = distname,
                  version = version,
-                 license =license,
+                 license = license,
                  description = short_desc,
                  long_description = long_desc,
                  author = author,
                  author_email = author_email,
                  url = web,
                  scripts = ensure_scripts(scripts),
-                 data_files=data_files,
-                 ext_modules=ext_modules,
-                 cmdclass={'install_lib': BuildScripts},
+                 data_files = data_files,
+                 ext_modules = ext_modules,
+                 cmdclass = {'install_lib': MyInstallLib},
                  **kwargs
                  )
 
