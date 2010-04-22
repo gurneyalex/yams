@@ -13,6 +13,8 @@ import decimal
 import operator
 from StringIO import StringIO
 
+from logilab.common.deprecation import class_renamed
+
 import yams
 from yams import BadSchemaDefinition
 from yams.interfaces import IConstraint, IVocabularyConstraint
@@ -191,11 +193,10 @@ OPERATORS = {
     '>=': operator.ge,
     }
 
-class BoundConstraint(BaseConstraint):
+class BoundaryConstraint(BaseConstraint):
     """the int/float bound constraint :
 
     set a minimal or maximal value to a numerical value
-    This class is DEPRECATED, use IntervalBoundConstraint instead
     """
     __implements__ = IConstraint
 
@@ -230,6 +231,8 @@ class BoundConstraint(BaseConstraint):
         """simple text deserialization"""
         op, boundary = value.split(' ', 1)
         return cls(op, eval(boundary))
+
+BoundConstraint = class_renamed('BoundConstraint', BoundaryConstraint)
 
 
 class IntervalBoundConstraint(BaseConstraint):

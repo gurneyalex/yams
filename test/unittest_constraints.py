@@ -74,8 +74,8 @@ class ConstraintTC(TestCase):
         self.failIf(cstr2.check(None, 'hip', date.today() + timedelta(4)))
 
     def test_bound_with_attribute(self):
-        cstr = BoundConstraint('<=', Attribute('hop'))
-        cstr2 = BoundConstraint.deserialize(cstr.serialize())
+        cstr = BoundaryConstraint('<=', Attribute('hop'))
+        cstr2 = BoundaryConstraint.deserialize(cstr.serialize())
         self.assertEquals(cstr2.boundary.attr, 'hop')
         self.assertEquals(cstr2.operator, '<=')
         self.failUnless(cstr2.check(mock_object(hop=date.today()), 'hip', date.today()))
@@ -85,8 +85,8 @@ class ConstraintTC(TestCase):
 
 
     def test_bound_with_date(self):
-        cstr = BoundConstraint('<=', TODAY())
-        cstr2 = BoundConstraint.deserialize(cstr.serialize())
+        cstr = BoundaryConstraint('<=', TODAY())
+        cstr2 = BoundaryConstraint.deserialize(cstr.serialize())
         self.assertEquals(cstr2.boundary.offset, None)
         self.assertEquals(cstr2.operator, '<=')
         self.failUnless(cstr2.check(None, 'hip', date.today()))
