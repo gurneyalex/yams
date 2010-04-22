@@ -520,8 +520,7 @@ class EntitySchema(PermissionMixIn, ERSchema):
             # check arbitrary constraints
             for constraint in rdef.constraints:
                 if not constraint.check(entity, rschema, value):
-                    errors[qname] = _('%(cstr)s constraint failed for value %(value)r') % {
-                        'cstr': constraint, 'value': value}
+                    errors[qname] = constraint.failed_message(value, _)
         if errors:
             raise ValidationError(entity, errors)
 
