@@ -17,8 +17,7 @@ from yams import BASE_TYPES, MARKER, BadSchemaDefinition
 from yams.constraints import (SizeConstraint, UniqueConstraint,
                               StaticVocabularyConstraint, format_constraint)
 
-__all__ = ('ObjectRelation', 'SubjectRelation', 'BothWayRelation',
-           'RelationDefinition', 'EntityType', 'RelationType',
+__all__ = ('EntityType', 'RelationType', 'RelationDefinition',
            'SubjectRelation', 'ObjectRelation', 'BothWayRelation',
            'RichString', ) + tuple(BASE_TYPES)
 
