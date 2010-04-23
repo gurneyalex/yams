@@ -311,6 +311,8 @@ class EntityType(Definition):
                                           name=relation.name,
                                           object=name, order=order)
                 _copy_attributes(relation, rdef, RDEF_PROPERTIES + ('description',))
+            elif isinstance(relation, RelationDefinition):
+                rdef = relation
             else:
                 raise BadSchemaDefinition('dunno how to handle %s' % relation)
             order += 1
