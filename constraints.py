@@ -270,10 +270,10 @@ class IntervalBoundConstraint(BaseConstraint):
         return True
 
     def failed_message(self, value, _=unicode):
-        if minvalue is not None and value < self.minvalue:
+        if self.minvalue is not None and value < self.minvalue:
             return _("%(value)r must be >= %(boundary)s") % {
                 'value': value, 'boundary': self.minvalue}
-        if maxvalue is not None and value < self.maxvalue:
+        if self.maxvalue is not None and value < self.maxvalue:
             return _("%(value)r must be <= %(boundary)s") % {
                 'value': value, 'boundary': self.maxvalue}
         assert False, 'shouldnt be there'
