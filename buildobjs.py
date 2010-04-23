@@ -559,6 +559,10 @@ class ObjectRelation(Relation):
     created = 0
 
     def __init__(self, etype, **kwargs):
+        if self.__class__.__name__ == 'ObjectRelation':
+            warn('[yams 0.29] ObjectRelation is deprecated, '
+                 'use RelationDefinition subclass', DeprecationWarning,
+                 stacklevel=2)
         ObjectRelation.created += 1
         self.creation_rank = ObjectRelation.created
         self.name = '<undefined>'
@@ -598,6 +602,9 @@ class SubjectRelation(ObjectRelation):
 class BothWayRelation(Relation):
 
     def __init__(self, subjectrel, objectrel):
+        warn('[yams 0.29] BothWayRelation is deprecated, '
+             'use RelationDefinition subclass', DeprecationWarning,
+             stacklevel=2)
         assert isinstance(subjectrel, SubjectRelation)
         assert isinstance(objectrel, ObjectRelation)
         self.subjectrel = subjectrel
