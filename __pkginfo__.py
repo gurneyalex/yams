@@ -13,12 +13,11 @@ __docformat__ = "restructuredtext en"
 modname = 'yams'
 
 # release version
-numversion = (0, 28, 1)
+numversion = (0, 29, 0)
 version = '.'.join(str(num) for num in numversion)
 
 # license and copyright
 license = 'LGPL'
-copyright = 'Copyright (c) 2003-2010 LOGILAB S.A. (Paris, FRANCE)'
 
 # short and long description
 short_desc = "entity / relation schema"
