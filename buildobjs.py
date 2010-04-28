@@ -1,9 +1,22 @@
+# copyright 2004-2010 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
+# contact http://www.logilab.fr/ -- mailto:contact@logilab.fr
+#
+# This file is part of yams.
+#
+# yams is free software: you can redistribute it and/or modify it under the
+# terms of the GNU Lesser General Public License as published by the Free
+# Software Foundation, either version 2.1 of the License, or (at your option)
+# any later version.
+#
+# yams is distributed in the hope that it will be useful, but WITHOUT ANY
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+# A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
+# details.
+#
+# You should have received a copy of the GNU Lesser General Public License along
+# with yams. If not, see <http://www.gnu.org/licenses/>.
 """Classes used to build a schema.
 
-:organization: Logilab
-:copyright: 2003-2010 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
-:contact: http://www.logilab.fr/ -- mailto:contact@logilab.fr
-:license: General Public License version 2 - http://www.gnu.org/licenses
 """
 __docformat__ = "restructuredtext en"
 
@@ -17,8 +30,7 @@ from yams import BASE_TYPES, MARKER, BadSchemaDefinition
 from yams.constraints import (SizeConstraint, UniqueConstraint,
                               StaticVocabularyConstraint, format_constraint)
 
-__all__ = ('ObjectRelation', 'SubjectRelation', 'BothWayRelation',
-           'RelationDefinition', 'EntityType', 'RelationType',
+__all__ = ('EntityType', 'RelationType', 'RelationDefinition',
            'SubjectRelation', 'ObjectRelation', 'BothWayRelation',
            'RichString', ) + tuple(BASE_TYPES)
 
@@ -311,6 +323,8 @@ class EntityType(Definition):
                                           name=relation.name,
                                           object=name, order=order)
                 _copy_attributes(relation, rdef, RDEF_PROPERTIES + ('description',))
+            elif isinstance(relation, RelationDefinition):
+                rdef = relation
             else:
                 raise BadSchemaDefinition('dunno how to handle %s' % relation)
             order += 1
@@ -557,6 +571,10 @@ class ObjectRelation(Relation):
     created = 0
 
     def __init__(self, etype, **kwargs):
+        if self.__class__.__name__ == 'ObjectRelation':
+            warn('[yams 0.29] ObjectRelation is deprecated, '
+                 'use RelationDefinition subclass', DeprecationWarning,
+                 stacklevel=2)
         ObjectRelation.created += 1
         self.creation_rank = ObjectRelation.created
         self.name = '<undefined>'
@@ -596,6 +614,9 @@ class SubjectRelation(ObjectRelation):
 class BothWayRelation(Relation):
 
     def __init__(self, subjectrel, objectrel):
+        warn('[yams 0.29] BothWayRelation is deprecated, '
+             'use RelationDefinition subclass', DeprecationWarning,
+             stacklevel=2)
         assert isinstance(subjectrel, SubjectRelation)
         assert isinstance(objectrel, ObjectRelation)
         self.subjectrel = subjectrel

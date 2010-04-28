@@ -1,3 +1,20 @@
+# copyright 2004-2010 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
+# contact http://www.logilab.fr/ -- mailto:contact@logilab.fr
+#
+# This file is part of yams.
+#
+# yams is free software: you can redistribute it and/or modify it under the
+# terms of the GNU Lesser General Public License as published by the Free
+# Software Foundation, either version 2.1 of the License, or (at your option)
+# any later version.
+#
+# yams is distributed in the hope that it will be useful, but WITHOUT ANY
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+# A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
+# details.
+#
+# You should have received a copy of the GNU Lesser General Public License along
+# with yams. If not, see <http://www.gnu.org/licenses/>.
 from logilab.common.testlib import TestCase, unittest_main, mock_object
 
 from yams.constraints import *
@@ -74,8 +91,8 @@ class ConstraintTC(TestCase):
         self.failIf(cstr2.check(None, 'hip', date.today() + timedelta(4)))
 
     def test_bound_with_attribute(self):
-        cstr = BoundConstraint('<=', Attribute('hop'))
-        cstr2 = BoundConstraint.deserialize(cstr.serialize())
+        cstr = BoundaryConstraint('<=', Attribute('hop'))
+        cstr2 = BoundaryConstraint.deserialize(cstr.serialize())
         self.assertEquals(cstr2.boundary.attr, 'hop')
         self.assertEquals(cstr2.operator, '<=')
         self.failUnless(cstr2.check(mock_object(hop=date.today()), 'hip', date.today()))
@@ -85,8 +102,8 @@ class ConstraintTC(TestCase):
 
 
     def test_bound_with_date(self):
-        cstr = BoundConstraint('<=', TODAY())
-        cstr2 = BoundConstraint.deserialize(cstr.serialize())
+        cstr = BoundaryConstraint('<=', TODAY())
+        cstr2 = BoundaryConstraint.deserialize(cstr.serialize())
         self.assertEquals(cstr2.boundary.offset, None)
         self.assertEquals(cstr2.operator, '<=')
         self.failUnless(cstr2.check(None, 'hip', date.today()))

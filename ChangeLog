@@ -1,6 +1,17 @@
 ChangeLog for yams
 ------------------
 
+2010-04-26  --  0.29.0
+    * setuptools compat
+
+    * nicer error messages on constraint failure
+
+    * rename BoundConstraint to BoundaryConstraint
+
+    * deprecate ObjectRelation and BothWayRelation
+
+
+
 2010-03-26  --  0.28.1
     * EntitySchema.check() accepts an explicit set of relations to check
 
