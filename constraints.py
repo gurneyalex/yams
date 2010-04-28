@@ -1,9 +1,22 @@
+# copyright 2004-2010 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
+# contact http://www.logilab.fr/ -- mailto:contact@logilab.fr
+#
+# This file is part of yams.
+#
+# yams is free software: you can redistribute it and/or modify it under the
+# terms of the GNU Lesser General Public License as published by the Free
+# Software Foundation, either version 2.1 of the License, or (at your option)
+# any later version.
+#
+# yams is distributed in the hope that it will be useful, but WITHOUT ANY
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+# A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
+# details.
+#
+# You should have received a copy of the GNU Lesser General Public License along
+# with yams. If not, see <http://www.gnu.org/licenses/>.
 """Some common constraint classes.
 
-:organization: Logilab
-:copyright: 2004-2009 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
-:contact: http://www.logilab.fr/ -- mailto:contact@logilab.fr
-:license: General Public License version 2 - http://www.gnu.org/licenses
 """
 
 __docformat__ = "restructuredtext en"
@@ -12,6 +25,8 @@ import re
 import decimal
 import operator
 from StringIO import StringIO
+
+from logilab.common.deprecation import class_renamed
 
 import yams
 from yams import BadSchemaDefinition
@@ -39,6 +54,9 @@ class BaseConstraint(object):
         """
         return cls()
 
+    def failed_message(self, value, _=unicode):
+        return _('%(cstr)s constraint failed for value %(value)r') % {
+            'cstr': self, 'value': value}
 
 # possible constraints ########################################################
 
@@ -106,6 +124,13 @@ class SizeConstraint(BaseConstraint):
                 return False
         return True
 
+    def failed_message(self, value, _=unicode):
+        if self.max is not None and len(value) > self.max:
+            return _('value should have maximum size of %s') % self.max
+        if self.min is not None and len(value) < self.min:
+            return _('value should have minimum size of %s') % self.min
+        assert False, 'shouldnt be there'
+
     def serialize(self):
         """simple text serialization"""
         if self.max and self.min:
@@ -142,7 +167,7 @@ class RegexpConstraint(BaseConstraint):
         self._rgx = re.compile(regexp, flags)
 
     def __str__(self):
-        return 'regexp %s' % self.serialize()
+        return 'regexp %s' % self.regexp
 
     def check_consistency(self, subjschema, objschema, rdef):
         if not objschema.final:
@@ -155,6 +180,10 @@ class RegexpConstraint(BaseConstraint):
     def check(self, entity, rtype, value):
         """return true if the value maches the regular expression"""
         return self._rgx.match(value, self.flags)
+
+    def failed_message(self, value, _=unicode):
+        return _("%(value)r doesn't match the %(regexp)r regular expression") % {
+            'value': value, 'regexp': self.regexp}
 
     def serialize(self):
         """simple text serialization"""
@@ -177,11 +206,10 @@ OPERATORS = {
     '>=': operator.ge,
     }
 
-class BoundConstraint(BaseConstraint):
+class BoundaryConstraint(BaseConstraint):
     """the int/float bound constraint :
 
     set a minimal or maximal value to a numerical value
-    This class is DEPRECATED, use IntervalBoundConstraint instead
     """
     __implements__ = IConstraint
 
@@ -203,6 +231,10 @@ class BoundConstraint(BaseConstraint):
         boundary = actual_value(self.boundary, entity)
         return OPERATORS[self.operator](value, boundary)
 
+    def failed_message(self, value, _=unicode):
+        return _("value must be %(op)s %(boundary)s") % {
+            'op': self.operator, 'boundary': self.boundary}
+
     def serialize(self):
         """simple text serialization"""
         return u'%s %s' % (self.operator, self.boundary)
@@ -212,6 +244,8 @@ class BoundConstraint(BaseConstraint):
         """simple text deserialization"""
         op, boundary = value.split(' ', 1)
         return cls(op, eval(boundary))
+
+BoundConstraint = class_renamed('BoundConstraint', BoundaryConstraint)
 
 
 class IntervalBoundConstraint(BaseConstraint):
@@ -248,6 +282,15 @@ class IntervalBoundConstraint(BaseConstraint):
             return False
         return True
 
+    def failed_message(self, value, _=unicode):
+        if self.minvalue is not None and value < self.minvalue:
+            return _("value must be >= %(boundary)s") % {
+                'boundary': self.minvalue}
+        if self.maxvalue is not None and value > self.maxvalue:
+            return _("value must be <= %(boundary)s") % {
+                'boundary': self.maxvalue}
+        assert False, 'shouldnt be there'
+
     def serialize(self):
         """simple text serialization"""
         return u'%s;%s' % (self.minvalue, self.maxvalue)
@@ -272,6 +315,15 @@ class StaticVocabularyConstraint(BaseConstraint):
     def check(self, entity, rtype, value):
         """return true if the value is in the specific vocabulary"""
         return value in self.vocabulary(entity=entity)
+
+    def failed_message(self, value, _=unicode):
+        if isinstance(value, basestring):
+            value = '"%s"' % unicode(value)
+            choices = ', '.join('"%s"' % val for val in self.values)
+        else:
+            choices = ', '.join(unicode(val) for val in self.values)
+        return _('invalid value %(value)s, it must be one of %(choices)s') % {
+            'value': value, 'choices': choices}
 
     def vocabulary(self, **kwargs):
         """return a list of possible values for the attribute"""

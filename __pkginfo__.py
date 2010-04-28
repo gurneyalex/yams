@@ -1,9 +1,22 @@
+# copyright 2004-2010 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
+# contact http://www.logilab.fr/ -- mailto:contact@logilab.fr
+#
+# This file is part of yams.
+#
+# yams is free software: you can redistribute it and/or modify it under the
+# terms of the GNU Lesser General Public License as published by the Free
+# Software Foundation, either version 2.1 of the License, or (at your option)
+# any later version.
+#
+# yams is distributed in the hope that it will be useful, but WITHOUT ANY
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+# A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
+# details.
+#
+# You should have received a copy of the GNU Lesser General Public License along
+# with yams. If not, see <http://www.gnu.org/licenses/>.
 """Yams packaging information.
 
-:organization: Logilab
-:copyright: 2003-2010 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
-:contact: http://www.logilab.fr/ -- mailto:contact@logilab.fr
-:license: General Public License version 2 - http://www.gnu.org/licenses
 """
 __docformat__ = "restructuredtext en"
 
@@ -13,12 +26,11 @@ __docformat__ = "restructuredtext en"
 modname = 'yams'
 
 # release version
-numversion = (0, 28, 1)
+numversion = (0, 29, 0)
 version = '.'.join(str(num) for num in numversion)
 
 # license and copyright
-license = 'GPL'
-copyright = 'Copyright (c) 2003-2010 LOGILAB S.A. (Paris, FRANCE)'
+license = 'LGPL'
 
 # short and long description
 short_desc = "entity / relation schema"
@@ -49,3 +61,7 @@ include_dirs = []
 scripts = ['bin/yams-check', 'bin/yams-view']
 
 pyversions = ['2.4', '2.5']
+
+install_requires = [
+    'logilab-common >= 0.47.0',
+    ]
