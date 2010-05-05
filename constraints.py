@@ -246,6 +246,7 @@ class BoundaryConstraint(BaseConstraint):
         return cls(op, eval(boundary))
 
 BoundConstraint = class_renamed('BoundConstraint', BoundaryConstraint)
+BoundConstraint.type = lambda x: 'BoundaryConstraint'
 
 
 class IntervalBoundConstraint(BaseConstraint):
