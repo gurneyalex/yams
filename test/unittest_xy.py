@@ -21,9 +21,9 @@ from yams.xy import XYRegistry
 class XYTC(TestCase):
     def test(self):
         xy = XYRegistry()
-        xy.register_prefix('http://purl.org/dc/elements/1.1/', 'dc')
-        xy.register_prefix('http://xmlns.com/foaf/0.1/', 'foaf')
-        xy.register_prefix('http://usefulinc.com/ns/doap#', 'doap')
+        xy.register_prefix('dc', 'http://purl.org/dc/elements/1.1/')
+        xy.register_prefix('foaf', 'http://xmlns.com/foaf/0.1/')
+        xy.register_prefix('doap', 'http://usefulinc.com/ns/doap#')
 
         xy.add_equivalence('creation_date', 'dc:date')
         xy.add_equivalence('created_by', 'dc:creator')

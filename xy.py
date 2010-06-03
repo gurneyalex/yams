@@ -30,7 +30,7 @@ class XYRegistry(object):
         self._y2x = {}
         self._x2y = {}
 
-    def register_prefix(self, xmlns, prefix):
+    def register_prefix(self, prefix, xmlns):
         assert not prefix in self.prefixes, 'prefix already defined'
         self.prefixes[prefix] = xmlns
 
