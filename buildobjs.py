@@ -15,9 +15,8 @@
 #
 # You should have received a copy of the GNU Lesser General Public License along
 # with yams. If not, see <http://www.gnu.org/licenses/>.
-"""Classes used to build a schema.
+"""Classes used to build a schema."""
 
-"""
 __docformat__ = "restructuredtext en"
 
 from warnings import warn
@@ -111,8 +110,8 @@ DEFAULT_RELPERMS = {'read': ('managers', 'users', 'guests',),
                      'add': ('managers', 'users',)}
 
 DEFAULT_ATTRPERMS = {'read': ('managers', 'users', 'guests',),
-                      'update': ('managers', 'owners'),
-                      }
+                     'update': ('managers', 'owners'),
+                     }
 
 class Relation(object):
     """Abstract class which have to be defined before the metadefinition
