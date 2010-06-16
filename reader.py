@@ -181,8 +181,8 @@ class PyFileReader(object):
                             continue
                         warn('%s: please explicitly import %s (%s)'
                              % (filepath, pname, name), DeprecationWarning)
-            for key in self.context:
-                fglobals.pop(key, None)
+            #for key in self.context:
+            #    fglobals.pop(key, None)
             fglobals['__file__'] = filepath
             module = types.ModuleType(str(modname))
             module.__dict__.update(fglobals)
