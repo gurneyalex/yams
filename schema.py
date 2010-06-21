@@ -37,6 +37,9 @@ from yams.interfaces import (ISchema, IRelationSchema, IEntitySchema,
 from yams.constraints import BASE_CHECKERS, BASE_CONVERTERS, UniqueConstraint
 
 def role_name(rtype, role):
+    """function to use for qualifying attribute / relation in ValidationError
+    errors'dictionnary
+    """
     return '%s-%s' % (rtype, role)
 
 def check_permission_definitions(schema):
