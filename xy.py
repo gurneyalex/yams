@@ -15,9 +15,10 @@
 #
 # You should have received a copy of the GNU Lesser General Public License along
 # with yams. If not, see <http://www.gnu.org/licenses/>.
-"""XML vocabularies <-> Yams schema mapping
+"""XML vocabularies <-> Yams schema mapping"""
 
-"""
+from warnings import warn
+
 class UnsupportedVocabulary(Exception): pass
 
 class XYRegistry(object):
@@ -31,6 +32,10 @@ class XYRegistry(object):
         self._x2y = {}
 
     def register_prefix(self, prefix, xmlns):
+        if ':' in prefix:
+            warn('[yams 0.30] register_prefix arguments has been switched to '
+                 '(prefix, xmlns)', DeprecationWarning, stacklevel=1)
+            prefix, xmlns = xmlns, prefix
         assert not prefix in self.prefixes, 'prefix already defined'
         self.prefixes[prefix] = xmlns
 
