@@ -15,8 +15,8 @@
 #
 # You should have received a copy of the GNU Lesser General Public License along
 # with yams. If not, see <http://www.gnu.org/licenses/>.
-from yams.buildobjs import EntityType, RelationType, SubjectRelation, \
-     ObjectRelation, Int, String,  Boolean
+from yams.buildobjs import (EntityType, RelationType, RelationDefinition,
+                            SubjectRelation, Int, String,  Boolean)
 from yams.constraints import SizeConstraint, UniqueConstraint
 
 from data.schema import RESTRICTED_RTYPE_PERMS
@@ -41,7 +41,6 @@ class State(EntityType):
     # relations
     state_of = SubjectRelation('Eetype', cardinality='+*')
     next_state = SubjectRelation('State', cardinality='**')
-    initial_state = ObjectRelation('Eetype', cardinality='?*')
 
 
 class state_of(RelationType):
@@ -62,6 +61,9 @@ class initial_state(RelationType):
         'add':    ('managers', 'users',),
         'delete': ('managers', 'users',),
         }
+    subject = 'Eetype'
+    object = 'State'
+    cardinality = '?*'
     inlined = True
 
 class Eetype(EntityType):
