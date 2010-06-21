@@ -15,9 +15,7 @@
 #
 # You should have received a copy of the GNU Lesser General Public License along
 # with yams. If not, see <http://www.gnu.org/licenses/>.
-"""Yams packaging information.
-
-"""
+"""Yams packaging information."""
 __docformat__ = "restructuredtext en"
 
 # pylint: disable-msg=W0622
