@@ -106,8 +106,8 @@ def register_base_types(schema):
 
 # XXX use a "frozendict"
 DEFAULT_RELPERMS = {'read': ('managers', 'users', 'guests',),
-                     'delete': ('managers', 'users'),
-                     'add': ('managers', 'users',)}
+                    'delete': ('managers', 'users'),
+                    'add': ('managers', 'users',)}
 
 DEFAULT_ATTRPERMS = {'read': ('managers', 'users', 'guests',),
                      'update': ('managers', 'owners'),
@@ -504,7 +504,7 @@ class RelationDefinition(Definition):
 
         register all relations definition, expanding wildcard if necessary
         """
-        assert cls.subject and cls.object, '%s; check the schema' % cls
+        assert cls.subject and cls.object, '%s; check the schema (%s, %s)' % (cls, cls.subject, cls.object)
         cls()._add_relations(defined, schema)
 
     def _add_relations(self, defined, schema):
