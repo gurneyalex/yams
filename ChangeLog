@@ -1,7 +1,7 @@
 ChangeLog for yams
 ------------------
---
 
+2010-06-21  --  0.29.1
     * not use a hardcoded datatype for string colums with a max length (closes
       #35380). When a dbhelper provides a SizeConstrainedString entry in the
       TYPE_MAPPING dictionary, use it, otherwise default to varchar(%s).
@@ -11,6 +11,7 @@ ChangeLog for yams
       module's globals...)
 
     * xy: switch register_prefix argument
+
 
 
 2010-04-26  --  0.29.0
