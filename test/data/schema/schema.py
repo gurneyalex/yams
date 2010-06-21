@@ -15,9 +15,8 @@
 #
 # You should have received a copy of the GNU Lesser General Public License along
 # with yams. If not, see <http://www.gnu.org/licenses/>.
-from yams.buildobjs import (EntityType, SubjectRelation, ObjectRelation,
-                            String, Int, Float, Date, Boolean,
-                            RelationDefinition, RelationType)
+from yams.buildobjs import (EntityType, RelationDefinition, RelationType,
+                            SubjectRelation, String, Int, Float, Date, Boolean)
 
 class Affaire(EntityType):
     sujet = String(maxsize=128)
@@ -27,7 +26,10 @@ class Affaire(EntityType):
     obj_wildcard = SubjectRelation('*')
     sym_rel = SubjectRelation('Person', symmetric=True)
     inline_rel = SubjectRelation('Person', inlined=True, cardinality='?*')
-    subj_wildcard = ObjectRelation('*')
+
+class subj_wildcard(RelationDefinition):
+    subject = '*'
+    object = 'Affaire'
 
 
 class Person(EntityType):
