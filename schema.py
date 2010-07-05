@@ -15,9 +15,8 @@
 #
 # You should have received a copy of the GNU Lesser General Public License along
 # with yams. If not, see <http://www.gnu.org/licenses/>.
-"""Classes to define generic Entities/Relations schemas.
+"""Classes to define generic Entities/Relations schemas."""
 
-"""
 __docformat__ = "restructuredtext en"
 
 import warnings
@@ -797,9 +796,9 @@ class RelationSchema(ERSchema):
         self.rdefs[key] = rdef = RelationDefinitionSchema(subject, self, object)
         for prop, default in rdef.rproperties().iteritems():
             rdefval = getattr(buildrdef, prop, MARKER)
-            if rdefval is MARKER and prop == 'permissions':
-                rdefval = buildrdef.get_permissions(self.final).copy()
             if rdefval is MARKER:
+                if prop == 'permissions':
+                    rdefval = default = buildrdef.get_permissions(self.final).copy()
                 if prop == 'cardinality':
                     default = (object in BASE_TYPES) and '?1' or '**'
             else:
@@ -979,9 +978,8 @@ class RelationDefinitionSchema(PermissionMixIn):
         return propdefs
 
     def rproperties(self):
-        """return a dictionary mapping property name to its definition for each
-        allowable properties when the relation has `desttype` as target entity's
-        type
+        """same as .rproperty_defs class method, but for instances (hence
+        destination is known to be self.object).
         """
         return self.rproperty_defs(self.object)
 
