@@ -161,9 +161,6 @@ def type_from_constraints(dbhelper, etype, constraints, creating=True):
         sqltype += ' UNIQUE'
     return sqltype
 
-# backward compat
-_type_from_constraints = type_from_constraints
-
 
 _SQL_SCHEMA = """
 CREATE TABLE %(table)s (
