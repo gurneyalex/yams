@@ -1,6 +1,10 @@
 ChangeLog for yams
 ------------------
 
+--
+    * fix [de]serialization bug of vocabulary constraints in case
+      where some vocabulary value contains a comma followed by a space
+
 2010-06-21  --  0.29.1
     * not use a hardcoded datatype for string colums with a max length (closes
       #35380). When a dbhelper provides a SizeConstrainedString entry in the
