@@ -186,6 +186,7 @@ class EntitySchema(PermissionMixIn, ERSchema):
             self._specialized_by = rdef.specialized_by
             self.final = self.type in BASE_TYPES
             self.permissions = rdef.__permissions__.copy()
+            self._unique_together = getattr(rdef, '__unique_together__', [])
         else:
             self._specialized_type = None
             self._specialized_by = []
