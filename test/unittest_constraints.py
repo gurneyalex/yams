@@ -110,6 +110,11 @@ class ConstraintTC(TestCase):
         # fail, value > maxvalue
         self.failIf(cstr2.check(None, 'hip', date.today() + timedelta(days=1)))
 
+    def test_vocab_constraint_serialization(self):
+        cstr = StaticVocabularyConstraint(['a, b', 'c'])
+        self.assertEquals(StaticVocabularyConstraint.deserialize(cstr.serialize()).values,
+                         ('a, b', 'c'))
+
 if __name__ == '__main__':
     unittest_main()
 
