@@ -338,12 +338,16 @@ class StaticVocabularyConstraint(BaseConstraint):
             sample = unicode()
         if not isinstance(sample, basestring):
             return u', '.join(repr(word) for word in self.vocabulary())
-        return u', '.join(repr(unicode(word)) for word in self.vocabulary())
+        return u', '.join(repr(unicode(word).replace(',', ',,'))
+                          for word in self.vocabulary())
 
     @classmethod
     def deserialize(cls, value):
         """deserialize possible values from a csv list of evaluable strings"""
-        return cls([eval(w) for w in value.split(', ')])
+        values = [eval(w) for w in re.split('(?<!,), ', value)]
+        if values and isinstance(values[0], basestring):
+            values = [v.replace(',,', ',') for v in values]
+        return cls(values)
 
 
 class FormatConstraint(StaticVocabularyConstraint):
