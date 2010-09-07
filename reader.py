@@ -30,7 +30,6 @@ from os.path import exists, join, splitext, basename, abspath
 from warnings import warn
 
 from logilab.common.testlib import mock_object
-from logilab.common.textutils import get_csv
 from logilab.common.modutils import modpath_from_file, cleanup_sys_modules
 
 from yams import UnknownType, BadSchemaDefinition, BASE_TYPES
