@@ -23,6 +23,7 @@ from logilab.common.testlib import TestCase, unittest_main
 from copy import copy, deepcopy
 from tempfile import mktemp
 
+from yams import BadSchemaDefinition
 from yams.buildobjs import register_base_types, EntityType, RelationType, RelationDefinition
 from yams.schema import *
 from yams.constraints import *
@@ -282,8 +283,21 @@ class EntitySchemaTC(BaseSchemaTC):
         """check subject relations a returned in the same order as in the
         schema definition"""
         self.assertEquals(eperson.destination('nom'), 'String')
-        #self.assertRaises(AssertionError, eperson.destination, 'concerne')
         self.assertEquals(eperson.destination('travaille'), 'Societe')
+
+    def test_check_unique_together1(self):
+        eperson._unique_together = [('prenom', 'nom')]
+        eperson.check_unique_together()
+
+    def test_check_unique_together2(self):
+        eperson._unique_together = [('prenom', 'noms')]
+        exc = self.assertRaises(BadSchemaDefinition, eperson.check_unique_together)
+        self.failUnless('no such attribute or relation noms' in exc.args[0])
+
+    def test_check_unique_together3(self):
+        eperson._unique_together = [('nom', 'travaille')]
+        exc = self.assertRaises(BadSchemaDefinition, eperson.check_unique_together)
+        self.failUnless('travaille is not an attribute or an inlined relation' in exc.args[0])
 
 
 class RelationSchemaTC(BaseSchemaTC):
