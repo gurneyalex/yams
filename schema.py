@@ -24,7 +24,7 @@ from copy import deepcopy
 from decimal import Decimal
 
 from logilab.common import attrdict
-from logilab.common.decorators import cached
+from logilab.common.decorators import cached, clear_cache
 from logilab.common.compat import sorted
 from logilab.common.interface import implements
 from logilab.common.deprecation import deprecated
@@ -206,7 +206,7 @@ class EntitySchema(PermissionMixIn, ERSchema):
         if errors:
             msg = 'invalid __unique_together__ specification for %s: %s' % (self, ', '.join(errors))
             raise BadSchemaDefinition(msg)
-        
+
     def __repr__(self):
         return '<%s %s - %s>' % (self.type,
                                  [rs.type for rs in self.subject_relations()],
@@ -227,6 +227,8 @@ class EntitySchema(PermissionMixIn, ERSchema):
     def add_subject_relation(self, rschema):
         """register the relation schema as possible subject relation"""
         self.subjrels[rschema] = rschema
+        clear_cache(self, 'ordered_relations')
+        clear_cache(self, 'meta_attributes')
 
     def add_object_relation(self, rschema):
         """register the relation schema as possible object relation"""
@@ -235,6 +237,8 @@ class EntitySchema(PermissionMixIn, ERSchema):
     def del_subject_relation(self, rtype):
         try:
             del self.subjrels[rtype]
+            clear_cache(self, 'ordered_relations')
+            clear_cache(self, 'meta_attributes')
         except KeyError:
             pass
 
