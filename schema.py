@@ -186,10 +186,27 @@ class EntitySchema(PermissionMixIn, ERSchema):
             self._specialized_by = rdef.specialized_by
             self.final = self.type in BASE_TYPES
             self.permissions = rdef.__permissions__.copy()
-        else:
+            self._unique_together = getattr(rdef, '__unique_together__', [])
+        else: # this happens during deep copy (cf. ERSchema.__deepcopy__)
             self._specialized_type = None
             self._specialized_by = []
 
+    def check_unique_together(self):
+        errors = []
+        for unique_together in self._unique_together:
+            for name in unique_together:
+                try:
+                    rschema = self.rdef(name)
+                except KeyError:
+                    errors.append('no such attribute or relation %s' % name)
+                else:
+                    if not (rschema.final or rschema.rtype.inlined):
+                        errors.append('%s is not an attribute or an inlined '
+                                      'relation' % name)
+        if errors:
+            msg = 'invalid __unique_together__ specification for %s: %s' % (self, ', '.join(errors))
+            raise BadSchemaDefinition(msg)
+        
     def __repr__(self):
         return '<%s %s - %s>' % (self.type,
                                  [rs.type for rs in self.subject_relations()],

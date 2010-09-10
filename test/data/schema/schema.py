@@ -33,6 +33,7 @@ class subj_wildcard(RelationDefinition):
 
 
 class Person(EntityType):
+    __unique_together__ = [('nom', 'prenom')]
     nom    = String(maxsize=64, fulltextindexed=True, required=True)
     prenom = String(maxsize=64, fulltextindexed=True)
     sexe   = String(maxsize=1, default='M')

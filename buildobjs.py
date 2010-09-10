@@ -33,9 +33,9 @@ __all__ = ('EntityType', 'RelationType', 'RelationDefinition',
            'SubjectRelation', 'ObjectRelation', 'BothWayRelation',
            'RichString', ) + tuple(BASE_TYPES)
 
-ETYPE_PROPERTIES = ('description', '__permissions__',
+ETYPE_PROPERTIES = ('description', '__permissions__', '__unique_together__',
                     'meta') # XXX meta is deprecated
-# don't put description inside, handled "manualy"
+# don't put description inside, handled "manually"
 RTYPE_PROPERTIES = ('symmetric', 'inlined', 'fulltext_container',
                     'meta') # XXX meta is deprecated
 RDEF_PROPERTIES = ('cardinality', 'constraints', 'composite',
