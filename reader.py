@@ -280,6 +280,8 @@ class SchemaLoader(object):
         for erschema in schema.entities() + schema.relations():
             erschema.check_permission_definitions()
         schema.infer_specialization_rules()
+        for eschema in schema.entities():
+            eschema.check_unique_together()
         return schema
 
     # has to be overridable sometimes (usually for test purpose)
