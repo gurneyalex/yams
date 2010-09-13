@@ -24,7 +24,7 @@ from copy import deepcopy
 from decimal import Decimal
 
 from logilab.common import attrdict
-from logilab.common.decorators import cached
+from logilab.common.decorators import cached, clear_cache
 from logilab.common.compat import sorted
 from logilab.common.interface import implements
 from logilab.common.deprecation import deprecated
@@ -186,9 +186,26 @@ class EntitySchema(PermissionMixIn, ERSchema):
             self._specialized_by = rdef.specialized_by
             self.final = self.type in BASE_TYPES
             self.permissions = rdef.__permissions__.copy()
-        else:
+            self._unique_together = getattr(rdef, '__unique_together__', [])
+        else: # this happens during deep copy (cf. ERSchema.__deepcopy__)
             self._specialized_type = None
             self._specialized_by = []
+
+    def check_unique_together(self):
+        errors = []
+        for unique_together in self._unique_together:
+            for name in unique_together:
+                try:
+                    rschema = self.rdef(name)
+                except KeyError:
+                    errors.append('no such attribute or relation %s' % name)
+                else:
+                    if not (rschema.final or rschema.rtype.inlined):
+                        errors.append('%s is not an attribute or an inlined '
+                                      'relation' % name)
+        if errors:
+            msg = 'invalid __unique_together__ specification for %s: %s' % (self, ', '.join(errors))
+            raise BadSchemaDefinition(msg)
 
     def __repr__(self):
         return '<%s %s - %s>' % (self.type,
@@ -210,6 +227,8 @@ class EntitySchema(PermissionMixIn, ERSchema):
     def add_subject_relation(self, rschema):
         """register the relation schema as possible subject relation"""
         self.subjrels[rschema] = rschema
+        clear_cache(self, 'ordered_relations')
+        clear_cache(self, 'meta_attributes')
 
     def add_object_relation(self, rschema):
         """register the relation schema as possible object relation"""
@@ -218,6 +237,8 @@ class EntitySchema(PermissionMixIn, ERSchema):
     def del_subject_relation(self, rtype):
         try:
             del self.subjrels[rtype]
+            clear_cache(self, 'ordered_relations')
+            clear_cache(self, 'meta_attributes')
         except KeyError:
             pass
 

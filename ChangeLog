@@ -1,9 +1,15 @@
 ChangeLog for yams
 ------------------
 
---
+2010-09-10  --  0.30.0
     * fix [de]serialization bug of vocabulary constraints in case
       where some vocabulary value contains a comma followed by a space
+
+    * support for __unique_together__ on EntityType to declare some
+      unique constraint on multiple attributes / relations (relations
+      should be inlined on the entity to which the constraint apply)
+
+
 
 2010-06-21  --  0.29.1
     * not use a hardcoded datatype for string colums with a max length (closes
