@@ -24,7 +24,7 @@ __docformat__ = "restructuredtext en"
 modname = 'yams'
 
 # release version
-numversion = (0, 30, 0)
+numversion = (0, 30, 1)
 version = '.'.join(str(num) for num in numversion)
 
 # license and copyright
@@ -62,5 +62,5 @@ pyversions = ['2.4', '2.5']
 
 install_requires = [
     'logilab-common >= 0.47.0',
-    'logilab-database >= 1.2.0',
+    'logilab-database >= 1.3.0',
     ]
