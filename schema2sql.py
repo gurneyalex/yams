@@ -112,8 +112,9 @@ def eschema2sql(dbhelper, eschema, skip_relations=(), prefix=''):
             w(dbhelper.sql_create_index(table, prefix + rschema.type))
     for unique_together in eschema._unique_together:
         cols  = ['%s%s' % (prefix, col) for col in unique_together]
-        sql = dbhelper.sql_create_multicol_unique_index(table, cols)
-        w(sql)
+        sqls = dbhelper.sqls_create_multicol_unique_index(table, cols)
+        for sql in sqls:
+            w(sql)
     w('')
     return '\n'.join(output)
 
