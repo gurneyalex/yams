@@ -2,20 +2,16 @@
 
 import sys
 from os.path import exists, join, dirname
-from yams import schema2dot
-from yams.reader import SchemaLoader
-from ginco.common.schema import ErudiSchemaLoader as SchemaLoader
 from tempfile import NamedTemporaryFile
 from subprocess import Popen
 
 from logilab.common.configuration import Configuration
 
 from yams.__pkginfo__ import version
+from yams import schema2dot
+from yams.reader import SchemaLoader
 
-
-
-    
-
+from cubicweb.schema import CubicWebSchemaLoader as SchemaLoader
 
 options = [('output-file', {'type':'file', 'default': None,
              'metavar': '<file>', 'short':'o', 'help':'output image file'}),

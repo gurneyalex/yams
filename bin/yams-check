@@ -5,6 +5,7 @@ from itertools import chain
 from traceback import extract_tb
 
 from logilab.common.configuration import Configuration
+
 from yams.reader import SchemaLoader
 from yams._exceptions import *
 from yams.__pkginfo__ import version
@@ -42,11 +43,9 @@ try:
 except Exception, ex:
     tb_offset = getattr(ex, 'tb_offset', 0)
     filename, lineno, func, text = extract_tb(sys.exc_traceback)[-1-tb_offset]
-    
     if hasattr(ex, "schema_files"):
         filename = ', '.join(ex.schema_files)
     _error(filename, lineno,"%s -> %s" % (ex.__class__.__name__, ex))
     return_code = 2
-    
-    
+
 sys.exit(return_code)
