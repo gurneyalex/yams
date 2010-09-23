@@ -387,7 +387,7 @@ class EntitySchema(PermissionMixIn, ERSchema):
             # rdef.object is the attribute type
             if rdef.object == 'Boolean':
                 if not isinstance(default, bool):
-                    default = default == 'True'
+                    default = default == 'True' # XXX duh?
             elif rdef.object == 'Int':
                 if not isinstance(default, int):
                     default = int(default)
