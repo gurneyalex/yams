@@ -849,7 +849,7 @@ class RelationSchema(ERSchema):
         try:
             return tuple(self._obj_schemas[etype])
         except KeyError:
-            raise KeyError("%s don't have %s as object" % (self, etype))
+            raise KeyError("%s does not have %s as object" % (self, etype))
 
     def objects(self, etype=None):
         """Return a list of entity schema which can be object of this relation.
@@ -864,7 +864,7 @@ class RelationSchema(ERSchema):
         try:
             return tuple(self._subj_schemas[etype])
         except KeyError:
-            raise KeyError("%s don't have %s as subject" % (self, etype))
+            raise KeyError("%s does not have %s as subject" % (self, etype))
 
     def targets(self, etype=None, role='subject'):
         """return possible target types with <etype> as <x>"""
