@@ -668,7 +668,9 @@ for basetype in BASE_TYPES:
 
 
 class RichString(String):
-    """Convenience RichString attribute type
+    """RichString is a convenience attribute type for attribute containing text
+    in a format that should be specified in another attribute.
+
     The following declaration::
 
       class Card(EntityType):
