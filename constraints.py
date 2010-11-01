@@ -18,6 +18,7 @@
 """Some common constraint classes."""
 
 __docformat__ = "restructuredtext en"
+_ = unicode
 
 import re
 import decimal
