@@ -34,7 +34,7 @@ class XYRegistry(object):
     def register_prefix(self, prefix, xmlns):
         if ':' in prefix:
             warn('[yams 0.30] register_prefix arguments has been switched to '
-                 '(prefix, xmlns)', DeprecationWarning, stacklevel=1)
+                 '(prefix, xmlns)', DeprecationWarning, stacklevel=2)
             prefix, xmlns = xmlns, prefix
         assert not prefix in self.prefixes, 'prefix already defined'
         self.prefixes[prefix] = xmlns
