@@ -1,3 +1,9 @@
+yams (0.30.2-1) unstable; urgency=low
+
+  * new upstream release
+
+ -- Pierre-Yves David <pierre-yves.david@logilab.fr> Tue, 23 Nov 2010 15:27:46 +0200
+
 yams (0.30.1-1) unstable; urgency=low
 
   * new upstream release
