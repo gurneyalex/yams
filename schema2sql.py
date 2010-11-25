@@ -21,8 +21,6 @@
 __docformat__ = "restructuredtext en"
 __metaclass__ = type
 
-from logilab.common.compat import sorted
-
 from yams.constraints import SizeConstraint, UniqueConstraint
 
 # default are usually not handled at the sql level. If you want them, set

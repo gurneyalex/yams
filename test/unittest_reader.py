@@ -22,7 +22,6 @@ import os.path as osp
 from datetime import datetime, date, time
 
 from logilab.common.testlib import TestCase, unittest_main
-from logilab.common.compat import sorted
 
 from yams import BadSchemaDefinition, buildobjs
 from yams.schema import Schema
