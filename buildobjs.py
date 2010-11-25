@@ -22,7 +22,6 @@ __docformat__ = "restructuredtext en"
 from warnings import warn
 
 from logilab.common import attrdict
-from logilab.common.compat import sorted
 from logilab.common.decorators import iclassmethod
 
 from yams import BASE_TYPES, MARKER, BadSchemaDefinition
