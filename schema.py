@@ -25,7 +25,6 @@ from decimal import Decimal
 
 from logilab.common import attrdict
 from logilab.common.decorators import cached, clear_cache
-from logilab.common.compat import sorted
 from logilab.common.interface import implements
 from logilab.common.deprecation import deprecated
 

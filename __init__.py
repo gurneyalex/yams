@@ -25,7 +25,6 @@ from datetime import datetime, date, time
 import __builtin__
 __builtin__._ = unicode
 
-from logilab.common.compat import set
 from logilab.common.date import strptime, strptime_time
 from logilab.common import nullobject
 
