@@ -21,7 +21,6 @@ import os
 import os.path as osp
 
 from logilab.common.testlib import TestCase, unittest_main
-from logilab.common.compat import set
 
 from yams.reader import SchemaLoader
 from yams import schema2dot
