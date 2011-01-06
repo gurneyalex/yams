@@ -41,10 +41,10 @@ class XYTC(TestCase):
         xy.add_equivalence('Version creation_date', 'doap:Version doap:created')
         xy.add_equivalence('Version num', 'doap:Version doap:revision')
 
-        self.assertEquals(xy.yeq('doap:Project', isentity=True), ['Project'])
-        self.assertEquals(xy.yeq('dc:title'), [('CWUser', 'login', '*'),
+        self.assertEqual(xy.yeq('doap:Project', isentity=True), ['Project'])
+        self.assertEqual(xy.yeq('dc:title'), [('CWUser', 'login', '*'),
                                                ('Project', 'name', '*')])
-        self.assertEquals(xy.yeq('doap:Project doap:maintainer'),
+        self.assertEqual(xy.yeq('doap:Project doap:maintainer'),
                           [('Project', 'created_by', 'CWUser')])
 
 if __name__ == '__main__':
