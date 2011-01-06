@@ -17,6 +17,8 @@
 # with yams. If not, see <http://www.gnu.org/licenses/>.
 """unit tests for module yams.reader"""
 
+from __future__ import with_statement
+
 import sys
 import os.path as osp
 from datetime import datetime, date, time
