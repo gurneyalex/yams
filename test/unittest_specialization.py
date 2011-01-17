@@ -35,55 +35,55 @@ class SpecializationTC(TestCase):
         schema = self.schema
         # company
         company = schema.eschema('Company')
-        self.assertEquals(company.specializes(), None)
+        self.assertEqual(company.specializes(), None)
         # division
         division = schema.eschema('Division')
-        self.assertEquals(division.specializes().type, 'Company')
+        self.assertEqual(division.specializes().type, 'Company')
         # subdivision
         subdivision = schema.eschema('SubDivision')
-        self.assertEquals(subdivision.specializes().type, 'Division')
+        self.assertEqual(subdivision.specializes().type, 'Division')
         # subsubdivision
         subsubdivision = schema.eschema('SubSubDivision')
-        self.assertEquals(subsubdivision.specializes(), None)
+        self.assertEqual(subsubdivision.specializes(), None)
 
     def test_ancestors(self):
         schema = self.schema
         # company
         company = schema.eschema('Company')
-        self.assertEquals(company.ancestors(), [])
+        self.assertEqual(company.ancestors(), [])
         # division
         division = schema.eschema('Division')
-        self.assertEquals(division.ancestors(), ['Company'])
+        self.assertEqual(division.ancestors(), ['Company'])
         # subdivision
         subdivision = schema.eschema('SubDivision')
-        self.assertEquals(subdivision.ancestors(), ['Division', 'Company'])
+        self.assertEqual(subdivision.ancestors(), ['Division', 'Company'])
         # subsubdivision
         subsubdivision = schema.eschema('SubSubDivision')
-        self.assertEquals(subsubdivision.ancestors(), [])
+        self.assertEqual(subsubdivision.ancestors(), [])
 
     def test_specialized_by(self):
         schema = self.schema
         # company
         company = schema.eschema('Company')
-        self.assertEquals(sorted(company.specialized_by(False)), ['Division', 'SubCompany'])
-        self.assertEquals(sorted(company.specialized_by(True)), ['Division', 'SubCompany', 'SubDivision'])
+        self.assertEqual(sorted(company.specialized_by(False)), ['Division', 'SubCompany'])
+        self.assertEqual(sorted(company.specialized_by(True)), ['Division', 'SubCompany', 'SubDivision'])
         # division
         division = schema.eschema('Division')
-        self.assertEquals(sorted(division.specialized_by(False)), ['SubDivision'])
-        self.assertEquals(sorted(division.specialized_by(True)), ['SubDivision'])
+        self.assertEqual(sorted(division.specialized_by(False)), ['SubDivision'])
+        self.assertEqual(sorted(division.specialized_by(True)), ['SubDivision'])
         # subdivision
         subdivision = schema.eschema('SubDivision')
-        self.assertEquals(sorted(subdivision.specialized_by(False)), [])
+        self.assertEqual(sorted(subdivision.specialized_by(False)), [])
         # subsubdivision
         subsubdivision = schema.eschema('SubSubDivision')
-        self.assertEquals(subsubdivision.specialized_by(False), [])
+        self.assertEqual(subsubdivision.specialized_by(False), [])
 
     def test_relations_infered(self):
         entities = [str(e) for e in self.schema.entities() if not e.final]
         relations = sorted([r for r in self.schema.relations() if not r.final])
-        self.assertListEquals(sorted(entities), ['Company', 'Division', 'Person',
+        self.assertListEqual(sorted(entities), ['Company', 'Division', 'Person',
                                                  'Student', 'SubCompany', 'SubDivision', 'SubSubDivision'])
-        self.assertListEquals(relations, ['division_of', 'knows', 'works_for'])
+        self.assertListEqual(relations, ['division_of', 'knows', 'works_for'])
         expected = {('Person', 'Person'): False,
                     ('Person', 'Student'): True,
                     # as Student extends Person, it already has the `knows` relation
@@ -95,10 +95,10 @@ class SpecializationTC(TestCase):
         for subjobj in krschema.rdefs:
             subject, object = subjobj
             done.add(subjobj)
-            self.failUnless(subjobj in expected)
-            self.assertEquals(krschema.rdef(subject, object).infered,
+            self.assertTrue(subjobj in expected)
+            self.assertEqual(krschema.rdef(subject, object).infered,
                               expected[subjobj])
-        self.assertEquals(len(set(expected) - done), 0, 'missing %s' % (set(expected) - done))
+        self.assertEqual(len(set(expected) - done), 0, 'missing %s' % (set(expected) - done))
         expected = {('Person', 'Company'): False,
                     ('Person', 'Division'): True,
                     ('Person', 'SubDivision'): True,
@@ -112,15 +112,15 @@ class SpecializationTC(TestCase):
         for subjobj in wrschema.rdefs:
             subject, object = subjobj
             done.add(subjobj)
-            self.failUnless(subjobj in expected)
-            self.assertEquals(wrschema.rdef(subject, object).infered,
+            self.assertTrue(subjobj in expected)
+            self.assertEqual(wrschema.rdef(subject, object).infered,
                               expected[subjobj])
-        self.assertEquals(len(set(expected) - done), 0, 'missing %s' % (set(expected) - done))
+        self.assertEqual(len(set(expected) - done), 0, 'missing %s' % (set(expected) - done))
 
     def test_remove_infered_relations(self):
         self.schema.remove_infered_definitions()
         relations = sorted([r for r in self.schema.relations() if not r.final])
-        self.assertListEquals(relations, ['division_of', 'knows', 'works_for'])
+        self.assertListEqual(relations, ['division_of', 'knows', 'works_for'])
         expected = {('Person', 'Person'): False,
                     # as Student extends Person, it already has the `knows` relation
                     ('Student', 'Person'): False,
@@ -130,10 +130,10 @@ class SpecializationTC(TestCase):
         for subjobj in krschema.rdefs:
             subject, object = subjobj
             done.add(subjobj)
-            self.failUnless(subjobj in expected)
-            self.assertEquals(krschema.rdef(subject, object).infered,
+            self.assertTrue(subjobj in expected)
+            self.assertEqual(krschema.rdef(subject, object).infered,
                               expected[subjobj])
-        self.assertEquals(len(set(expected) - done), 0, 'missing %s' % (set(expected) - done))
+        self.assertEqual(len(set(expected) - done), 0, 'missing %s' % (set(expected) - done))
         expected = {('Person', 'Company'): False,
                     ('Student', 'Company'): False,
                    }
@@ -141,10 +141,10 @@ class SpecializationTC(TestCase):
         for subjobj in wrschema.rdefs:
             subject, object = subjobj
             done.add(subjobj)
-            self.failUnless(subjobj in expected)
-            self.assertEquals(wrschema.rdef(subject, object).infered,
+            self.assertTrue(subjobj in expected)
+            self.assertEqual(wrschema.rdef(subject, object).infered,
                               expected[subjobj])
-        self.assertEquals(len(set(expected) - done), 0, 'missing %s' % (set(expected) - done))
+        self.assertEqual(len(set(expected) - done), 0, 'missing %s' % (set(expected) - done))
 
 
 if __name__ == '__main__':
