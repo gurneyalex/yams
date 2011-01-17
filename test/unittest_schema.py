@@ -18,6 +18,8 @@
 # with yams. If not, see <http://www.gnu.org/licenses/>.
 """unit tests for module yams.schema classes"""
 
+from __future__ import with_statement
+
 from logilab.common.testlib import TestCase, unittest_main
 
 from copy import copy, deepcopy
@@ -101,7 +103,7 @@ class BaseSchemaTC(TestCase):
         try:
             func(*args, **kwargs)
         except Exception, ex:
-            self.assertEquals(str(ex), msg)
+            self.assertEqual(str(ex), msg)
 
 # test data ###################################################################
 
@@ -163,87 +165,87 @@ class EntitySchemaTC(BaseSchemaTC):
         self.assert_(repr(eperson))
 
     def test_cmp(self):
-        self.failUnless(eperson == 'Person')
-        self.failUnless('Person' == eperson)
-        self.failUnless(eperson != 'Note')
-        self.failUnless('Note' != eperson)
-        self.failIf(enote == eperson)
-        self.failIf(eperson == enote)
-        self.failUnless(enote != eperson)
-        self.failUnless(eperson != enote)
+        self.assertTrue(eperson == 'Person')
+        self.assertTrue('Person' == eperson)
+        self.assertTrue(eperson != 'Note')
+        self.assertTrue('Note' != eperson)
+        self.assertFalse(enote == eperson)
+        self.assertFalse(eperson == enote)
+        self.assertTrue(enote != eperson)
+        self.assertTrue(eperson != enote)
         l = [eperson, enote, eaffaire, esociete]
         l.sort()
-        self.assertListEquals(l, [eaffaire, enote, eperson, esociete])
-        self.assertListEquals(l, ['Affaire', 'Note', 'Person', 'Societe'])
+        self.assertListEqual(l, [eaffaire, enote, eperson, esociete])
+        self.assertListEqual(l, ['Affaire', 'Note', 'Person', 'Societe'])
 
     def test_hash(self):
         d = {}
         d[eperson] = 'p'
         d[enote] = 'n'
-        self.failUnlessEqual(d[copy(eperson)], 'p')
-        self.failUnlessEqual(d[copy(enote)], 'n')
-        self.failUnlessEqual(d['Person'], 'p')
-        self.failUnlessEqual(d['Note'], 'n')
+        self.assertEqual(d[copy(eperson)], 'p')
+        self.assertEqual(d[copy(enote)], 'n')
+        self.assertEqual(d['Person'], 'p')
+        self.assertEqual(d['Note'], 'n')
         d = {}
         d['Person'] = eperson
         d['Note'] = enote
-        self.failUnlessEqual(copy(eperson), 'Person')
-        self.failUnlessEqual(d[copy(eperson)], 'Person')
-        self.failUnlessEqual(d[copy(enote)], 'Note')
+        self.assertEqual(copy(eperson), 'Person')
+        self.assertEqual(d[copy(eperson)], 'Person')
+        self.assertEqual(d[copy(enote)], 'Note')
 
     def test_deepcopy_with_regexp_constraints(self):
         eaffaire.rdef('ref').constraints = [RegexpConstraint(r'[A-Z]+\d+')]
         rgx_cstr, = eaffaire.rdef('ref').constraints
         eaffaire2 = deepcopy(schema).eschema('Affaire')
         rgx_cstr2, = eaffaire2.rdef('ref').constraints
-        self.assertEquals(rgx_cstr2.regexp, rgx_cstr.regexp)
-        self.assertEquals(rgx_cstr2.flags, rgx_cstr.flags)
-        self.assertEquals(rgx_cstr2._rgx, rgx_cstr._rgx)
+        self.assertEqual(rgx_cstr2.regexp, rgx_cstr.regexp)
+        self.assertEqual(rgx_cstr2.flags, rgx_cstr.flags)
+        self.assertEqual(rgx_cstr2._rgx, rgx_cstr._rgx)
 
     def test_deepcopy(self):
         global schema
         schema = deepcopy(schema)
-        self.failIf(eperson is schema['Person'])
-        self.failUnlessEqual(eperson, schema['Person'])
-        self.failUnlessEqual('Person', schema['Person'])
-        self.failUnlessEqual(eperson.subject_relations(), schema['Person'].subject_relations())
-        self.failUnlessEqual(eperson.object_relations(), schema['Person'].object_relations())
-        self.assertEquals(schema.eschema('Person').final, False)
-        self.assertEquals(schema.eschema('String').final, True)
-        self.assertEquals(schema.rschema('ref').final, True)
-        self.assertEquals(schema.rschema('concerne').final, False)
+        self.assertFalse(eperson is schema['Person'])
+        self.assertEqual(eperson, schema['Person'])
+        self.assertEqual('Person', schema['Person'])
+        self.assertEqual(eperson.subject_relations(), schema['Person'].subject_relations())
+        self.assertEqual(eperson.object_relations(), schema['Person'].object_relations())
+        self.assertEqual(schema.eschema('Person').final, False)
+        self.assertEqual(schema.eschema('String').final, True)
+        self.assertEqual(schema.rschema('ref').final, True)
+        self.assertEqual(schema.rschema('concerne').final, False)
 
     def test_deepcopy_specialization(self):
         schema2 = deepcopy(SchemaLoader().load([self.datadir], 'Test'))
         edivision = schema2.eschema('Division')
-        self.assertEquals(edivision.specializes(), 'Company')
-        self.assertEquals(edivision.specialized_by(), ['Subdivision'])
+        self.assertEqual(edivision.specializes(), 'Company')
+        self.assertEqual(edivision.specialized_by(), ['Subdivision'])
         schema2.del_entity_type('Subdivision')
-        self.assertEquals(edivision.specialized_by(), [])
+        self.assertEqual(edivision.specialized_by(), [])
 
     def test_is_final(self):
-        self.assertEquals(eperson.final, False)
-        self.assertEquals(enote.final, False)
-        self.assertEquals(estring.final, True)
-        self.assertEquals(eint.final, True)
-        self.assertEquals(eperson.subjrels['nom'].final, True)
-        #self.assertEquals(eperson.is_final('concerne'), False)
-        self.assertEquals(eperson.subjrels['concerne'].final, False)
+        self.assertEqual(eperson.final, False)
+        self.assertEqual(enote.final, False)
+        self.assertEqual(estring.final, True)
+        self.assertEqual(eint.final, True)
+        self.assertEqual(eperson.subjrels['nom'].final, True)
+        #self.assertEqual(eperson.is_final('concerne'), False)
+        self.assertEqual(eperson.subjrels['concerne'].final, False)
 
     def test_is_metadata(self):
-        self.assertEquals(eperson.is_metadata('promo'), None)
-        self.assertEquals(eperson.is_metadata('promo_enlarged'), None)
-        self.assertEquals(eperson.is_metadata('promo_encoding'), ('promo', 'encoding'))
-        self.assertEquals([(k.type, v)  for k, v in eperson.meta_attributes().items()],
+        self.assertEqual(eperson.is_metadata('promo'), None)
+        self.assertEqual(eperson.is_metadata('promo_enlarged'), None)
+        self.assertEqual(eperson.is_metadata('promo_encoding'), ('promo', 'encoding'))
+        self.assertEqual([(k.type, v)  for k, v in eperson.meta_attributes().items()],
                           [('promo_encoding', ('encoding', 'promo'))])
 
     def test_defaults(self):
-        self.assertEquals(list(eperson.defaults()), [])
+        self.assertEqual(list(eperson.defaults()), [])
         self.assertRaises(StopIteration, estring.defaults().next)
 
     def test_vocabulary(self):
-        #self.assertEquals(eperson.vocabulary('promo')
-        self.assertEquals(eperson.rdef('promo').constraint_by_interface(IVocabularyConstraint).vocabulary(),
+        #self.assertEqual(eperson.vocabulary('promo')
+        self.assertEqual(eperson.rdef('promo').constraint_by_interface(IVocabularyConstraint).vocabulary(),
                           ('bon', 'pasbon'))
         # self.assertRaises(AssertionError,
         #                   eperson.vocabulary, 'nom')
@@ -251,13 +253,13 @@ class EntitySchemaTC(BaseSchemaTC):
     def test_indexable_attributes(self):
         eperson.rdef('nom').fulltextindexed = True
         eperson.rdef('prenom').fulltextindexed = True
-        self.assertEquals(list(eperson.indexable_attributes()), ['nom', 'prenom'])
+        self.assertEqual(list(eperson.indexable_attributes()), ['nom', 'prenom'])
 
 
     def test_goodValues_relation_default(self):
         """check good values of entity does not raise an exception"""
         eperson.rdef('nom').default = 'No name'
-        self.assertEquals(eperson.default('nom'), 'No name')
+        self.assertEqual(eperson.default('nom'), 'No name')
 
     def test_subject_relations(self):
         """check subject relations a returned in the same order as in the
@@ -266,24 +268,24 @@ class EntitySchemaTC(BaseSchemaTC):
         expected = ['nom', 'prenom', 'sexe', 'tel', 'fax', 'datenaiss',
                     'TEST', 'promo', 'promo_enlarged', 'promo_encoding', 'travaille',
                     'evaluee', 'concerne']
-        self.assertEquals([r.type for r in rels], expected)
+        self.assertEqual([r.type for r in rels], expected)
 
     def test_object_relations(self):
         """check object relations a returned in the same order as in the
         schema definition"""
         rels = eaffaire.object_relations()
         expected = ['concerne']
-        self.assertEquals(rels, expected)
+        self.assertEqual(rels, expected)
         rels = [schem.type for schem in eaffaire.object_relations()]
-        self.assertEquals(rels, expected)
-        self.assertEquals(eaffaire.objrels['concerne'].type,
+        self.assertEqual(rels, expected)
+        self.assertEqual(eaffaire.objrels['concerne'].type,
                          'concerne')
 
     def test_destination_type(self):
         """check subject relations a returned in the same order as in the
         schema definition"""
-        self.assertEquals(eperson.destination('nom'), 'String')
-        self.assertEquals(eperson.destination('travaille'), 'Societe')
+        self.assertEqual(eperson.destination('nom'), 'String')
+        self.assertEqual(eperson.destination('travaille'), 'Societe')
 
     def test_check_unique_together1(self):
         eperson._unique_together = [('prenom', 'nom')]
@@ -291,35 +293,39 @@ class EntitySchemaTC(BaseSchemaTC):
 
     def test_check_unique_together2(self):
         eperson._unique_together = [('prenom', 'noms')]
-        exc = self.assertRaises(BadSchemaDefinition, eperson.check_unique_together)
-        self.failUnless('no such attribute or relation noms' in exc.args[0])
+        with self.assertRaises(BadSchemaDefinition) as cm:
+            eperson.check_unique_together()
+        self.assertTrue('no such attribute or relation noms'
+                        in cm.exception.args[0])
 
     def test_check_unique_together3(self):
         eperson._unique_together = [('nom', 'travaille')]
-        exc = self.assertRaises(BadSchemaDefinition, eperson.check_unique_together)
-        self.failUnless('travaille is not an attribute or an inlined relation' in exc.args[0])
+        with self.assertRaises(BadSchemaDefinition) as cm:
+            eperson.check_unique_together()
+        self.assertTrue('travaille is not an attribute or an inlined relation'
+                        in cm.exception.args[0])
 
 
 class RelationSchemaTC(BaseSchemaTC):
 
     def test_cmp(self):
-        self.failUnless(rconcerne == 'concerne')
-        self.failUnless('concerne' == rconcerne)
-        self.failUnless(rconcerne != 'nom')
-        self.failUnless('nom' != rconcerne)
-        self.failIf(rnom == rconcerne)
-        self.failIf(rconcerne == rnom)
-        self.failUnless(rnom != rconcerne)
-        self.failUnless(rconcerne != rnom)
+        self.assertTrue(rconcerne == 'concerne')
+        self.assertTrue('concerne' == rconcerne)
+        self.assertTrue(rconcerne != 'nom')
+        self.assertTrue('nom' != rconcerne)
+        self.assertFalse(rnom == rconcerne)
+        self.assertFalse(rconcerne == rnom)
+        self.assertTrue(rnom != rconcerne)
+        self.assertTrue(rconcerne != rnom)
 
     def test_hash(self):
         d = {}
         d[rconcerne] = 'p'
         d[rnom] = 'n'
-        self.failUnlessEqual(d[copy(rconcerne)], 'p')
-        self.failUnlessEqual(d[copy(rnom)], 'n')
-        self.failUnlessEqual(d['concerne'], 'p')
-        self.failUnlessEqual(d['nom'], 'n')
+        self.assertEqual(d[copy(rconcerne)], 'p')
+        self.assertEqual(d[copy(rnom)], 'n')
+        self.assertEqual(d['concerne'], 'p')
+        self.assertEqual(d['nom'], 'n')
 
 
     def test_base(self):
@@ -327,9 +333,9 @@ class RelationSchemaTC(BaseSchemaTC):
 
     def test_star_types(self):
         types = sorted(rconcerne.subjects())
-        self.assertEquals(types, ['Affaire', 'Person'])
+        self.assertEqual(types, ['Affaire', 'Person'])
         types = sorted(rconcerne.objects())
-        self.assertEquals(types, ['Affaire', 'Societe'])
+        self.assertEqual(types, ['Affaire', 'Societe'])
 
     def test_raise_update(self):
         self.assertRaisesMsg(BadSchemaDefinition,
@@ -348,25 +354,25 @@ class RelationSchemaTC(BaseSchemaTC):
                      ('Person', ['Affaire', 'Societe']) ]
         assoc_types = rconcerne.associations()
         assoc_types.sort()
-        self.assertEquals(assoc_types, expected)
+        self.assertEqual(assoc_types, expected)
         assoc_types = []
         for _from, _to in rconcerne.associations():
             assoc_types.append( (_from, _to))
             #assoc_types.append( (_from.type, [s.type for s in _to]) )
         assoc_types.sort()
-        self.assertEquals(assoc_types, expected)
+        self.assertEqual(assoc_types, expected)
 
 #     def test_reverse_association_types(self):
 #         expected = [ ('Affaire', ['Person']),
 #                      ('Societe', ['Person', 'Affaire'])]
 #         assoc_types = rconcerne.reverse_association_types()
 #         assoc_types.sort()
-#         self.assertEquals(assoc_types, expected)
+#         self.assertEqual(assoc_types, expected)
 #         assoc_types = []
 #         for _from, _to in rconcerne.reverse_association_types(True):
 #             assoc_types.append( (_from.type, [s.type for s in _to]) )
 #         assoc_types.sort()
-#         self.assertEquals(assoc_types, expected)
+#         self.assertEqual(assoc_types, expected)
 
 
 class SchemaTC(BaseSchemaTC):
@@ -380,9 +386,9 @@ class SchemaTC(BaseSchemaTC):
                      'Person', 'Societe', 'String', 'Time']
         types = schema.entities()
         types.sort()
-        self.assertEquals(types, all_types)
-        self.assertEquals(schema.has_entity('Affaire'), True)
-        self.assertEquals(schema.has_entity('Aaire'), False)
+        self.assertEqual(types, all_types)
+        self.assertEqual(schema.has_entity('Affaire'), True)
+        self.assertEqual(schema.has_entity('Aaire'), False)
 
     def test_raise_add_entity_type(self):
         self.assertRaisesMsg(BadSchemaDefinition, "entity type Person is already defined" ,
@@ -403,10 +409,10 @@ class SchemaTC(BaseSchemaTC):
         all_relations.sort()
         relations = schema.relations()
         relations.sort()
-        self.assertEquals(relations, all_relations)
+        self.assertEqual(relations, all_relations)
 
-        self.assertEquals(len(eperson.rdef('nom').constraints), 1)
-        self.assertEquals(len(eperson.rdef('prenom').constraints), 1)
+        self.assertEqual(len(eperson.rdef('nom').constraints), 1)
+        self.assertEqual(len(eperson.rdef('prenom').constraints), 1)
 
     def test_schema_check_relations(self):
         """test behaviour with some incorrect relations"""
@@ -442,30 +448,30 @@ class SchemaTC(BaseSchemaTC):
         picklestream.close()
         pschema = pickle.load(open(picklefile))
         schema.__hashmode__ = None
-        self.assertEquals(pschema.__hashmode__, None)
-        self.failIf(eperson is pschema['Person'])
-        self.failUnlessEqual(eperson, pschema['Person'])
-        self.failUnlessEqual('Person', pschema['Person'])
-        self.failUnlessEqual(eperson.ordered_relations(), pschema['Person'].ordered_relations())
-        self.failUnlessEqual(eperson.object_relations(), pschema['Person'].object_relations())
+        self.assertEqual(pschema.__hashmode__, None)
+        self.assertFalse(eperson is pschema['Person'])
+        self.assertEqual(eperson, pschema['Person'])
+        self.assertEqual('Person', pschema['Person'])
+        self.assertEqual(eperson.ordered_relations(), pschema['Person'].ordered_relations())
+        self.assertEqual(eperson.object_relations(), pschema['Person'].object_relations())
 
 
     def test_rename_entity_type(self):
         affaire = schema.eschema('Affaire')
         orig_rprops = affaire.rdef('concerne')
         schema.rename_entity_type('Affaire', 'Workcase')
-        self.assertUnorderedIterableEquals(schema._entities.keys(),
+        self.assertItemsEqual(schema._entities.keys(),
                              ['Boolean', 'Bytes', 'Date', 'Datetime', 'Float',
                               'Decimal',
                               'Int', 'Interval', 'Note', 'Password', 'Person',
                               'Societe', 'String', 'Time', 'Workcase'])
         rconcerne = schema.rschema('concerne')
-        self.assertUnorderedIterableEquals(rconcerne.subjects(), ['Workcase', 'Person'])
-        self.assertUnorderedIterableEquals(rconcerne.objects(), ['Workcase', 'Societe'])
+        self.assertItemsEqual(rconcerne.subjects(), ['Workcase', 'Person'])
+        self.assertItemsEqual(rconcerne.objects(), ['Workcase', 'Societe'])
         self.assertRaises(KeyError, schema.eschema, 'Affaire')
         workcase = schema.eschema('Workcase')
         schema.__test__ = True
-        self.assertEquals(workcase.rdef('concerne'), orig_rprops)
+        self.assertEqual(workcase.rdef('concerne'), orig_rprops)
 
 
 class SymetricTC(TestCase):
@@ -488,7 +494,7 @@ class SymetricTC(TestCase):
         rsee_also = schema.rschema('see_also')
         subj_types = rsee_also.associations()
         subj_types.sort()
-        self.assertEquals(subj_types,
+        self.assertEqual(subj_types,
                           [('Bug', ['Bug', 'Story', 'Project']),
                            ('Project', ['Bug', 'Story', 'Project']),
                            ('Story', ['Bug', 'Story', 'Project'])])
@@ -503,7 +509,7 @@ class SymetricTC(TestCase):
         subj_types.sort()
         for key, vals in subj_types:
             vals.sort()
-        self.assertEquals(subj_types,
+        self.assertEqual(subj_types,
                           [('Bug', ['Bug', 'Project', 'Story']),
                            ('Project', ['Bug', 'Project', 'Story']),
                            ('Story', ['Bug', 'Project', 'Story'])])

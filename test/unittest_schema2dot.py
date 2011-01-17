@@ -53,7 +53,7 @@ class DotTC(TestCase):
         schema2dot.schema2dot(schema, 'toto.dot', skiptypes=skipped_entities)
         generated = open('toto.dot').read()
         os.remove('toto.dot')
-        self.assertTextEquals(DOT_SOURCE, generated)
+        self.assertMultiLineEqual(DOT_SOURCE, generated)
 
 if __name__ == '__main__':
     unittest_main()

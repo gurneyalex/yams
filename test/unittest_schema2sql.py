@@ -265,7 +265,7 @@ class SQLSchemaTC(TestCase):
     def test_known_values(self):
         dbhelper = get_db_helper('postgres')
         output = schema2sql.schema2sql(dbhelper, schema)
-        self.assertTextEquals(EXPECTED_DATA_NO_DROP.strip(), output.strip())
+        self.assertMultiLineEqual(EXPECTED_DATA_NO_DROP.strip(), output.strip())
 
 
 if __name__ == '__main__':
