@@ -508,7 +508,6 @@ class EntitySchema(PermissionMixIn, ERSchema):
                     return True
                 if rdef.cardinality[0] in '1+':
                     return True
-                return True
         return False
 
     ## validation ######################
