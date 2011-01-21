@@ -81,7 +81,7 @@ def schema_image():
 
     schm_ldr = SchemaLoader()
 
-    class MockConfig():
+    class MockConfig(object):
         def packages(self):
             return packages
         def packages_path(self):
