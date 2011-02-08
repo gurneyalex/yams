@@ -488,25 +488,27 @@ class EntitySchema(PermissionMixIn, ERSchema):
 
     ## resource accessors ##############
 
-    def is_subobject(self, strict=False):
+    def is_subobject(self, strict=False, skiprels=()):
         """return True if this entity type is contained by another. If strict,
         return True if this entity type *must* be contained by another.
         """
         for rschema in self.object_relations():
+            if (rschema, 'object') in skiprels:
+                continue
             rdef = self.rdef(rschema, 'object')
             if rdef.composite == 'subject':
-                if not strict:
-                    return True
-                if rdef.cardinality[1] in '1+':
+                if not strict or rdef.cardinality[1] in '1+':
+                    print self, rdef
                     return True
         for rschema in self.subject_relations():
+            if (rschema, 'subject') in skiprels:
+                continue
             if rschema.final:
                 continue
             rdef = self.rdef(rschema, 'subject')
             if rdef.composite == 'object':
-                if not strict:
-                    return True
-                if rdef.cardinality[0] in '1+':
+                if not strict or rdef.cardinality[0] in '1+':
+                    print self, rdef
                     return True
         return False
 
