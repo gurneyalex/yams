@@ -11,7 +11,7 @@ def serialize_to_python(s):
         l = graph.setdefault(entity, [])
         if entity._specialized_type is not None:
             l.append(entity._specialized_type)
-    for e in ordered_nodes(graph):
+    for e in reversed(ordered_nodes(graph)):
         if not e.final:
             if e._specialized_type:
                 base = e._specialized_type
