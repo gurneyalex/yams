@@ -59,6 +59,6 @@ include_dirs = []
 scripts = ['bin/yams-check', 'bin/yams-view']
 
 install_requires = [
-    'logilab-common >= 0.47.0',
+    'logilab-common >= 0.54.1',
     'logilab-database >= 1.3.0',
     ]
