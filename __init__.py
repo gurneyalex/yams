@@ -58,7 +58,6 @@ class _RelationRole(int):
             return other == 'object'
         return other == 'subject'
     def __nonzero__(self):
-        print 'oyop'
         if self is SUBJECT:
             return OBJECT
         return SUBJECT

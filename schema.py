@@ -498,7 +498,6 @@ class EntitySchema(PermissionMixIn, ERSchema):
             rdef = self.rdef(rschema, 'object')
             if rdef.composite == 'subject':
                 if not strict or rdef.cardinality[1] in '1+':
-                    print self, rdef
                     return True
         for rschema in self.subject_relations():
             if (rschema, 'subject') in skiprels:
@@ -508,7 +507,6 @@ class EntitySchema(PermissionMixIn, ERSchema):
             rdef = self.rdef(rschema, 'subject')
             if rdef.composite == 'object':
                 if not strict or rdef.cardinality[0] in '1+':
-                    print self, rdef
                     return True
         return False
 
