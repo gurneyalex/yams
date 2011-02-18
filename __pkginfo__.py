@@ -24,7 +24,7 @@ __docformat__ = "restructuredtext en"
 modname = 'yams'
 
 # release version
-numversion = (0, 30, 3)
+numversion = (0, 31, 0)
 version = '.'.join(str(num) for num in numversion)
 
 # license and copyright
@@ -59,6 +59,6 @@ include_dirs = []
 scripts = ['bin/yams-check', 'bin/yams-view']
 
 install_requires = [
-    'logilab-common >= 0.47.0',
+    'logilab-common >= 0.54.1',
     'logilab-database >= 1.3.0',
     ]

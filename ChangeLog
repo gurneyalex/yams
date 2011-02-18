@@ -1,6 +1,15 @@
 ChangeLog for yams
 ------------------
 
+2011-02-18  --  0.31.0
+    * new `skiprels` argument to EntitySchema.is_subjobject
+
+    * started a `serialize` module to serialize a yams schema as OWL
+
+    * fix py2.4 syntax error
+
+
+
 2011-01-17  --  0.30.3
     * various packaging fixes
 
