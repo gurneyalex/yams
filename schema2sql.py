@@ -1,4 +1,4 @@
-# copyright 2004-2010 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
+# copyright 2004-2011 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
 # contact http://www.logilab.fr/ -- mailto:contact@logilab.fr
 #
 # This file is part of yams.
@@ -15,11 +15,9 @@
 #
 # You should have received a copy of the GNU Lesser General Public License along
 # with yams. If not, see <http://www.gnu.org/licenses/>.
-"""write a schema as sql
+"""write a schema as sql"""
 
-"""
 __docformat__ = "restructuredtext en"
-__metaclass__ = type
 
 from yams.constraints import SizeConstraint, UniqueConstraint
 
