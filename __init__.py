@@ -33,14 +33,18 @@ from yams._exceptions import *
 
 MARKER = nullobject()
 
-BASE_TYPES = set(('String', 'Int', 'Float', 'Boolean', 'Date', 'Decimal',
-                  'Time', 'Datetime', 'Interval', 'Password', 'Bytes'))
+BASE_TYPES = set(('String', 'Password', 'Bytes',
+                  'Int', 'Float', 'Boolean', 'Decimal',
+                  'Date', 'Time', 'Datetime', 'TZTime', 'TZDatetime', 'Interval'
+                  ))
 
 # base groups used in permissions
 BASE_GROUPS = set((_('managers'), _('users'), _('guests'), _('owners')))
 
 KEYWORD_MAP = {'Datetime.NOW' : datetime.now,
                'Datetime.TODAY': datetime.today,
+               'TZDatetime.NOW' : datetime.utcnow,
+               'TZDatetime.TODAY': datetime.today,
                'Date.TODAY': date.today}
 DATE_FACTORY_MAP = {
     'Datetime' : lambda x: ':' in x and strptime(x, '%Y/%m/%d %H:%M') or strptime(x, '%Y/%m/%d'),

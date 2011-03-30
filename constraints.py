@@ -498,6 +498,8 @@ BASE_CHECKERS = {
     'Date' :     yes,
     'Time' :     yes,
     'Datetime' : yes,
+    'TZTime' :   yes,
+    'TZDatetime':yes,
     'Interval' : yes,
     'String' :   check_string,
     'Int' :      check_int,
