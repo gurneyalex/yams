@@ -56,7 +56,7 @@ class SchemaLoaderTC(TestCase):
                               ['Affaire', 'Boolean', 'Bytes', 'Company', 'Date', 'Datetest', 'Datetime', 'Decimal',
                                'Division', 'EPermission', 'Eetype',  'Employee', 'Float', 'Int', 'Interval',
                                'Note', 'Password', 'Person', 'Societe', 'State', 'String',
-                               'Subcompany', 'Subdivision', 'Time', 'pkginfo'])
+                               'Subcompany', 'Subdivision', 'TZDatetime', 'TZTime', 'Time', 'pkginfo'])
         self.assertListEqual(sorted(schema.relations()),
                               ['ad1', 'ad2', 'ad3', 'adel', 'ass', 'author', 'author_email',
                                'concerne', 'copyright', 'cp',

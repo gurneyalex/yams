@@ -383,10 +383,8 @@ class SchemaTC(BaseSchemaTC):
         all_types = ['Affaire', 'Boolean', 'Bytes', 'Date', 'Datetime',
                      'Decimal',
                      'Float', 'Int', 'Interval', 'Note', 'Password',
-                     'Person', 'Societe', 'String', 'Time']
-        types = schema.entities()
-        types.sort()
-        self.assertEqual(types, all_types)
+                     'Person', 'Societe', 'String', 'TZDatetime', 'TZTime', 'Time']
+        self.assertEqual(sorted(schema.entities()), all_types)
         self.assertEqual(schema.has_entity('Affaire'), True)
         self.assertEqual(schema.has_entity('Aaire'), False)
 
@@ -464,7 +462,8 @@ class SchemaTC(BaseSchemaTC):
                              ['Boolean', 'Bytes', 'Date', 'Datetime', 'Float',
                               'Decimal',
                               'Int', 'Interval', 'Note', 'Password', 'Person',
-                              'Societe', 'String', 'Time', 'Workcase'])
+                              'Societe', 'String', 'Time', 'TZDatetime', 'TZTime',
+                              'Workcase'])
         rconcerne = schema.rschema('concerne')
         self.assertItemsEqual(rconcerne.subjects(), ['Workcase', 'Person'])
         self.assertItemsEqual(rconcerne.objects(), ['Workcase', 'Societe'])
