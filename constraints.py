@@ -90,9 +90,9 @@ class SizeConstraint(BaseConstraint):
     def __str__(self):
         res = 'size'
         if self.max is not None:
-            res = '%s < %s' % (res, self.max)
+            res = '%s <= %s' % (res, self.max)
         if self.min is not None:
-            res = '%s < %s' % (self.min, res)
+            res = '%s <= %s' % (self.min, res)
         return res
 
     def check_consistency(self, subjschema, objschema, rdef):
