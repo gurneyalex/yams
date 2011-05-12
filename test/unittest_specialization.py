@@ -117,6 +117,8 @@ class SpecializationTC(TestCase):
                               expected[subjobj])
         self.assertEqual(len(set(expected) - done), 0, 'missing %s' % (set(expected) - done))
 
+        self.failUnless('custom_attr' in self.schema['Student'].subjrels)
+
     def test_remove_infered_relations(self):
         self.schema.remove_infered_definitions()
         relations = sorted([r for r in self.schema.relations() if not r.final])

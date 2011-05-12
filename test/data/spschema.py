@@ -15,4 +15,33 @@
 #
 # You should have received a copy of the GNU Lesser General Public License along
 # with yams. If not, see <http://www.gnu.org/licenses/>.
-"hop"
+from yams.buildobjs import EntityType, SubjectRelation, String, RelationDefinition
+
+class Person(EntityType):
+    firstname = String()
+    knows = SubjectRelation('Person')
+    works_for = SubjectRelation('Company')
+
+class Student(Person):
+    __specializes_schema__ = True
+
+class Company(EntityType):
+    name = String()
+
+class SubCompany(Company):
+    __specializes_schema__ = True
+
+class Division(Company):
+    __specializes_schema__ = True
+    division_of = SubjectRelation('Company')
+
+class SubDivision(Division):
+    __specializes_schema__ = True
+
+# This class doesn't extend the schema
+class SubSubDivision(SubDivision):
+    pass
+
+class custom_attr(RelationDefinition):
+    subject = 'Person'
+    object = 'String'
