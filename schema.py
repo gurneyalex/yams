@@ -1199,7 +1199,7 @@ class Schema(object):
 
     def infer_specialization_rules(self):
         for rschema in self.relations():
-            if rschema.final or rschema in self.no_specialization_inference:
+            if rschema in self.no_specialization_inference:
                 continue
             for (subject, object), rdef in rschema.rdefs.items():
                 subjeschemas = [subject] + subject.specialized_by(recursive=True)
