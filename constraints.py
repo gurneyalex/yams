@@ -125,9 +125,11 @@ class SizeConstraint(BaseConstraint):
 
     def failed_message(self, value, _=unicode):
         if self.max is not None and len(value) > self.max:
-            return _('value should have maximum size of %s') % self.max
+            return _('value should have maximum size of %s but found %s') % (
+                self.max, len(value))
         if self.min is not None and len(value) < self.min:
-            return _('value should have minimum size of %s') % self.min
+            return _('value should have minimum size of %s but found %s') % (
+                self.min, len(value))
         assert False, 'shouldnt be there'
 
     def serialize(self):
@@ -231,8 +233,8 @@ class BoundaryConstraint(BaseConstraint):
         return OPERATORS[self.operator](value, boundary)
 
     def failed_message(self, value, _=unicode):
-        return _("value must be %(op)s %(boundary)s") % {
-            'op': self.operator, 'boundary': self.boundary}
+        return _("value %(value)s must be %(op)s %(boundary)s") % {
+            'value': value, 'op': self.operator, 'boundary': self.boundary}
 
     def serialize(self):
         """simple text serialization"""
@@ -284,11 +286,11 @@ class IntervalBoundConstraint(BaseConstraint):
 
     def failed_message(self, value, _=unicode):
         if self.minvalue is not None and value < self.minvalue:
-            return _("value must be >= %(boundary)s") % {
-                'boundary': self.minvalue}
+            return _("value %(value)s must be >= %(boundary)s") % {
+                'value': value, 'boundary': self.minvalue}
         if self.maxvalue is not None and value > self.maxvalue:
-            return _("value must be <= %(boundary)s") % {
-                'boundary': self.maxvalue}
+            return _("value %(value)s must be <= %(boundary)s") % {
+                'value': value, 'boundary': self.maxvalue}
         assert False, 'shouldnt be there'
 
     def serialize(self):
