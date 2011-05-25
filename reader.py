@@ -333,6 +333,7 @@ class SchemaLoader(object):
             hdlr.error('invalid definition object')
         defobject.expand_type_definitions(self.defined)
 
+
 class _Context(object):
     def __init__(self):
         self.defined = {}
