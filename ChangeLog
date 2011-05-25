@@ -1,8 +1,11 @@
 ChangeLog for yams
 ------------------
-    * support TZDatetime and TZTime
 
 2011-04-01  --  0.32.0
+    * support TZDatetime and TZTime
+
+
+2011-18-02  --  0.31.0
     * new `skiprels` argument to EntitySchema.is_subjobject
 
     * started a `serialize` module to serialize a yams schema as OWL
