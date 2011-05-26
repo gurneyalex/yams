@@ -477,9 +477,9 @@ class SchemaLoaderTC2(TestCase):
         loader.defined = {}
         class RT1(RelationType):
             pass
-        loader.add_definition(None, RT1)
+        loader.add_definition(RT1)
         with self.assertRaises(BadSchemaDefinition) as cm:
-            loader.add_definition(None, RT1)
+            loader.add_definition(RT1)
         self.assertEqual(str(cm.exception), 'duplicated relation type for RT1')
 
     def test_rtype_priority(self):
@@ -491,8 +491,8 @@ class SchemaLoaderTC2(TestCase):
             object = 'Whatever'
         class RT1(RelationType):
             pass
-        loader.add_definition(None, RT1Def)
-        loader.add_definition(None, RT1)
+        loader.add_definition(RT1Def)
+        loader.add_definition(RT1)
         self.assertEqual(loader.defined['RT1'], RT1)
 
     def test_unfinalized_manipulation(self):

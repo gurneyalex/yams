@@ -62,137 +62,6 @@ class DeprecatedDict(dict):
         warn(self.message, DeprecationWarning, stacklevel=2)
         return super(DeprecatedDict, self).__contains__(key)
 
-
-def _builder_context():
-    """builds the context in which the schema files
-    will be executed
-    """
-    return dict([(attr, getattr(buildobjs, attr))
-                 for attr in buildobjs.__all__])
-
-
-
-class PyFileReader(object):
-    """read schema definition objects from a python file"""
-    context = _builder_context()
-    context.update(CONSTRAINTS)
-
-    def __init__(self, loader):
-        self.loader = loader
-        self._current_file = None
-        self._loaded = {}
-
-    def error(self, msg=None):
-        """raise a contextual exception"""
-        raise BadSchemaDefinition(self._current_file, msg)
-
-    def read_file(self, filepath):
-        self._current_file = filepath
-        try:
-            modname, module = self._loaded[filepath]
-        except KeyError:
-            modname, module = self.exec_file(filepath)
-        processed_object = set()
-        for name, obj in vars(module).items():
-            if name.startswith('_'):
-                continue
-            try:
-                isdef = issubclass(obj, buildobjs.Definition)
-            except TypeError:
-                continue
-            if (not isdef) or obj.__module__ != modname or \
-                obj in processed_object:
-                continue
-            self.loader.add_definition(self, obj)
-            processed_object.add(obj)
-
-    def import_erschema(self, ertype, schemamod=None, instantiate=True):
-        warn('import_erschema is deprecated, use explicit import once schema '
-             'is turned into a proper python module (eg not expecting '
-             'predefined context in globals)', DeprecationWarning, stacklevel=3)
-        try:
-            erdef = self.loader.defined[ertype]
-            name = hasattr(erdef, 'name') and erdef.name or erdef.__name__
-            if name == ertype:
-                assert instantiate, 'can\'t get class of an already registered type'
-                return erdef
-        except KeyError:
-            pass
-        assert False, 'ooups'
-
-    def exec_file(self, filepath):
-        try:
-            modname = '.'.join(modpath_from_file(filepath, self.loader.extrapath))
-            doimport = True
-        except ImportError:
-            warn('module for %s can\'t be found, add necessary __init__.py '
-                 'files to make it importable' % filepath, DeprecationWarning)
-            modname = splitext(basename(filepath))[0]
-            doimport = False
-        # XXX can't rely on __import__ until bw compat (eg implicit import) needed
-        #if doimport:
-        #    module = __import__(modname, fglobals)
-        #    for part in modname.split('.')[1:]:
-        #        module = getattr(module, part)
-        #else:
-        if modname in sys.modules:
-            module = sys.modules[modname]
-            # NOTE: don't test raw equality to avoid .pyc / .py comparisons
-            assert abspath(module.__file__).startswith(abspath(filepath)), (
-                modname, filepath, module.__file__)
-        else:
-            # XXX until bw compat is gone, put context into builtins to allow proper
-            # control of deprecation warning
-            import __builtin__
-            fglobals = {} # self.context.copy()
-            # wrap callable that should be imported
-            for key, val in self.context.items():
-                if key in BASE_TYPES or key == 'RichString' or key in CONSTRAINTS or \
-                       key in ('SubjectRelation', 'ObjectRelation', 'BothWayRelation'):
-                    val = obsolete(val)
-                setattr(__builtin__, key, val)
-            __builtin__.import_erschema = self.import_erschema
-            __builtin__.defined_types = DeprecatedDict(self.loader.defined,
-                                                        'defined_types is deprecated, '
-                                                        'use yams.reader.context')
-            fglobals['__file__'] = filepath
-            fglobals['__name__'] = modname
-            package = '.'.join(modname.split('.')[:-1])
-            if package and not package in sys.modules:
-                __import__(package)
-            execfile(filepath, fglobals)
-            # check for use of classes that should be imported, without
-            # importing them
-            for name, obj in fglobals.items():
-                if isinstance(obj, type) and \
-                       issubclass(obj, buildobjs.Definition) and \
-                       obj.__module__ == modname:
-                    for parent in obj.__bases__:
-                        pname = parent.__name__
-                        if pname in ('MetaEntityType', 'MetaUserEntityType',
-                                     'MetaRelationType', 'MetaUserRelationType',
-                                     'MetaAttributeRelationType'):
-                            warn('%s: %s is deprecated, use EntityType/RelationType'
-                                 ' with explicit permission (%s)' % (filepath, pname, name),
-                                 DeprecationWarning)
-                        if pname in fglobals or not pname in self.context:
-                            # imported
-                            continue
-                        warn('%s: please explicitly import %s (%s)'
-                             % (filepath, pname, name), DeprecationWarning)
-            #for key in self.context:
-            #    fglobals.pop(key, None)
-            fglobals['__file__'] = filepath
-            module = types.ModuleType(str(modname))
-            module.__dict__.update(fglobals)
-            sys.modules[modname] = module
-            if package:
-                setattr(sys.modules[package], modname.split('.')[-1], module)
-        if hasattr(module, 'post_build_callback'):
-            self.loader.post_build_callbacks.append(module.post_build_callback)
-        self._loaded[filepath] = (modname, module)
-        return self._loaded[filepath]
-
 def obsolete(cls):
     def wrapped(*args, **kwargs):
         reason = '%s should be explictly imported from %s' % (
@@ -209,6 +78,9 @@ class SchemaLoader(object):
     """
     schemacls = schemamod.Schema
     extrapath = None
+    context = dict([(attr, getattr(buildobjs, attr))
+                    for attr in buildobjs.__all__])
+    context.update(CONSTRAINTS)
 
     def load(self, directories, name=None,
              register_base_types=True, construction_mode='strict',
@@ -217,7 +89,6 @@ class SchemaLoader(object):
         """
         self.defined = {}
         self.loaded_files = []
-        self._pyreader = PyFileReader(self)
         self.post_build_callbacks = []
         sys.modules[__name__].context = self
         # ensure we don't have an iterator
@@ -311,10 +182,11 @@ class SchemaLoader(object):
     def handle_file(self, filepath):
         """handle a partial schema definition file according to its extension
         """
-        ext = splitext(filepath)[1]
-        assert ext == '.py'
-        self._pyreader.read_file(filepath)
-        self.loaded_files.append(filepath)
+        assert filepath.endswith('.py'), 'not a python file'
+        if filepath not in self.loaded_files:
+            for obj in self.read_file(filepath):
+                self.add_definition(obj, filepath)
+            self.loaded_files.append(filepath)
 
     def unhandled_file(self, filepath):
         """called when a file without handler associated has been found,
@@ -322,7 +194,7 @@ class SchemaLoader(object):
         """
         pass
 
-    def add_definition(self, hdlr, defobject):
+    def add_definition(self, defobject, filepath=None):
         """file handler callback to add a definition object
 
         wildcard capability force to load schema in two steps : first register
@@ -330,8 +202,111 @@ class SchemaLoader(object):
         `_build_schema`)
         """
         if not issubclass(defobject, buildobjs.Definition):
-            hdlr.error('invalid definition object')
+            raise BadSchemaDefinition(filepath, 'invalid definition object')
         defobject.expand_type_definitions(self.defined)
+
+
+    def read_file(self, filepath):
+        modname, module = self.exec_file(filepath)
+        processed_object = set()
+        for name, obj in vars(module).items():
+            if name.startswith('_'):
+                continue
+            try:
+                isdef = issubclass(obj, buildobjs.Definition)
+            except TypeError:
+                continue
+            if (not isdef) or obj.__module__ != modname or \
+                obj in processed_object:
+                continue
+            processed_object.add(obj)
+        return processed_object
+
+    def import_erschema(self, ertype, schemamod=None, instantiate=True):
+        warn('import_erschema is deprecated, use explicit import once schema '
+             'is turned into a proper python module (eg not expecting '
+             'predefined context in globals)', DeprecationWarning, stacklevel=3)
+        try:
+            erdef = self.defined[ertype]
+            name = getattr(erdef, 'name', erdef.__name__)
+            if name == ertype:
+                assert instantiate, 'can\'t get class of an already registered type'
+                return erdef
+        except KeyError:
+            pass
+        assert False, 'ooups'
+
+    def exec_file(self, filepath):
+        try:
+            modname = '.'.join(modpath_from_file(filepath, self.extrapath))
+            doimport = True
+        except ImportError:
+            warn('module for %s can\'t be found, add necessary __init__.py '
+                 'files to make it importable' % filepath, DeprecationWarning)
+            modname = splitext(basename(filepath))[0]
+            doimport = False
+        # XXX can't rely on __import__ until bw compat (eg implicit import) needed
+        #if doimport:
+        #    module = __import__(modname, fglobals)
+        #    for part in modname.split('.')[1:]:
+        #        module = getattr(module, part)
+        #else:
+        if modname in sys.modules:
+            module = sys.modules[modname]
+            # NOTE: don't test raw equality to avoid .pyc / .py comparisons
+            assert abspath(module.__file__).startswith(abspath(filepath)), (
+                modname, filepath, module.__file__)
+        else:
+            # XXX until bw compat is gone, put context into builtins to allow proper
+            # control of deprecation warning
+            import __builtin__
+            fglobals = {} # self.context.copy()
+            # wrap callable that should be imported
+            for key, val in self.context.items():
+                if key in BASE_TYPES or key == 'RichString' or key in CONSTRAINTS or \
+                       key in ('SubjectRelation', 'ObjectRelation', 'BothWayRelation'):
+                    val = obsolete(val)
+                setattr(__builtin__, key, val)
+            __builtin__.import_erschema = self.import_erschema
+            __builtin__.defined_types = DeprecatedDict(self.defined,
+                                                        'defined_types is deprecated, '
+                                                        'use yams.reader.context')
+            fglobals['__file__'] = filepath
+            fglobals['__name__'] = modname
+            package = '.'.join(modname.split('.')[:-1])
+            if package and not package in sys.modules:
+                __import__(package)
+            execfile(filepath, fglobals)
+            # check for use of classes that should be imported, without
+            # importing them
+            for name, obj in fglobals.items():
+                if isinstance(obj, type) and \
+                       issubclass(obj, buildobjs.Definition) and \
+                       obj.__module__ == modname:
+                    for parent in obj.__bases__:
+                        pname = parent.__name__
+                        if pname in ('MetaEntityType', 'MetaUserEntityType',
+                                     'MetaRelationType', 'MetaUserRelationType',
+                                     'MetaAttributeRelationType'):
+                            warn('%s: %s is deprecated, use EntityType/RelationType'
+                                 ' with explicit permission (%s)' % (filepath, pname, name),
+                                 DeprecationWarning)
+                        if pname in fglobals or not pname in self.context:
+                            # imported
+                            continue
+                        warn('%s: please explicitly import %s (%s)'
+                             % (filepath, pname, name), DeprecationWarning)
+            #for key in self.context:
+            #    fglobals.pop(key, None)
+            fglobals['__file__'] = filepath
+            module = types.ModuleType(str(modname))
+            module.__dict__.update(fglobals)
+            sys.modules[modname] = module
+            if package:
+                setattr(sys.modules[package], modname.split('.')[-1], module)
+        if hasattr(module, 'post_build_callback'):
+            self.post_build_callbacks.append(module.post_build_callback)
+        return (modname, module)
 
 
 class _Context(object):
@@ -339,3 +314,7 @@ class _Context(object):
         self.defined = {}
 
 context = _Context()
+
+# XXX backward compatibility to prevent changing cw.schema and cw.test.unittest_schema (3.12.+)
+PyFileReader = SchemaLoader
+PyFileReader.__init__ = lambda *x: None
