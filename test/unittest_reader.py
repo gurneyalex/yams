@@ -27,7 +27,7 @@ from logilab.common.testlib import TestCase, unittest_main
 
 from yams import BadSchemaDefinition, buildobjs
 from yams.schema import Schema
-from yams.reader import SchemaLoader
+from yams.reader import SchemaLoader, build_schema_from_namespace
 from yams.constraints import StaticVocabularyConstraint, SizeConstraint
 
 sys.path.insert(0, osp.join(osp.dirname(__file__)))
@@ -519,6 +519,28 @@ class SchemaLoaderTC2(TestCase):
         schema = SchemaLoader().load([DATADIR], 'Test')
         self.assertIn('Toto', schema.entities())
 
+class BuildSchemaTC(TestCase):
+
+    def test_build_schema(self):
+        from yams.buildobjs import EntityType, RelationDefinition, Int, String
+
+        class Question(EntityType):
+            number = Int()
+            text = String()
+
+        class Form(EntityType):
+            title = String()
+
+        class in_form(RelationDefinition):
+            subject = 'Question'
+            object = 'Form'
+            cardinality = '*1'
+
+        schema = build_schema_from_namespace(vars().items())
+        entities = [x for x in schema.entities() if not x.final]
+        self.assertItemsEqual(['Form', 'Question'], entities)
+        relations = [x for x in schema.relations() if not x.final]
+        self.assertItemsEqual(['in_form'], relations)
 
 if __name__ == '__main__':
     unittest_main()
