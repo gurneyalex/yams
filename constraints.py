@@ -513,6 +513,8 @@ BASE_CHECKERS = {
     }
 
 BASE_CONVERTERS = {
+    'String' :  unicode,
+    'Password':  str,
     'Int' :      int,
     'Float' :    float,
     'Boolean' :  bool,
