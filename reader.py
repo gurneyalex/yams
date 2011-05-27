@@ -49,7 +49,6 @@ for objname in dir(constraints):
     except TypeError:
         continue
 
-
 class DeprecatedDict(dict):
     def __init__(self, context, message):
         dict.__init__(self, context)
@@ -70,7 +69,39 @@ def obsolete(cls):
         return cls(*args, **kwargs)
     return wrapped
 
-# the main schema loader ######################################################
+def fill_schema(schema, erdefs, register_base_types=True,
+                remove_unused_rtypes=False, post_build_callbacks=[]):
+    if register_base_types:
+        buildobjs.register_base_types(schema)
+    # register relation types and non final entity types
+    for definition in erdefs.itervalues():
+        if isinstance(definition, type):
+            definition = definition()
+        if isinstance(definition, buildobjs.RelationType):
+            schema.add_relation_type(definition)
+        elif isinstance(definition, buildobjs.EntityType):
+            schema.add_entity_type(definition)
+    # register relation definitions
+    for definition in erdefs.itervalues():
+        if isinstance(definition, type):
+            definition = definition()
+        definition.expand_relation_definitions(erdefs, schema)
+    # call 'post_build_callback' functions found in schema modules
+    for cb in post_build_callbacks:
+        cb(schema)
+    # optionaly remove relation types without definitions
+    if remove_unused_rtypes:
+        for rschema in schema.relations():
+            if not rschema.rdefs:
+                schema.del_relation_type(rschema)
+    # set permissions on entities and relations
+    for erschema in schema.entities() + schema.relations():
+        erschema.check_permission_definitions()
+    schema.infer_specialization_rules()
+    for eschema in schema.entities():
+        eschema.check_unique_together()
+    return schema
+
 
 class SchemaLoader(object):
     """the schema loader is responsible to build a schema object from a
@@ -95,10 +126,11 @@ class SchemaLoader(object):
         directories = tuple(directories)
         try:
             self._load_definition_files(directories)
+            schema = self.schemacls(name or 'NoName', construction_mode=construction_mode)
             try:
-                schema = self._build_schema(name, register_base_types,
-                                            construction_mode=construction_mode,
-                                            remove_unused_rtypes=remove_unused_rtypes)
+                fill_schema(schema, self.defined, register_base_types,
+                            remove_unused_rtypes=remove_unused_rtypes,
+                            post_build_callbacks=self.post_build_callbacks)
             except Exception, ex:
                 if not hasattr(ex, 'schema_files'):
                     ex.schema_files = self.loaded_files
@@ -118,41 +150,6 @@ class SchemaLoader(object):
         for directory in directories:
             for filepath in self.get_schema_files(directory):
                 self.handle_file(filepath)
-
-    def _build_schema(self, name, register_base_types=True,
-                      construction_mode='strict', remove_unused_rtypes=False):
-        """build actual schema from definition objects, and return it"""
-        schema = self.schemacls(name or 'NoName', construction_mode=construction_mode)
-        if register_base_types:
-            buildobjs.register_base_types(schema)
-        # register relation types and non final entity types
-        for definition in self.defined.itervalues():
-            if isinstance(definition, type):
-                definition = definition()
-            if isinstance(definition, buildobjs.RelationType):
-                schema.add_relation_type(definition)
-            elif isinstance(definition, buildobjs.EntityType):
-                schema.add_entity_type(definition)
-        # register relation definitions
-        for definition in self.defined.itervalues():
-            if isinstance(definition, type):
-                definition = definition()
-            definition.expand_relation_definitions(self.defined, schema)
-        # call 'post_build_callback' functions found in schema modules
-        for cb in self.post_build_callbacks:
-            cb(schema)
-        # optionaly remove relation types without definitions
-        if remove_unused_rtypes:
-            for rschema in schema.relations():
-                if not rschema.rdefs:
-                    schema.del_relation_type(rschema)
-        # set permissions on entities and relations
-        for erschema in schema.entities() + schema.relations():
-            erschema.check_permission_definitions()
-        schema.infer_specialization_rules()
-        for eschema in schema.entities():
-            eschema.check_unique_together()
-        return schema
 
     # has to be overridable sometimes (usually for test purpose)
     main_schema_directory = 'schema'
@@ -184,7 +181,15 @@ class SchemaLoader(object):
         """
         assert filepath.endswith('.py'), 'not a python file'
         if filepath not in self.loaded_files:
-            for obj in self.read_file(filepath):
+            modname, module = self.exec_file(filepath)
+            objects_to_add = set()
+            for name, obj in vars(module).items():
+                if (isinstance(obj, type)
+                    and issubclass(obj, buildobjs.Definition)
+                    and obj.__module__ == modname
+                    and not name.startswith('_')):
+                    objects_to_add.add(obj)
+            for obj in objects_to_add:
                 self.add_definition(obj, filepath)
             self.loaded_files.append(filepath)
 
@@ -204,23 +209,6 @@ class SchemaLoader(object):
         if not issubclass(defobject, buildobjs.Definition):
             raise BadSchemaDefinition(filepath, 'invalid definition object')
         defobject.expand_type_definitions(self.defined)
-
-
-    def read_file(self, filepath):
-        modname, module = self.exec_file(filepath)
-        processed_object = set()
-        for name, obj in vars(module).items():
-            if name.startswith('_'):
-                continue
-            try:
-                isdef = issubclass(obj, buildobjs.Definition)
-            except TypeError:
-                continue
-            if (not isdef) or obj.__module__ != modname or \
-                obj in processed_object:
-                continue
-            processed_object.add(obj)
-        return processed_object
 
     def import_erschema(self, ertype, schemamod=None, instantiate=True):
         warn('import_erschema is deprecated, use explicit import once schema '
@@ -308,13 +296,22 @@ class SchemaLoader(object):
             self.post_build_callbacks.append(module.post_build_callback)
         return (modname, module)
 
+# XXX backward compatibility to prevent changing cw.schema and cw.test.unittest_schema (3.12.+)
+PyFileReader = SchemaLoader
+PyFileReader.__init__ = lambda *x: None
+
+def build_schema_from_namespace(items):
+    erdefs = {}
+    for name, obj in items:
+        if (isinstance(obj, type) and issubclass(obj, buildobjs.Definition)
+            and obj not in (buildobjs.Definition, buildobjs.RelationDefinition, buildobjs.EntityType)):
+            obj.expand_type_definitions(erdefs)
+    schema = schemamod.Schema('noname')
+    fill_schema(schema, erdefs)
+    return schema
 
 class _Context(object):
     def __init__(self):
         self.defined = {}
 
 context = _Context()
-
-# XXX backward compatibility to prevent changing cw.schema and cw.test.unittest_schema (3.12.+)
-PyFileReader = SchemaLoader
-PyFileReader.__init__ = lambda *x: None
