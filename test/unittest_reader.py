@@ -1,4 +1,4 @@
-# copyright 2004-2010 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
+# copyright 2004-2011 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
 # contact http://www.logilab.fr/ -- mailto:contact@logilab.fr
 #
 # This file is part of yams.
@@ -53,7 +53,8 @@ class SchemaLoaderTC(TestCase):
         self.assert_(isinstance(schema, Schema))
         self.assertEqual(schema.name, 'NoName')
         self.assertListEqual(sorted(schema.entities()),
-                              ['Affaire', 'Boolean', 'Bytes', 'Company', 'Date', 'Datetest', 'Datetime', 'Decimal',
+                              ['Affaire', 'BigInt', 'Boolean', 'Bytes', 'Company',
+                               'Date', 'Datetest', 'Datetime', 'Decimal',
                                'Division', 'EPermission', 'Eetype',  'Employee', 'Float', 'Int', 'Interval',
                                'Note', 'Password', 'Person', 'Societe', 'State', 'String',
                                'Subcompany', 'Subdivision', 'TZDatetime', 'TZTime', 'Time', 'pkginfo'])

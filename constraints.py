@@ -1,4 +1,4 @@
-# copyright 2004-2010 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
+# copyright 2004-2011 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
 # contact http://www.logilab.fr/ -- mailto:contact@logilab.fr
 #
 # This file is part of yams.
@@ -505,6 +505,7 @@ BASE_CHECKERS = {
     'Interval' : yes,
     'String' :   check_string,
     'Int' :      check_int,
+    'BigInt' :   check_int,
     'Float' :    check_float,
     'Decimal' :  check_decimal,
     'Boolean' :  check_boolean,
@@ -516,6 +517,7 @@ BASE_CONVERTERS = {
     'String' :  unicode,
     'Password':  str,
     'Int' :      int,
+    'BigInt' :   int,
     'Float' :    float,
     'Boolean' :  bool,
     'Decimal' :  decimal.Decimal,

@@ -34,7 +34,7 @@ from yams._exceptions import *
 MARKER = nullobject()
 
 BASE_TYPES = set(('String', 'Password', 'Bytes',
-                  'Int', 'Float', 'Boolean', 'Decimal',
+                  'Int', 'BigInt', 'Float', 'Boolean', 'Decimal',
                   'Date', 'Time', 'Datetime', 'TZTime', 'TZDatetime', 'Interval'
                   ))
 
