@@ -1,6 +1,9 @@
 ChangeLog for yams
 ------------------
 
+	--
+    * support BigInt
+
 2011-04-01  --  0.32.0
     * support TZDatetime and TZTime
 
