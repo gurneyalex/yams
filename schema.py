@@ -387,8 +387,8 @@ class EntitySchema(PermissionMixIn, ERSchema):
             if rdef.object == 'Boolean':
                 if not isinstance(default, bool):
                     default = default == 'True' # XXX duh?
-            elif rdef.object == 'Int':
-                if not isinstance(default, int):
+            elif rdef.object in ('Int', 'BigInt'):
+                if not isinstance(default, (int, long)):
                     default = int(default)
             elif rdef.object == 'Float':
                 if not isinstance(default, float):

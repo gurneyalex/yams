@@ -128,7 +128,7 @@ def aschema2sql(dbhelper, eschema, rschema, aschema, creating=True, indent=''):
                 sqltype += ' DEFAULT %s' % dbhelper.boolean_value(default)
             elif aschema.type == 'String':
                 sqltype += ' DEFAULT %r' % str(default)
-            elif aschema.type in ('Int', 'Float'):
+            elif aschema.type in ('Int', 'BigInt', 'Float'):
                 sqltype += ' DEFAULT %s' % default
             # XXX ignore default for other type
             # this is expected for NOW / TODAY

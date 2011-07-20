@@ -1,4 +1,4 @@
-# copyright 2004-2010 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
+# copyright 2004-2011 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
 # contact http://www.logilab.fr/ -- mailto:contact@logilab.fr
 #
 # This file is part of yams.
@@ -27,7 +27,7 @@ from logilab.common.testlib import TestCase, unittest_main
 
 from yams import BadSchemaDefinition, buildobjs
 from yams.schema import Schema
-from yams.reader import SchemaLoader
+from yams.reader import SchemaLoader, build_schema_from_namespace
 from yams.constraints import StaticVocabularyConstraint, SizeConstraint
 
 sys.path.insert(0, osp.join(osp.dirname(__file__)))
@@ -53,7 +53,8 @@ class SchemaLoaderTC(TestCase):
         self.assert_(isinstance(schema, Schema))
         self.assertEqual(schema.name, 'NoName')
         self.assertListEqual(sorted(schema.entities()),
-                              ['Affaire', 'Boolean', 'Bytes', 'Company', 'Date', 'Datetest', 'Datetime', 'Decimal',
+                              ['Affaire', 'BigInt', 'Boolean', 'Bytes', 'Company',
+                               'Date', 'Datetest', 'Datetime', 'Decimal',
                                'Division', 'EPermission', 'Eetype',  'Employee', 'Float', 'Int', 'Interval',
                                'Note', 'Password', 'Person', 'Societe', 'State', 'String',
                                'Subcompany', 'Subdivision', 'TZDatetime', 'TZTime', 'Time', 'pkginfo'])
@@ -477,9 +478,9 @@ class SchemaLoaderTC2(TestCase):
         loader.defined = {}
         class RT1(RelationType):
             pass
-        loader.add_definition(None, RT1)
+        loader.add_definition(RT1)
         with self.assertRaises(BadSchemaDefinition) as cm:
-            loader.add_definition(None, RT1)
+            loader.add_definition(RT1)
         self.assertEqual(str(cm.exception), 'duplicated relation type for RT1')
 
     def test_rtype_priority(self):
@@ -491,8 +492,8 @@ class SchemaLoaderTC2(TestCase):
             object = 'Whatever'
         class RT1(RelationType):
             pass
-        loader.add_definition(None, RT1Def)
-        loader.add_definition(None, RT1)
+        loader.add_definition(RT1Def)
+        loader.add_definition(RT1)
         self.assertEqual(loader.defined['RT1'], RT1)
 
     def test_unfinalized_manipulation(self):
@@ -518,6 +519,28 @@ class SchemaLoaderTC2(TestCase):
         schema = SchemaLoader().load([DATADIR], 'Test')
         self.assertIn('Toto', schema.entities())
 
+class BuildSchemaTC(TestCase):
+
+    def test_build_schema(self):
+        from yams.buildobjs import EntityType, RelationDefinition, Int, String
+
+        class Question(EntityType):
+            number = Int()
+            text = String()
+
+        class Form(EntityType):
+            title = String()
+
+        class in_form(RelationDefinition):
+            subject = 'Question'
+            object = 'Form'
+            cardinality = '*1'
+
+        schema = build_schema_from_namespace(vars().items())
+        entities = [x for x in schema.entities() if not x.final]
+        self.assertItemsEqual(['Form', 'Question'], entities)
+        relations = [x for x in schema.relations() if not x.final]
+        self.assertItemsEqual(['in_form'], relations)
 
 if __name__ == '__main__':
     unittest_main()
