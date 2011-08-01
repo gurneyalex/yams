@@ -441,12 +441,9 @@ class SchemaTC(BaseSchemaTC):
         import pickle
         picklefile = mktemp()
         picklestream = open(picklefile, 'w')
-        schema.__hashmode__ = 'pickle'
         pickle.dump(schema, picklestream)
         picklestream.close()
         pschema = pickle.load(open(picklefile))
-        schema.__hashmode__ = None
-        self.assertEqual(pschema.__hashmode__, None)
         self.assertFalse(eperson is pschema['Person'])
         self.assertEqual(eperson, pschema['Person'])
         self.assertEqual('Person', pschema['Person'])
