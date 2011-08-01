@@ -733,6 +733,10 @@ class RelationSchema(ERSchema):
         if (subjschema, objschema) in self.rdefs and self.symmetric:
             return
         # update our internal struct
+        if final:
+            assert not self.symmetric, 'no sense on final relation'
+            assert not self.inlined, 'no sense on final relation'
+            assert not self.fulltext_container, 'no sense on final relation'
         self.final = final
         rdefs = self.init_rproperties(subjschema, objschema, rdef)
         self._add_rdef(rdefs)
