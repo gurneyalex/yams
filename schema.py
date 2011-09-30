@@ -120,8 +120,7 @@ class ERSchema(object):
 
     def __hash__(self):
         try:
-            if self.schema.__hashmode__ is None:
-                return hash(self.type)
+            return hash(self.type)
         except AttributeError:
             pass
         return hash(id(self))
@@ -131,7 +130,6 @@ class ERSchema(object):
         memo[id(self)] = clone
         clone.type = deepcopy(self.type, memo)
         clone.schema = deepcopy(self.schema, memo)
-        clone.schema.__hashmode__ = None
         clone.__dict__ = deepcopy(self.__dict__, memo)
         return clone
 
@@ -733,6 +731,10 @@ class RelationSchema(ERSchema):
         if (subjschema, objschema) in self.rdefs and self.symmetric:
             return
         # update our internal struct
+        if final:
+            assert not self.symmetric, 'no sense on final relation'
+            assert not self.inlined, 'no sense on final relation'
+            assert not self.fulltext_container, 'no sense on final relation'
         self.final = final
         rdefs = self.init_rproperties(subjschema, objschema, rdef)
         self._add_rdef(rdefs)
@@ -1051,14 +1053,9 @@ class Schema(object):
     relation_class = RelationSchema
     # relation that should not be infered according to entity type inheritance
     no_specialization_inference = ()
-    # __hashmode__ is a evil hack to support schema pickling
-    # it should be set to 'pickle' before pickling is done and reset to None
-    # once it's done
-    __hashmode__ = 'pickle' # None | 'pickle'
 
     def __init__(self, name, construction_mode='strict'):
         super(Schema, self).__init__()
-        self.__hashmode__ = None
         self.name = name
         # with construction_mode != 'strict', no error when trying to add a
         # relation using an undefined entity type, simply log the error
@@ -1068,8 +1065,6 @@ class Schema(object):
 
     def __setstate__(self, state):
         self.__dict__.update(state)
-        # restore __hashmode__
-        self.__hashmode__ = None
         self._rehash()
 
     def _rehash(self):
