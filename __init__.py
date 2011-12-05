@@ -52,6 +52,8 @@ DATE_FACTORY_MAP = {
     'Time' : strptime_time
     }
 
+KNOWN_METAATTRIBUTES = set(('format', 'encoding', 'name'))
+
 # work in progress ###
 
 class _RelationRole(int):
