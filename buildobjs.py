@@ -628,7 +628,10 @@ class AbstractTypedAttribute(SubjectRelation):
 
     subclasses must provide a <etype> attribute to be instantiable
     """
-    def __init__(self, **kwargs):
+    def __init__(self, metadata=None, **kwargs):
+        if metadata is None:
+            metadata = {}
+        self.metadata = metadata
         required = kwargs.pop('required', False)
         if required:
             cardinality = '11'
