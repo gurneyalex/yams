@@ -202,6 +202,7 @@ class metadefinition(XXX_backward_permissions_compat):
     stacklevel = 3
     def __new__(mcs, name, bases, classdict):
 
+        ### Move (any) relation from the class dict to __relations__ attribute
         rels = classdict.setdefault('__relations__', [])
         relations = dict((rdef.name, rdef) for rdef in rels)
         for rname, rdef in classdict.items():
@@ -210,41 +211,53 @@ class metadefinition(XXX_backward_permissions_compat):
                 # to avoid conflicts with instance's potential attributes
                 del classdict[rname]
                 relations[rname] = rdef
+        ### handle logical inheritance
         if '__specializes_schema__' in classdict:
             specialized = bases[0]
             classdict['__specializes__'] = specialized.__name__
             if '__specialized_by__' not in specialized.__dict__:
                 specialized.__specialized_by__ = []
             specialized.__specialized_by__.append(name)
+        ### Initialize processed class
         defclass = super(metadefinition, mcs).__new__(mcs, name, bases, classdict)
         for rname, rdef in relations.items():
             _add_relation(defclass.__relations__, rdef, rname)
-        # take base classes'relations into account
+        ### take base classes'relations into account
         for base in bases:
             for rdef in getattr(base, '__relations__', ()):
                 if not rdef.name in relations or not relations[rdef.name].override:
                     rels.append(rdef)
                 else:
                     relations[rdef.name].creation_rank = rdef.creation_rank
-        # sort relations by creation rank
+        ### sort relations by creation rank
         defclass.__relations__ = sorted(rels, key=lambda r: r.creation_rank)
         return defclass
 
 
 class EntityType(Definition):
-    # FIXME reader magic forbids to define a docstring...
-    #"""an entity has attributes and can be linked to other entities by
-    #relations. Both entity attributes and relationships are defined by
-    #class attributes.
-    #
-    #kwargs keys must have values in ETYPE_PROPERTIES
-    #
-    #Example:
-    #
-    #>>> class Project(EntityType):
-    #...     name = String()
-    #>>>
-    #"""
+    #::FIXME reader magic forbids to define a docstring...
+    #: an entity has attributes and can be linked to other entities by
+    #: relations. Both entity attributes and relationships are defined by
+    #: class attributes.
+    #:
+    #: kwargs keys must have values in ETYPE_PROPERTIES
+    #:
+    #: Example:
+    #:
+    #: >>> class Project(EntityType):
+    #: ...     name = String()
+    #: >>>
+    #:
+    #: After instanciation, EntityType can we altered with dedicated class methods:
+    #:
+    #: .. currentmodule:: yams.buildobjs
+    #:
+    #:  .. automethod:: EntityType.extend
+    #:  .. automethod:: EntityType.add_relation
+    #:  .. automethod:: EntityType.insert_relation_after
+    #:  .. automethod:: EntityType.remove_relation
+    #:  .. automethod:: EntityType.get_relation
+    #:  .. automethod:: EntityType.get_relations
 
     __metaclass__ = metadefinition
     # XXX use a "frozendict"
@@ -331,11 +344,13 @@ class EntityType(Definition):
 
     @classmethod
     def extend(cls, othermetadefcls):
+        """add all relations of ``othermetadefcls`` to the current class"""
         for rdef in othermetadefcls.__relations__:
             cls.add_relation(rdef)
 
     @classmethod
     def add_relation(cls, rdef, name=None):
+        """Add ``rdef`` relation to the class"""
         if name:
             rdef.name = name
         if cls._ensure_relation_type(rdef):
@@ -350,6 +365,7 @@ class EntityType(Definition):
 
     @classmethod
     def insert_relation_after(cls, afterrelname, name, rdef):
+        """Add ``rdef`` relation to the class right after another"""
         # FIXME change order of arguments to rdef, name, afterrelname ?
         rdef.name = name
         cls._ensure_relation_type(rdef)
@@ -363,13 +379,16 @@ class EntityType(Definition):
 
     @classmethod
     def remove_relation(cls, name):
+        """Remove relation from the class"""
         for rdef in cls.get_relations(name):
             cls.__relations__.remove(rdef)
 
     @classmethod
     def get_relations(cls, name):
-        """get relation definitions by name (may have multiple definitions with
-        the same name if the relation is both a subject and object relation)
+        """Iterate over relations definitions that match the ``name`` parameters
+
+        It may iterate multiple definitions when the class is both object and
+        sujet of a relation:
         """
         for rdef in cls.__relations__[:]:
             if rdef.name == name:
@@ -377,8 +396,7 @@ class EntityType(Definition):
 
     @classmethod
     def get_relation(cls, name):
-        """get relation definitions by name (may have multiple definitions with
-        the same name if the relation is both a subject and object relation)
+        """Return relation definitions by name. Fails if there is multiple one.
         """
         relations = tuple(cls.get_relations(name))
         assert len(relations) == 1, "can't use get_relation for relation with multiple definitions"
@@ -629,21 +647,26 @@ class AbstractTypedAttribute(SubjectRelation):
     subclasses must provide a <etype> attribute to be instantiable
     """
     def __init__(self, metadata=None, **kwargs):
+        # Store metadata
         if metadata is None:
             metadata = {}
         self.metadata = metadata
+        # transform "required" into "cardinality"
         required = kwargs.pop('required', False)
         if required:
             cardinality = '11'
         else:
             cardinality = '?1'
         kwargs['cardinality'] = cardinality
+        # transform maxsize into SizeConstraint
         maxsize = kwargs.pop('maxsize', None)
         if maxsize is not None:
             _add_constraint(kwargs, SizeConstraint(max=maxsize))
+        # transform vocabulary into StaticVocabularyConstraint
         vocabulary = kwargs.pop('vocabulary', None)
         if vocabulary is not None:
             self.set_vocabulary(vocabulary, kwargs)
+        # transform unique into UniqueConstraint
         unique = kwargs.pop('unique', None)
         if unique:
             _add_constraint(kwargs, UniqueConstraint())
