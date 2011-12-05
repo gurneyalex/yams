@@ -24,7 +24,7 @@ from warnings import warn
 from logilab.common import attrdict
 from logilab.common.decorators import iclassmethod
 
-from yams import BASE_TYPES, MARKER, BadSchemaDefinition
+from yams import BASE_TYPES, MARKER, BadSchemaDefinition, KNOWN_METAATTRIBUTES
 from yams.constraints import (SizeConstraint, UniqueConstraint,
                               StaticVocabularyConstraint, format_constraint)
 
@@ -56,12 +56,6 @@ def _add_constraint(kwargs, constraint):
 
 def _add_relation(relations, rdef, name=None, insertidx=None):
     """Add relation (param rdef) to list of relations (param relations)."""
-    if isinstance(rdef, RichString):
-        format_attrdef = String(internationalizable=True,
-                                default=rdef.default_format, maxsize=50,
-                                constraints=rdef.format_constraints)
-        _add_relation(relations, format_attrdef,
-                      (name or rdef.name) + '_format', insertidx)
     if isinstance(rdef, BothWayRelation):
         _add_relation(relations, rdef.subjectrel, name, insertidx)
         _add_relation(relations, rdef.objectrel, name, insertidx)
@@ -69,9 +63,14 @@ def _add_relation(relations, rdef, name=None, insertidx=None):
         if name is not None:
             rdef.name = name
         if insertidx is None:
-            relations.append(rdef)
-        else:
-            relations.insert(insertidx, rdef)
+            insertidx = len(relations)
+        relations.insert(insertidx, rdef)
+    if getattr(rdef, 'metadata', {}):
+        for meta_name, value in rdef.metadata.iteritems():
+            assert meta_name in KNOWN_METAATTRIBUTES
+            insertidx += 1 # insert meta after main
+            meta_rel_name = '_'.join(((name or rdef.name), meta_name))
+            _add_relation(relations, value, meta_rel_name, insertidx)
 
 def _check_kwargs(kwargs, attributes):
     """Check that all keys of kwargs are actual attributes."""
@@ -341,10 +340,11 @@ class EntityType(Definition):
             rdef.name = name
         if cls._ensure_relation_type(rdef):
             _add_relation(cls.__relations__, rdef, name)
-            if isinstance(rdef, RichString) and not rdef in cls._defined:
-                format_attr_name = (name or rdef.name) + '_format'
-                rdef = cls.get_relations(format_attr_name).next()
-                cls._ensure_relation_type(rdef)
+            if getattr(rdef, 'metadata', {}) and not rdef in cls._defined:
+                for meta_name in rdef.metadata:
+                    meta_rel_name = '_'.join(((name or rdef.name), name_name))
+                    rdef = cls.get_relations(format_attr_name).next()
+                    cls._ensure_relation_type(rdef)
         else:
            _add_relation(cls.__relations__, rdef, name=name)
 
@@ -646,6 +646,20 @@ class AbstractTypedAttribute(SubjectRelation):
             _add_constraint(kwargs, UniqueConstraint())
         # use the etype attribute provided by subclasses
         super(AbstractTypedAttribute, self).__init__(self.etype, **kwargs)
+        # reassign creation rank
+        #
+        # Main attribute are marked as created before it's metadata.
+        # order in meta data is preserved.
+        if self.metadata:
+            meta = sorted(metadata.values(), key= lambda x: x.creation_rank)
+            if meta[0].creation_rank < self.creation_rank:
+                m_iter = iter(meta)
+                previous = self
+                for next in meta:
+                    if previous.creation_rank < next.creation_rank:
+                        break
+                    previous.creation_rank, next.creation_rank = next.creation_rank, previous.creation_rank
+                    next = previous
 
     def set_vocabulary(self, vocabulary, kwargs=None):
         if kwargs is None:
@@ -664,10 +678,10 @@ for basetype in BASE_TYPES:
     globals()[basetype] = type(basetype, (AbstractTypedAttribute,),
                                {'etype' : basetype})
 
-# provides a RichString class for convenience
+# provides a RichString factory for convenience
 
 
-class RichString(String):
+def RichString(default_format='text/plain', format_constraints=None, **kwargs):
     """RichString is a convenience attribute type for attribute containing text
     in a format that should be specified in another attribute.
 
@@ -683,10 +697,12 @@ class RichString(String):
                                   default='text/rest', constraints=[format_constraint])
           content  = String(fulltextindexed=True)
     """
-    def __init__(self, default_format='text/plain', format_constraints=None, **kwargs):
-        self.default_format = default_format
-        self.format_constraints = format_constraints or [format_constraint]
-        super(RichString, self).__init__(**kwargs)
+    format_args = {'default': default_format,
+                   'maxsize': 50}
+    if format_constraints is not None:
+        format_args['constraints'] = [format_constraints]
+    meta = {'format':String(internationalizable=True, **format_args)}
+    return String(metadata=meta, **kwargs)
 
 
 # various derivated classes with some predefined values XXX deprecated
