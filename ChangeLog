@@ -1,6 +1,17 @@
 ChangeLog for yams
 ------------------
 
+2011-11-03  --  0.34.0
+    * fixed yams-view script
+
+    * sqldropscham2sql now takes a dbhelper as argument to handle db specificities
+
+    * dropped __hashmode__ hack
+
+    * enhanced error messages
+
+
+
 2011-06-09  --  0.33.0
     * support BigInt
 

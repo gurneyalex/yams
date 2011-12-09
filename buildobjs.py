@@ -494,7 +494,8 @@ class RelationDefinition(Definition):
             defined[name] = rtype
         key = (cls.subject, name, cls.object)
         if key in defined:
-            raise BadSchemaDefinition('duplicated %s' % cls)
+            raise BadSchemaDefinition('duplicated relation definition %s (%s.%s)'
+                                      % (key, cls.__module__, cls.__name__))
         defined[key] = cls
 
     @classmethod
