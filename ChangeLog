@@ -1,8 +1,18 @@
 ChangeLog for yams
 ------------------
 
+2011-06-09  --  0.33.0
+    * support BigInt
+
+    * refactored reader
+
+    * enhanced constraint error message
+
+
+
 2011-04-01  --  0.32.0
     * support TZDatetime and TZTime
+
 
 
 2011-18-02  --  0.31.0

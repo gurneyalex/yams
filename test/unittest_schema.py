@@ -1,5 +1,5 @@
 # -*- coding: iso-8859-1 -*-
-# copyright 2004-2010 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
+# copyright 2004-2011 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
 # contact http://www.logilab.fr/ -- mailto:contact@logilab.fr
 #
 # This file is part of yams.
@@ -380,7 +380,7 @@ class SchemaTC(BaseSchemaTC):
     def test_schema_base(self):
         """test base schema methods
         """
-        all_types = ['Affaire', 'Boolean', 'Bytes', 'Date', 'Datetime',
+        all_types = ['Affaire', 'BigInt', 'Boolean', 'Bytes', 'Date', 'Datetime',
                      'Decimal',
                      'Float', 'Int', 'Interval', 'Note', 'Password',
                      'Person', 'Societe', 'String', 'TZDatetime', 'TZTime', 'Time']
@@ -441,12 +441,9 @@ class SchemaTC(BaseSchemaTC):
         import pickle
         picklefile = mktemp()
         picklestream = open(picklefile, 'w')
-        schema.__hashmode__ = 'pickle'
         pickle.dump(schema, picklestream)
         picklestream.close()
         pschema = pickle.load(open(picklefile))
-        schema.__hashmode__ = None
-        self.assertEqual(pschema.__hashmode__, None)
         self.assertFalse(eperson is pschema['Person'])
         self.assertEqual(eperson, pschema['Person'])
         self.assertEqual('Person', pschema['Person'])
@@ -459,7 +456,7 @@ class SchemaTC(BaseSchemaTC):
         orig_rprops = affaire.rdef('concerne')
         schema.rename_entity_type('Affaire', 'Workcase')
         self.assertItemsEqual(schema._entities.keys(),
-                             ['Boolean', 'Bytes', 'Date', 'Datetime', 'Float',
+                             ['BigInt', 'Boolean', 'Bytes', 'Date', 'Datetime', 'Float',
                               'Decimal',
                               'Int', 'Interval', 'Note', 'Password', 'Person',
                               'Societe', 'String', 'Time', 'TZDatetime', 'TZTime',

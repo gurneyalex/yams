@@ -31,12 +31,13 @@ class XYRegistry(object):
         self._y2x = {}
         self._x2y = {}
 
-    def register_prefix(self, prefix, xmlns):
+    def register_prefix(self, prefix, xmlns, overwrite=False):
         if ':' in prefix:
             warn('[yams 0.30] register_prefix arguments has been switched to '
                  '(prefix, xmlns)', DeprecationWarning, stacklevel=2)
             prefix, xmlns = xmlns, prefix
-        assert not prefix in self.prefixes, 'prefix already defined'
+        if not overwrite:
+            assert not prefix in self.prefixes, 'prefix already defined'
         self.prefixes[prefix] = xmlns
 
     def _norm_yams_key(self, yamssnippet):
