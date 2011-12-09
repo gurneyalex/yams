@@ -4,14 +4,16 @@ Priority: optional
 Maintainer: Logilab Packaging Team <contact@logilab.fr>
 Uploaders: Sylvain Thenault <sylvain.thenault@logilab.fr>, Alexandre Fayolle <afayolle@debian.org>,
     Nicolas Chauvat <nicolas.chauvat@logilab.fr>
-Build-Depends: debhelper (>= 5.0.37.2), python (>=2.3.5-7)
+Build-Depends: debhelper (>= 7), python (>=2.5)
 Build-Depends-Indep: python-support
 Homepage: http://www.logilab.org/project/yams
 Standards-Version: 3.8.0
+XS-Python-Version: >= 2.5, << 2.7
 
 Package: python-yams
 Architecture: all
 Depends: ${python:Depends}, python-logilab-common (> 0.55.2), python-logilab-database (>= 1.5.0)
+Breaks: cubicweb-server (<< 3.14.0)
 Conflicts: python-yams (<= 0.5.2)
 XB-Python-Version: ${python:Versions}
 Description: entity / relation schema

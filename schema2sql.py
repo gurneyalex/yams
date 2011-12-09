@@ -45,7 +45,7 @@ def schema2sql(dbhelper, schema, skip_entities=(), skip_relations=(), prefix='')
     return '\n'.join(output)
 
 
-def dropschema2sql(schema, skip_entities=(), skip_relations=(), prefix=''):
+def dropschema2sql(dbhelper, schema, skip_entities=(), skip_relations=(), prefix=''):
     """write to the output stream a SQL schema to store the objects
     corresponding to the given schema
     """
@@ -55,7 +55,9 @@ def dropschema2sql(schema, skip_entities=(), skip_relations=(), prefix=''):
         eschema = schema.eschema(etype)
         if eschema.final or eschema.type in skip_entities:
             continue
-        w(dropeschema2sql(eschema, skip_relations, prefix=prefix))
+        stmts = dropeschema2sql(dbhelper, eschema, skip_relations, prefix=prefix)
+        for stmt in stmts:
+            w(stmt)
     for rtype in sorted(schema.relations()):
         rschema = schema.rschema(rtype)
         if rschema.final or rschema.inlined:
@@ -73,11 +75,20 @@ def eschema_attrs(eschema, skip_relations):
     return attrs
 
 
-def dropeschema2sql(eschema, skip_relations=(), prefix=''):
+def dropeschema2sql(dbhelper, eschema, skip_relations=(), prefix=''):
     """return sql to drop an entity type's table"""
-    # not necessary to drop indexes, that's implictly done when dropping
-    # the table
-    return 'DROP TABLE %s;' % (prefix + eschema.type)
+    # not necessary to drop indexes, that's implictly done when
+    # dropping the table, but we need to drop SQLServer views used to
+    # create multicol unique indices
+    statements = []
+    tablename = prefix + eschema.type
+    if eschema._unique_together is not None:
+        for unique_together in eschema._unique_together:
+            cols  = ['%s%s' % (prefix, col) for col in unique_together]
+            sqls = dbhelper.sqls_drop_multicol_unique_index(tablename, cols)
+            statements += sqls
+    statements += ['DROP TABLE %s;' % (tablename)]
+    return statements
 
 
 def eschema2sql(dbhelper, eschema, skip_relations=(), prefix=''):
