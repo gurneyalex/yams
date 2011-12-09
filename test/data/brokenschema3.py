@@ -23,7 +23,3 @@ class Anentity(EntityType):
 
 class rel(RelationType):
     inlined = False
-
-class otherrel(RelationType):
-    name = 'rel'
-    inlined = False
