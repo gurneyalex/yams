@@ -700,9 +700,24 @@ class AbstractTypedAttribute(SubjectRelation):
         return '<%(name)s(%(etype)s)>' % self.__dict__
 
 # build a specific class for each base type
-for basetype in BASE_TYPES:
-    globals()[basetype] = type(basetype, (AbstractTypedAttribute,),
-                               {'etype' : basetype})
+def _make_type(etype):
+    return type(etype, (AbstractTypedAttribute,), {'etype' : etype})
+
+String = _make_type('String')
+Password = _make_type('Password')
+Bytes = _make_type('Bytes')
+Int = _make_type('Int')
+BigInt = _make_type('BigInt')
+Float = _make_type('Float')
+Boolean = _make_type('Boolean')
+Decimal = _make_type('Decimal')
+Time = _make_type('Time')
+Date = _make_type('Date')
+Datetime = _make_type('Datetime')
+TZTime = _make_type('TZTime')
+TZDatetime = _make_type('TZDatetime')
+Interval = _make_type('Interval')
+
 
 # provides a RichString factory for convenience
 
