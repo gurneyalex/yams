@@ -26,7 +26,7 @@ from logilab.common.decorators import iclassmethod
 
 from yams import BASE_TYPES, MARKER, BadSchemaDefinition, KNOWN_METAATTRIBUTES
 from yams.constraints import (SizeConstraint, UniqueConstraint,
-                              StaticVocabularyConstraint, format_constraint)
+                              StaticVocabularyConstraint, FORMAT_CONSTRAINT)
 
 __all__ = ('EntityType', 'RelationType', 'RelationDefinition',
            'SubjectRelation', 'ObjectRelation', 'BothWayRelation',
@@ -735,13 +735,15 @@ def RichString(default_format='text/plain', format_constraints=None, **kwargs):
 
       class Card(EntityType):
           content_format = String(internationalizable=True,
-                                  default='text/rest', constraints=[format_constraint])
+                                  default='text/rest', constraints=[FORMAT_CONSTRAINT])
           content  = String(fulltextindexed=True)
     """
     format_args = {'default': default_format,
                    'maxsize': 50}
-    if format_constraints is not None:
-        format_args['constraints'] = [format_constraints]
+    if format_constraints is None:
+        format_args['constraints'] = [FORMAT_CONSTRAINT]
+    else:
+        format_args['constraints'] = format_constraints
     meta = {'format':String(internationalizable=True, **format_args)}
     return String(metadata=meta, **kwargs)
 
