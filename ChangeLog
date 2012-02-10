@@ -1,6 +1,13 @@
 ChangeLog for yams
 ------------------
 
+	--
+    * generic metadata attributes handling (#83813)
+    * fix debian packaging to be installable with python = 2.7 (#83759)
+    * take into account of inheritance relations in schema2dot (#88599)
+    * RichString is now a function
+    * final types are now explicitly created to please pylint
+
 2011-11-03  --  0.34.0
     * fixed yams-view script
 
