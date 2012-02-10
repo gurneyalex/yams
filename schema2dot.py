@@ -124,6 +124,11 @@ class FullSchemaVisitor(SchemaVisitor):
             yield eschema.type, eschema
 
     def edges(self):
+        # Entities with inheritance relations.
+        for eschema in self._eindex.values():
+            if eschema.specializes():
+                yield str(eschema), str(eschema.specializes()), None
+        # Subject/object relations.
         for rschema in self.schema.relations():
             if not self.should_display_schema(rschema):
                 continue
@@ -157,6 +162,14 @@ class OneHopESchemaVisitor(SchemaVisitor):
                 if not self.display_rel(rschema, teschema.type, eschema.type):
                     continue
                 edges.add((teschema.type, eschema.type, rschema))
+        # Inheritance relations.
+        if eschema.specializes():
+            nodes.add((eschema.specializes().type, eschema.specializes()))
+            edges.add((eschema.type, eschema.specializes().type, None))
+        if eschema.specialized_by():
+            for pschema in eschema.specialized_by():
+                nodes.add((pschema.type, pschema))
+                edges.add((pschema.type, eschema.type, None))
         self._nodes = nodes
         self._edges = edges
 

@@ -312,9 +312,10 @@ class X(Student):
     pass
 
 class Foo(B.EntityType):
-    i = B.Int(required=True)
+    i = B.Int(required=True, metadata={'name': B.String()})
     f = B.Float()
     d = B.Datetime()
+
 
 
 class PySchemaTC(TestCase):
@@ -336,10 +337,10 @@ class PySchemaTC(TestCase):
 
     def test_relationtype(self):
         foo = Foo()
-        self.assertEqual([r.etype for r in foo.__relations__],
-                          ['Int', 'Float', 'Datetime'])
+        self.assertEqual(['Int', 'String', 'Float', 'Datetime'],
+                         [r.etype for r in foo.__relations__])
         self.assertEqual(foo.__relations__[0].cardinality, '11')
-        self.assertEqual(foo.__relations__[1].cardinality, '?1')
+        self.assertEqual(foo.__relations__[2].cardinality, '?1')
 
     def test_maxsize(self):
         bp = BasePerson()
@@ -351,6 +352,11 @@ class PySchemaTC(TestCase):
         # self.assertEqual(maxsize(bp.__relations__[1]), 7)
         emp = Employee()
         self.assertEqual(maxsize(emp.__relations__[3]), 7)
+
+    def test_metadata(self):
+        foo = Foo()
+        self.assertEqual('i_name', foo.__relations__[1].name)
+
 
     def test_date_defaults(self):
         _today = date.today()

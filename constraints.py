@@ -384,7 +384,7 @@ class FormatConstraint(StaticVocabularyConstraint):
     def __str__(self):
         return 'value in (%s)' % u', '.join(repr(unicode(word)) for word in self.vocabulary())
 
-format_constraint = FormatConstraint()
+FORMAT_CONSTRAINT = FormatConstraint()
 
 
 class MultipleStaticVocabularyConstraint(StaticVocabularyConstraint):
