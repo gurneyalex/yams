@@ -29,7 +29,8 @@ from logilab.common.interface import implements
 from logilab.common.deprecation import deprecated
 
 import yams
-from yams import BASE_TYPES, MARKER, ValidationError, BadSchemaDefinition
+from yams import (BASE_TYPES, MARKER, ValidationError, BadSchemaDefinition,
+                  KNOWN_METAATTRIBUTES)
 from yams.interfaces import (ISchema, IRelationSchema, IEntitySchema,
                              IVocabularyConstraint)
 from yams.constraints import BASE_CHECKERS, BASE_CONVERTERS, UniqueConstraint
@@ -155,7 +156,6 @@ class PermissionMixIn(object):
 
 # Schema objects definition ###################################################
 
-KNOWN_METAATTRIBUTES = set(('format', 'encoding', 'name'))
 
 class EntitySchema(PermissionMixIn, ERSchema):
     """An entity has a type, a set of subject and or object relations

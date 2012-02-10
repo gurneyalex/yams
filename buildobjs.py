@@ -24,9 +24,9 @@ from warnings import warn
 from logilab.common import attrdict
 from logilab.common.decorators import iclassmethod
 
-from yams import BASE_TYPES, MARKER, BadSchemaDefinition
+from yams import BASE_TYPES, MARKER, BadSchemaDefinition, KNOWN_METAATTRIBUTES
 from yams.constraints import (SizeConstraint, UniqueConstraint,
-                              StaticVocabularyConstraint, format_constraint)
+                              StaticVocabularyConstraint, FORMAT_CONSTRAINT)
 
 __all__ = ('EntityType', 'RelationType', 'RelationDefinition',
            'SubjectRelation', 'ObjectRelation', 'BothWayRelation',
@@ -56,12 +56,6 @@ def _add_constraint(kwargs, constraint):
 
 def _add_relation(relations, rdef, name=None, insertidx=None):
     """Add relation (param rdef) to list of relations (param relations)."""
-    if isinstance(rdef, RichString):
-        format_attrdef = String(internationalizable=True,
-                                default=rdef.default_format, maxsize=50,
-                                constraints=rdef.format_constraints)
-        _add_relation(relations, format_attrdef,
-                      (name or rdef.name) + '_format', insertidx)
     if isinstance(rdef, BothWayRelation):
         _add_relation(relations, rdef.subjectrel, name, insertidx)
         _add_relation(relations, rdef.objectrel, name, insertidx)
@@ -69,9 +63,14 @@ def _add_relation(relations, rdef, name=None, insertidx=None):
         if name is not None:
             rdef.name = name
         if insertidx is None:
-            relations.append(rdef)
-        else:
-            relations.insert(insertidx, rdef)
+            insertidx = len(relations)
+        relations.insert(insertidx, rdef)
+    if getattr(rdef, 'metadata', {}):
+        for meta_name, value in rdef.metadata.iteritems():
+            assert meta_name in KNOWN_METAATTRIBUTES
+            insertidx += 1 # insert meta after main
+            meta_rel_name = '_'.join(((name or rdef.name), meta_name))
+            _add_relation(relations, value, meta_rel_name, insertidx)
 
 def _check_kwargs(kwargs, attributes):
     """Check that all keys of kwargs are actual attributes."""
@@ -203,6 +202,7 @@ class metadefinition(XXX_backward_permissions_compat):
     stacklevel = 3
     def __new__(mcs, name, bases, classdict):
 
+        ### Move (any) relation from the class dict to __relations__ attribute
         rels = classdict.setdefault('__relations__', [])
         relations = dict((rdef.name, rdef) for rdef in rels)
         for rname, rdef in classdict.items():
@@ -211,41 +211,53 @@ class metadefinition(XXX_backward_permissions_compat):
                 # to avoid conflicts with instance's potential attributes
                 del classdict[rname]
                 relations[rname] = rdef
+        ### handle logical inheritance
         if '__specializes_schema__' in classdict:
             specialized = bases[0]
             classdict['__specializes__'] = specialized.__name__
             if '__specialized_by__' not in specialized.__dict__:
                 specialized.__specialized_by__ = []
             specialized.__specialized_by__.append(name)
+        ### Initialize processed class
         defclass = super(metadefinition, mcs).__new__(mcs, name, bases, classdict)
         for rname, rdef in relations.items():
             _add_relation(defclass.__relations__, rdef, rname)
-        # take base classes'relations into account
+        ### take base classes'relations into account
         for base in bases:
             for rdef in getattr(base, '__relations__', ()):
                 if not rdef.name in relations or not relations[rdef.name].override:
                     rels.append(rdef)
                 else:
                     relations[rdef.name].creation_rank = rdef.creation_rank
-        # sort relations by creation rank
+        ### sort relations by creation rank
         defclass.__relations__ = sorted(rels, key=lambda r: r.creation_rank)
         return defclass
 
 
 class EntityType(Definition):
-    # FIXME reader magic forbids to define a docstring...
-    #"""an entity has attributes and can be linked to other entities by
-    #relations. Both entity attributes and relationships are defined by
-    #class attributes.
-    #
-    #kwargs keys must have values in ETYPE_PROPERTIES
-    #
-    #Example:
-    #
-    #>>> class Project(EntityType):
-    #...     name = String()
-    #>>>
-    #"""
+    #::FIXME reader magic forbids to define a docstring...
+    #: an entity has attributes and can be linked to other entities by
+    #: relations. Both entity attributes and relationships are defined by
+    #: class attributes.
+    #:
+    #: kwargs keys must have values in ETYPE_PROPERTIES
+    #:
+    #: Example:
+    #:
+    #: >>> class Project(EntityType):
+    #: ...     name = String()
+    #: >>>
+    #:
+    #: After instanciation, EntityType can we altered with dedicated class methods:
+    #:
+    #: .. currentmodule:: yams.buildobjs
+    #:
+    #:  .. automethod:: EntityType.extend
+    #:  .. automethod:: EntityType.add_relation
+    #:  .. automethod:: EntityType.insert_relation_after
+    #:  .. automethod:: EntityType.remove_relation
+    #:  .. automethod:: EntityType.get_relation
+    #:  .. automethod:: EntityType.get_relations
 
     __metaclass__ = metadefinition
     # XXX use a "frozendict"
@@ -332,24 +344,28 @@ class EntityType(Definition):
 
     @classmethod
     def extend(cls, othermetadefcls):
+        """add all relations of ``othermetadefcls`` to the current class"""
         for rdef in othermetadefcls.__relations__:
             cls.add_relation(rdef)
 
     @classmethod
     def add_relation(cls, rdef, name=None):
+        """Add ``rdef`` relation to the class"""
         if name:
             rdef.name = name
         if cls._ensure_relation_type(rdef):
             _add_relation(cls.__relations__, rdef, name)
-            if isinstance(rdef, RichString) and not rdef in cls._defined:
-                format_attr_name = (name or rdef.name) + '_format'
-                rdef = cls.get_relations(format_attr_name).next()
-                cls._ensure_relation_type(rdef)
+            if getattr(rdef, 'metadata', {}) and not rdef in cls._defined:
+                for meta_name in rdef.metadata:
+                    meta_rel_name = '_'.join(((name or rdef.name), name_name))
+                    rdef = cls.get_relations(format_attr_name).next()
+                    cls._ensure_relation_type(rdef)
         else:
            _add_relation(cls.__relations__, rdef, name=name)
 
     @classmethod
     def insert_relation_after(cls, afterrelname, name, rdef):
+        """Add ``rdef`` relation to the class right after another"""
         # FIXME change order of arguments to rdef, name, afterrelname ?
         rdef.name = name
         cls._ensure_relation_type(rdef)
@@ -363,13 +379,16 @@ class EntityType(Definition):
 
     @classmethod
     def remove_relation(cls, name):
+        """Remove relation from the class"""
         for rdef in cls.get_relations(name):
             cls.__relations__.remove(rdef)
 
     @classmethod
     def get_relations(cls, name):
-        """get relation definitions by name (may have multiple definitions with
-        the same name if the relation is both a subject and object relation)
+        """Iterate over relations definitions that match the ``name`` parameters
+
+        It may iterate multiple definitions when the class is both object and
+        sujet of a relation:
         """
         for rdef in cls.__relations__[:]:
             if rdef.name == name:
@@ -377,8 +396,7 @@ class EntityType(Definition):
 
     @classmethod
     def get_relation(cls, name):
-        """get relation definitions by name (may have multiple definitions with
-        the same name if the relation is both a subject and object relation)
+        """Return relation definitions by name. Fails if there is multiple one.
         """
         relations = tuple(cls.get_relations(name))
         assert len(relations) == 1, "can't use get_relation for relation with multiple definitions"
@@ -628,24 +646,46 @@ class AbstractTypedAttribute(SubjectRelation):
 
     subclasses must provide a <etype> attribute to be instantiable
     """
-    def __init__(self, **kwargs):
+    def __init__(self, metadata=None, **kwargs):
+        # Store metadata
+        if metadata is None:
+            metadata = {}
+        self.metadata = metadata
+        # transform "required" into "cardinality"
         required = kwargs.pop('required', False)
         if required:
             cardinality = '11'
         else:
             cardinality = '?1'
         kwargs['cardinality'] = cardinality
+        # transform maxsize into SizeConstraint
         maxsize = kwargs.pop('maxsize', None)
         if maxsize is not None:
             _add_constraint(kwargs, SizeConstraint(max=maxsize))
+        # transform vocabulary into StaticVocabularyConstraint
         vocabulary = kwargs.pop('vocabulary', None)
         if vocabulary is not None:
             self.set_vocabulary(vocabulary, kwargs)
+        # transform unique into UniqueConstraint
         unique = kwargs.pop('unique', None)
         if unique:
             _add_constraint(kwargs, UniqueConstraint())
         # use the etype attribute provided by subclasses
         super(AbstractTypedAttribute, self).__init__(self.etype, **kwargs)
+        # reassign creation rank
+        #
+        # Main attribute are marked as created before it's metadata.
+        # order in meta data is preserved.
+        if self.metadata:
+            meta = sorted(metadata.values(), key= lambda x: x.creation_rank)
+            if meta[0].creation_rank < self.creation_rank:
+                m_iter = iter(meta)
+                previous = self
+                for next in meta:
+                    if previous.creation_rank < next.creation_rank:
+                        break
+                    previous.creation_rank, next.creation_rank = next.creation_rank, previous.creation_rank
+                    next = previous
 
     def set_vocabulary(self, vocabulary, kwargs=None):
         if kwargs is None:
@@ -660,14 +700,29 @@ class AbstractTypedAttribute(SubjectRelation):
         return '<%(name)s(%(etype)s)>' % self.__dict__
 
 # build a specific class for each base type
-for basetype in BASE_TYPES:
-    globals()[basetype] = type(basetype, (AbstractTypedAttribute,),
-                               {'etype' : basetype})
+def _make_type(etype):
+    return type(etype, (AbstractTypedAttribute,), {'etype' : etype})
 
-# provides a RichString class for convenience
+String = _make_type('String')
+Password = _make_type('Password')
+Bytes = _make_type('Bytes')
+Int = _make_type('Int')
+BigInt = _make_type('BigInt')
+Float = _make_type('Float')
+Boolean = _make_type('Boolean')
+Decimal = _make_type('Decimal')
+Time = _make_type('Time')
+Date = _make_type('Date')
+Datetime = _make_type('Datetime')
+TZTime = _make_type('TZTime')
+TZDatetime = _make_type('TZDatetime')
+Interval = _make_type('Interval')
 
 
-class RichString(String):
+# provides a RichString factory for convenience
+
+
+def RichString(default_format='text/plain', format_constraints=None, **kwargs):
     """RichString is a convenience attribute type for attribute containing text
     in a format that should be specified in another attribute.
 
@@ -680,13 +735,17 @@ class RichString(String):
 
       class Card(EntityType):
           content_format = String(internationalizable=True,
-                                  default='text/rest', constraints=[format_constraint])
+                                  default='text/rest', constraints=[FORMAT_CONSTRAINT])
           content  = String(fulltextindexed=True)
     """
-    def __init__(self, default_format='text/plain', format_constraints=None, **kwargs):
-        self.default_format = default_format
-        self.format_constraints = format_constraints or [format_constraint]
-        super(RichString, self).__init__(**kwargs)
+    format_args = {'default': default_format,
+                   'maxsize': 50}
+    if format_constraints is None:
+        format_args['constraints'] = [FORMAT_CONSTRAINT]
+    else:
+        format_args['constraints'] = format_constraints
+    meta = {'format':String(internationalizable=True, **format_args)}
+    return String(metadata=meta, **kwargs)
 
 
 # various derivated classes with some predefined values XXX deprecated
