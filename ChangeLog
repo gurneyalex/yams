@@ -1,7 +1,7 @@
 ChangeLog for yams
 ------------------
 
-	--
+2012-03-08 -- 0.35.0
     * generic metadata attributes handling (#83813)
     * fix debian packaging to be installable with python = 2.7 (#83759)
     * take into account of inheritance relations in schema2dot (#88599)
