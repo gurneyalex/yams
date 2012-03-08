@@ -1,3 +1,9 @@
+yams (0.35.0-1) unstable; urgency=low
+
+  * new upstream release
+
+ -- David Douard <david.douard@logilab.fr>  Thu, 08 Mar 2012 09:37:08 +0100
+
 yams (0.34.0-1) unstable; urgency=low
 
   * new upstream release
