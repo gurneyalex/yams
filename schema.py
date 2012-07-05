@@ -542,7 +542,7 @@ class EntitySchema(PermissionMixIn, ERSchema):
                     errors[qname] = _('required attribute')
                 continue
             if not aschema.check_value(value):
-                errors[qname] = _('incorrect value (%(value)s) for type "%(type)s"') % {
+                errors[qname] = _('incorrect value (%(value)r) for type "%(type)s"') % {
                     'value':value, 'type': _(aschema.type)}
                 if isinstance(value, str) and aschema == 'String':
                     errors[qname] += '; you might want to try unicode'
