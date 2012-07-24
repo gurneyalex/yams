@@ -1,4 +1,4 @@
-# copyright 2004-2011 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
+# copyright 2004-2012 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
 # contact http://www.logilab.fr/ -- mailto:contact@logilab.fr
 #
 # This file is part of yams.
@@ -38,7 +38,7 @@ ETYPE_PROPERTIES = ('description', '__permissions__', '__unique_together__',
 RTYPE_PROPERTIES = ('symmetric', 'inlined', 'fulltext_container',
                     'meta') # XXX meta is deprecated
 RDEF_PROPERTIES = ('cardinality', 'constraints', 'composite',
-                   'order',  'default', 'uid', 'indexed', 'uid',
+                   'order',  'default', 'uid', 'indexed',
                    'fulltextindexed', 'internationalizable',
                    '__permissions__',)
 
@@ -779,4 +779,5 @@ class MetaAttributeRelationType(RelationType):
 __all__ += ('MetaEntityType', 'MetaUserEntityType',
             'MetaRelationType', 'MetaUserRelationType',
             'MetaAttributeRelationType')
+
 
