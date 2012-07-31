@@ -1,4 +1,4 @@
-# copyright 2004-2011 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
+# copyright 2004-2012 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
 # contact http://www.logilab.fr/ -- mailto:contact@logilab.fr
 #
 # This file is part of yams.
@@ -548,7 +548,11 @@ class EntitySchema(PermissionMixIn, ERSchema):
                     errors[qname] += '; you might want to try unicode'
                 continue
             # ensure value has the correct python type
-            entity[rschema] = value = aschema.convert_value(value)
+            nvalue = aschema.convert_value(value)
+            if nvalue != value:
+                # don't change what's has not changed, who knows what's behind
+                # this <entity> thing
+                entity[rschema] = value = nvalue
             # check arbitrary constraints
             for constraint in rdef.constraints:
                 if not constraint.check(entity, rschema, value):
