@@ -1,4 +1,4 @@
-# copyright 2004-2011 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
+# copyright 2004-2012 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
 # contact http://www.logilab.fr/ -- mailto:contact@logilab.fr
 #
 # This file is part of yams.
@@ -388,6 +388,10 @@ class PySchemaTC(TestCase):
 
 
 class SchemaLoaderTC2(TestCase):
+
+    def tearDown(self):
+        SchemaLoader.main_schema_directory = 'schema'
+
     def test_broken_schema1(self):
         SchemaLoader.main_schema_directory = 'brokenschema1'
         with self.assertRaises(BadSchemaDefinition) as cm:
