@@ -1,5 +1,5 @@
 # -*- coding: iso-8859-1 -*-
-# copyright 2004-2011 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
+# copyright 2004-2012 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
 # contact http://www.logilab.fr/ -- mailto:contact@logilab.fr
 #
 # This file is part of yams.
@@ -434,7 +434,33 @@ class SchemaTC(BaseSchemaTC):
             eschema = schema.eschema(etype)
             # check attribute values one each time...
             for item in val_list:
-                self.assertRaises(ValidationError, eschema.check, dict([item]))
+                with self.assertRaises(ValidationError) as cm:
+                    eschema.check(dict([item]))
+                # check calling tr works properly
+                cm.exception.translate(unicode)
+
+    def test_validation_error_translation(self):
+        """check bad values of entity raises ValidationError exception"""
+        eschema = schema.eschema('Person')
+        with self.assertRaises(ValidationError) as cm:
+            eschema.check({'nom': 1, 'promo': 2})
+        cm.exception.translate(unicode)
+        self.assertEqual(cm.exception.errors,
+                         {'nom-subject': u'incorrect value (1) for type "String"',
+                          'promo-subject': u'incorrect value (2) for type "String"'})
+        with self.assertRaises(ValidationError) as cm:
+            eschema.check({'nom': u'x'*21, 'prenom': u'x'*65})
+        cm.exception.translate(unicode)
+        self.assertEqual(cm.exception.errors,
+                         {'nom-subject': u'value should have maximum size of 20 but found 21',
+                          'prenom-subject': u'value should have maximum size of 64 but found 65'})
+
+        with self.assertRaises(ValidationError) as cm:
+            eschema.check({'tel': 1000000, 'fax': 1000001})
+        cm.exception.translate(unicode)
+        self.assertEqual(cm.exception.errors,
+                         {'fax-subject': u'value 1000001 must be <= 999999',
+                          'tel-subject': u'value 1000000 must be <= 999999'})
 
     def test_pickle(self):
         """schema should be pickeable"""
