@@ -1,4 +1,4 @@
-# copyright 2004-2011 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
+# copyright 2004-2012 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
 # contact http://www.logilab.fr/ -- mailto:contact@logilab.fr
 #
 # This file is part of yams.
@@ -53,9 +53,10 @@ class BaseConstraint(object):
         """
         return cls()
 
-    def failed_message(self, value, _=unicode):
-        return _('%(cstr)s constraint failed for value %(value)r') % {
-            'cstr': self, 'value': value}
+    def failed_message(self, key, value):
+        return _('%(KEY-cstr)s constraint failed for value %(KEY-value)r'), {
+            key+'-cstr': self,
+            key+'-value': value}
 
 # possible constraints ########################################################
 
@@ -123,13 +124,15 @@ class SizeConstraint(BaseConstraint):
                 return False
         return True
 
-    def failed_message(self, value, _=unicode):
+    def failed_message(self, key, value):
         if self.max is not None and len(value) > self.max:
-            return _('value should have maximum size of %s but found %s') % (
-                self.max, len(value))
+            return _('value should have maximum size of %(KEY-max)s but found %(KEY-size)s'), {
+                key+'-max': self.max,
+                key+'-size': len(value)}
         if self.min is not None and len(value) < self.min:
-            return _('value should have minimum size of %s but found %s') % (
-                self.min, len(value))
+            return _('value should have minimum size of %(KEY-min)s but found %(KEY-size)s'), {
+                key+'-min': self.min,
+                key+'-size': len(value)}
         assert False, 'shouldnt be there'
 
     def serialize(self):
@@ -182,9 +185,10 @@ class RegexpConstraint(BaseConstraint):
         """return true if the value maches the regular expression"""
         return self._rgx.match(value, self.flags)
 
-    def failed_message(self, value, _=unicode):
-        return _("%(value)r doesn't match the %(regexp)r regular expression") % {
-            'value': value, 'regexp': self.regexp}
+    def failed_message(self, key, value):
+        return _("%(KEY-value)r doesn't match the %(KEY-regexp)r regular expression"), {
+            key+'-value': value,
+            key+'-regexp': self.regexp}
 
     def serialize(self):
         """simple text serialization"""
@@ -232,9 +236,11 @@ class BoundaryConstraint(BaseConstraint):
         boundary = actual_value(self.boundary, entity)
         return OPERATORS[self.operator](value, boundary)
 
-    def failed_message(self, value, _=unicode):
-        return _("value %(value)s must be %(op)s %(boundary)s") % {
-            'value': value, 'op': self.operator, 'boundary': self.boundary}
+    def failed_message(self, key, value):
+        return _("value %(KEY-value)s must be %(KEY-op)s %(KEY-boundary)s"), {
+            key+'-value': value,
+            key+'-op': self.operator,
+            key+'-boundary': self.boundary}
 
     def serialize(self):
         """simple text serialization"""
@@ -284,13 +290,15 @@ class IntervalBoundConstraint(BaseConstraint):
             return False
         return True
 
-    def failed_message(self, value, _=unicode):
+    def failed_message(self, key, value):
         if self.minvalue is not None and value < self.minvalue:
-            return _("value %(value)s must be >= %(boundary)s") % {
-                'value': value, 'boundary': self.minvalue}
+            return _("value %(KEY-value)s must be >= %(KEY-boundary)s"), {
+                key+'-value': value,
+                key+'-boundary': self.minvalue}
         if self.maxvalue is not None and value > self.maxvalue:
-            return _("value %(value)s must be <= %(boundary)s") % {
-                'value': value, 'boundary': self.maxvalue}
+            return _("value %(KEY-value)s must be <= %(KEY-boundary)s"), {
+                key+'-value': value,
+                key+'-boundary': self.maxvalue}
         assert False, 'shouldnt be there'
 
     def serialize(self):
@@ -318,14 +326,15 @@ class StaticVocabularyConstraint(BaseConstraint):
         """return true if the value is in the specific vocabulary"""
         return value in self.vocabulary(entity=entity)
 
-    def failed_message(self, value, _=unicode):
+    def failed_message(self, key, value):
         if isinstance(value, basestring):
             value = '"%s"' % unicode(value)
             choices = ', '.join('"%s"' % val for val in self.values)
         else:
             choices = ', '.join(unicode(val) for val in self.values)
-        return _('invalid value %(value)s, it must be one of %(choices)s') % {
-            'value': value, 'choices': choices}
+        return _('invalid value %(KEY-value)s, it must be one of %(KEY-choices)s'), {
+            key+'-value': value,
+            key+'-choices': choices}
 
     def vocabulary(self, **kwargs):
         """return a list of possible values for the attribute"""
