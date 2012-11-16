@@ -436,8 +436,8 @@ class SchemaTC(BaseSchemaTC):
             for item in val_list:
                 with self.assertRaises(ValidationError) as cm:
                     eschema.check(dict([item]))
-                # check calling tr works properly
-                cm.exception.translate(unicode)
+                # check automatic call to translation works properly
+                unicode(cm.exception)
 
     def test_validation_error_translation(self):
         """check bad values of entity raises ValidationError exception"""

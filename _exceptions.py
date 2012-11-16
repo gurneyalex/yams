@@ -100,7 +100,7 @@ class ValidationError(SchemaError):
 
     def __unicode__(self):
         if not self._translated:
-            self.tr(unicode)
+            self.translate(unicode)
         if len(self.errors) == 1:
             attr, error = self.errors.items()[0]
             return u'%s (%s): %s' % (self.entity, attr, error)
