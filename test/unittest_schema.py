@@ -26,7 +26,8 @@ from copy import copy, deepcopy
 from tempfile import mktemp
 
 from yams import BadSchemaDefinition
-from yams.buildobjs import register_base_types, EntityType, RelationType, RelationDefinition
+from yams.buildobjs import (register_base_types, EntityType, RelationType,
+                            RelationDefinition, _add_relation)
 from yams.schema import *
 from yams.constraints import *
 from yams.reader import SchemaLoader
@@ -494,6 +495,16 @@ class SchemaTC(BaseSchemaTC):
         workcase = schema.eschema('Workcase')
         schema.__test__ = True
         self.assertEqual(workcase.rdef('concerne'), orig_rprops)
+
+    def test_inheritance_rdefs(self):
+        class Plan(EntityType):
+            pass
+        rdef = RelationDefinition('Plan', 'custom_workflow', 'Workflow')
+        _add_relation(Plan.__relations__, rdef)
+        class TE(Plan):
+            pass
+        self.assertListEqual(['custom_workflow'],
+                             [rel.name for rel in TE.__relations__])
 
 
 class SymetricTC(TestCase):
