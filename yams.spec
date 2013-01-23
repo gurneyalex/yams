@@ -9,7 +9,7 @@
 
 Summary: yams
 Name: %{python}-yams
-Version: 0.35.0
+Version: 0.36.0
 Release: logilab.1%{?dist}
 Source0: http://download.logilab.org/pub/yams/yams-%{version}.tar.gz
 License: LGPLv2+
