@@ -1,5 +1,5 @@
 # -*- coding: iso-8859-1 -*-
-# copyright 2004-2011 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
+# copyright 2004-2012 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
 # contact http://www.logilab.fr/ -- mailto:contact@logilab.fr
 #
 # This file is part of yams.
@@ -26,7 +26,8 @@ from copy import copy, deepcopy
 from tempfile import mktemp
 
 from yams import BadSchemaDefinition
-from yams.buildobjs import register_base_types, EntityType, RelationType, RelationDefinition
+from yams.buildobjs import (register_base_types, EntityType, RelationType,
+                            RelationDefinition, _add_relation)
 from yams.schema import *
 from yams.constraints import *
 from yams.reader import SchemaLoader
@@ -434,7 +435,33 @@ class SchemaTC(BaseSchemaTC):
             eschema = schema.eschema(etype)
             # check attribute values one each time...
             for item in val_list:
-                self.assertRaises(ValidationError, eschema.check, dict([item]))
+                with self.assertRaises(ValidationError) as cm:
+                    eschema.check(dict([item]))
+                # check automatic call to translation works properly
+                unicode(cm.exception)
+
+    def test_validation_error_translation(self):
+        """check bad values of entity raises ValidationError exception"""
+        eschema = schema.eschema('Person')
+        with self.assertRaises(ValidationError) as cm:
+            eschema.check({'nom': 1, 'promo': 2})
+        cm.exception.translate(unicode)
+        self.assertEqual(cm.exception.errors,
+                         {'nom-subject': u'incorrect value (1) for type "String"',
+                          'promo-subject': u'incorrect value (2) for type "String"'})
+        with self.assertRaises(ValidationError) as cm:
+            eschema.check({'nom': u'x'*21, 'prenom': u'x'*65})
+        cm.exception.translate(unicode)
+        self.assertEqual(cm.exception.errors,
+                         {'nom-subject': u'value should have maximum size of 20 but found 21',
+                          'prenom-subject': u'value should have maximum size of 64 but found 65'})
+
+        with self.assertRaises(ValidationError) as cm:
+            eschema.check({'tel': 1000000, 'fax': 1000001})
+        cm.exception.translate(unicode)
+        self.assertEqual(cm.exception.errors,
+                         {'fax-subject': u'value 1000001 must be <= 999999',
+                          'tel-subject': u'value 1000000 must be <= 999999'})
 
     def test_pickle(self):
         """schema should be pickeable"""
@@ -468,6 +495,16 @@ class SchemaTC(BaseSchemaTC):
         workcase = schema.eschema('Workcase')
         schema.__test__ = True
         self.assertEqual(workcase.rdef('concerne'), orig_rprops)
+
+    def test_inheritance_rdefs(self):
+        class Plan(EntityType):
+            pass
+        rdef = RelationDefinition('Plan', 'custom_workflow', 'Workflow')
+        _add_relation(Plan.__relations__, rdef)
+        class TE(Plan):
+            pass
+        self.assertListEqual(['custom_workflow'],
+                             [rel.name for rel in TE.__relations__])
 
 
 class SymetricTC(TestCase):

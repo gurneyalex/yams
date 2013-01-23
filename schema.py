@@ -1,4 +1,4 @@
-# copyright 2004-2011 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
+# copyright 2004-2012 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
 # contact http://www.logilab.fr/ -- mailto:contact@logilab.fr
 #
 # This file is part of yams.
@@ -18,6 +18,7 @@
 """Classes to define generic Entities/Relations schemas."""
 
 __docformat__ = "restructuredtext en"
+_ = unicode
 
 import warnings
 from copy import deepcopy
@@ -510,11 +511,17 @@ class EntitySchema(PermissionMixIn, ERSchema):
 
     ## validation ######################
 
-    def check(self, entity, creation=False, _=unicode, relations=None):
+    def check(self, entity, creation=False, _=None, relations=None):
         """check the entity and raises an ValidationError exception if it
         contains some invalid fields (ie some constraints failed)
         """
+        if _ is not None:
+            warnings.warn('[yams 0.36] _ argument is deprecated, remove it',
+                          DeprecationWarning, stacklevel=2)
+        _ = unicode
         errors = {}
+        msgargs = {}
+        i18nvalues = []
         relations = relations or self.subject_relations()
         for rschema in relations:
             if not rschema.final:
@@ -541,20 +548,29 @@ class EntitySchema(PermissionMixIn, ERSchema):
                 if required:
                     errors[qname] = _('required attribute')
                 continue
+            rtype = rschema.type
             if not aschema.check_value(value):
-                errors[qname] = _('incorrect value (%(value)r) for type "%(type)s"') % {
-                    'value':value, 'type': _(aschema.type)}
+                errors[qname] = _('incorrect value (%(KEY-value)r) for type "%(KEY-type)s"')
+                msgargs[qname+'-value'] = value
+                msgargs[qname+'-type'] = aschema.type
+                i18nvalues.append(qname+'-type')
                 if isinstance(value, str) and aschema == 'String':
                     errors[qname] += '; you might want to try unicode'
                 continue
             # ensure value has the correct python type
-            entity[rschema] = value = aschema.convert_value(value)
+            nvalue = aschema.convert_value(value)
+            if nvalue != value:
+                # don't change what's has not changed, who knows what's behind
+                # this <entity> thing
+                entity[rschema] = value = nvalue
             # check arbitrary constraints
             for constraint in rdef.constraints:
                 if not constraint.check(entity, rschema, value):
-                    errors[qname] = constraint.failed_message(value, _)
+                    msg, args = constraint.failed_message(qname, value)
+                    errors[qname] = msg
+                    msgargs.update(args)
         if errors:
-            raise ValidationError(entity, errors)
+            raise ValidationError(entity, errors, msgargs, i18nvalues)
 
     def check_value(self, value):
         """check the value of a final entity (ie a const value)"""
