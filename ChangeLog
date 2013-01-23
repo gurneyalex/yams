@@ -1,6 +1,10 @@
 ChangeLog for yams
 ------------------
 
+2013-01-23 -- 0.36.0
+    * don't translate validation error right away (#109550)
+    * fix relation definition inheritance (#115958)
+
 2012-03-08 -- 0.35.0
     * generic metadata attributes handling (#83813)
     * fix debian packaging to be installable with python = 2.7 (#83759)
