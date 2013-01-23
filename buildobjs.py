@@ -1,4 +1,4 @@
-# copyright 2004-2012 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
+# copyright 2004-2013 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
 # contact http://www.logilab.fr/ -- mailto:contact@logilab.fr
 #
 # This file is part of yams.
@@ -20,6 +20,7 @@
 __docformat__ = "restructuredtext en"
 
 from warnings import warn
+from copy import copy
 
 from logilab.common import attrdict
 from logilab.common.decorators import iclassmethod
@@ -44,6 +45,7 @@ RDEF_PROPERTIES = ('cardinality', 'constraints', 'composite',
 
 REL_PROPERTIES = RTYPE_PROPERTIES+RDEF_PROPERTIES + ('description',)
 
+CREATION_RANK = 0
 
 def _add_constraint(kwargs, constraint):
     """Add constraint to param kwargs."""
@@ -226,6 +228,12 @@ class metadefinition(XXX_backward_permissions_compat):
         for base in bases:
             for rdef in getattr(base, '__relations__', ()):
                 if not rdef.name in relations or not relations[rdef.name].override:
+                    if isinstance(rdef, RelationDefinition):
+                        rdef = copy(rdef)
+                        if rdef.subject == base.__name__:
+                            rdef.subject = name
+                        if rdef.object == base.__name__:
+                            rdef.object = name
                     rels.append(rdef)
                 else:
                     relations[rdef.name].creation_rank = rdef.creation_rank
@@ -478,6 +486,9 @@ class RelationDefinition(Definition):
         else:
             self.object = self.__class__.object
         super(RelationDefinition, self).__init__(name)
+        global CREATION_RANK
+        CREATION_RANK += 1
+        self.creation_rank = CREATION_RANK
         if kwargs.pop('meta', None):
             warn('[yams 0.25] meta is deprecated', DeprecationWarning)
         if 'symetric' in kwargs:
@@ -585,15 +596,15 @@ def _pow_etypes(schema):
 class ObjectRelation(Relation):
     cardinality = MARKER
     constraints = MARKER
-    created = 0
 
     def __init__(self, etype, **kwargs):
         if self.__class__.__name__ == 'ObjectRelation':
             warn('[yams 0.29] ObjectRelation is deprecated, '
                  'use RelationDefinition subclass', DeprecationWarning,
                  stacklevel=2)
-        ObjectRelation.created += 1
-        self.creation_rank = ObjectRelation.created
+        global CREATION_RANK
+        CREATION_RANK += 1
+        self.creation_rank = CREATION_RANK
         self.name = '<undefined>'
         self.etype = etype
         if self.constraints:
