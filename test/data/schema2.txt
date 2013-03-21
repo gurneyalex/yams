@@ -1,0 +1,61 @@
+Affaire
+	nom: String
+		uid=False
+		default=None
+		internationalizable=False
+		required=False
+		fulltextindexed=False
+		maxsize=150
+		indexed=False
+		order=1
+		description=
+	numero: Int
+		description=
+		default=None
+		required=False
+		indexed=False
+		order=2
+		uid=False
+	associate_affaire: Affaire
+		composite=None
+		cardinality=**
+		order=3
+		description=
+	associate_person: PersonBase
+		composite=None
+		cardinality=**
+		order=4
+		description=
+BigInt
+Boolean
+Bytes
+Date
+Datetime
+Decimal
+Float
+Int
+Interval
+Password
+PersonBase
+	nom: String
+		uid=False
+		default=None
+		internationalizable=False
+		required=False
+		fulltextindexed=False
+		indexed=False
+		order=1
+		description=
+	prenom: String
+		uid=False
+		default=None
+		internationalizable=False
+		required=False
+		fulltextindexed=False
+		indexed=False
+		order=2
+		description=
+String
+TZDatetime
+TZTime
+Time
