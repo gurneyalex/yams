@@ -954,9 +954,10 @@ class RelationDefinitionSchema(PermissionMixIn):
     _FINAL_RPROPERTIES = {'default': None,
                           'uid': False,
                           'indexed': False}
-    _STRING_RPROPERTIES = {'fulltextindexed': False,
-                           'internationalizable': False}
-    _BYTES_RPROPERTIES = {'fulltextindexed': False}
+    # Use a TYPE_PROPERTIES dictionnary to store type-dependant parameters.
+    BASE_TYPE_PROPERTIES = {'String': {'fulltextindexed': False,
+                                       'internationalizable': False},
+                            'Bytes': {'fulltextindexed': False}}
 
     def __init__(self, subject, rtype, object, values=None):
         if values is not None:
@@ -1008,10 +1009,7 @@ class RelationDefinitionSchema(PermissionMixIn):
             propdefs.update(cls._NONFINAL_RPROPERTIES)
         else:
             propdefs.update(cls._FINAL_RPROPERTIES)
-            if desttype == 'String':
-                propdefs.update(cls._STRING_RPROPERTIES)
-            elif desttype == 'Bytes':
-                propdefs.update(cls._BYTES_RPROPERTIES)
+            propdefs.update(cls.BASE_TYPE_PROPERTIES.get(desttype, {}))
         return propdefs
 
     def rproperties(self):
