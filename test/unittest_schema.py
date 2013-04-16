@@ -27,7 +27,7 @@ from tempfile import mktemp
 
 from yams import BadSchemaDefinition
 from yams.buildobjs import (register_base_types, EntityType, RelationType,
-                            RelationDefinition, _add_relation)
+                            RelationDefinition, _add_relation, _make_type)
 from yams.schema import *
 from yams.constraints import *
 from yams.reader import SchemaLoader
@@ -546,6 +546,20 @@ class SymetricTC(TestCase):
                           [('Bug', ['Bug', 'Project', 'Story']),
                            ('Project', ['Bug', 'Project', 'Story']),
                            ('Story', ['Bug', 'Project', 'Story'])])
+
+
+class MakeTypeTC(TestCase):
+
+    def test_make_type(self):
+        _type = _make_type('Test')
+        self.assertEqual(_type.etype, 'Test')
+        self.assertEqual(_type.type_parameters, ())
+
+    def test_make_type_parameters(self):
+        _type = _make_type('Test', ('test1', 'test2'))
+        self.assertEqual(_type.etype, 'Test')
+        self.assertEqual(_type.type_parameters, ('test1', 'test2'))
+
 
 if __name__ == '__main__':
     unittest_main()
