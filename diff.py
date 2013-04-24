@@ -8,8 +8,6 @@ import subprocess
 import tempfile
 import os
 
-from yams import MARKER
-from yams.buildobjs import REL_PROPERTIES
 from yams.constraints import (SizeConstraint,
                               UniqueConstraint,
                               StaticVocabularyConstraint)
@@ -18,20 +16,19 @@ from yams.reader import SchemaLoader
 
 ATTR_CARD_CONVERTER = {'11': True, '?1': False}
 
-def properties_from(attr, is_relation=False):
-    """return a dictionnaries containing properties of an attributes
+
+def properties_from(attr):
+    """return a dictionary containing properties of an attribute
     or a relation (if specified with is_relation option)"""
     ret = {}
-    for prop in REL_PROPERTIES:
-        try:
-            val = getattr(attr, prop)
-        except AttributeError:
-            continue
-        if prop == 'cardinality' and not is_relation: #for attibutes only
+    for prop in attr.rproperties():
+        if prop in ('infered', 'permissions'):
+            continue # XXX permissions should be serialized
+        val = getattr(attr, prop)
+        if prop == 'cardinality' and attr.final: # for attributes only
             prop = 'required'
             val = ATTR_CARD_CONVERTER[val]
-
-        if prop == 'constraints' and val is not MARKER:
+        elif prop == 'constraints':
             for constraint in val:
                 if isinstance(constraint, SizeConstraint):
                     ret['maxsize'] = constraint.max
@@ -40,10 +37,7 @@ def properties_from(attr, is_relation=False):
                 elif isinstance(constraint, StaticVocabularyConstraint):
                     ret['vocabulary'] = constraint.vocabulary()
             continue
-
-        if val is not MARKER:
-            ret[prop] = val
-
+        ret[prop] = val
     return ret
 
 def schema2descr(schema):
@@ -63,7 +57,7 @@ def schema2descr(schema):
 
         relations = [(rel[0].type,
                       rel[1][0].type,
-                      properties_from(entity.rdef(rel[0].type), True))
+                      properties_from(entity.rdef(rel[0].type)))
                      for rel in entity.relation_definitions() if rel[2] == 'subject']
         for rel_name, rel_type, rel_props in relations:
             txt += "\t%s: %s\n" % (rel_name, rel_type)

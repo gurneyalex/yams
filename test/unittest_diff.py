@@ -80,37 +80,56 @@ def create_schema_2():
 
 class PropertiesFromTC(TestCase):
 
+    def build_rdef(self, props_ref):
+        class AType(EntityType):
+            attr = String(**props_ref)
+        schema = build_schema_from_namespace(locals().items())
+        return schema['AType'].rdef('attr')
+
+    def build_props_dict(self, props_ref):
+        result = {'default': None,
+                  'description': '',
+                  'fulltextindexed': False,
+                  'indexed': False,
+                  'internationalizable': False,
+                  'order': 1,
+                  'required': False,
+                  'uid': False}
+        result.update(props_ref)
+        return result
+
     def test_properties_from_final_attributes_1(self):
-        props_ref = {'required': True, 'default': 'toto', 'composite': True,
-                     'inlined': True, 'description': 'something'}
-        s = String(**props_ref)
-        props = properties_from(s)
-        self.assertEqual(props, props_ref)
+        props_ref = {'required': True, 'default': 'toto',
+                     'description': 'something'}
+        self.assertEqual(properties_from(self.build_rdef(props_ref)),
+                         self.build_props_dict(props_ref))
 
     def test_properties_from_final_attributes_2(self):
-        s = String()
-        self.assertEqual(properties_from(s), {'required': False})
+        props_ref = {}
+        self.assertEqual(properties_from(self.build_rdef(props_ref)),
+                         self.build_props_dict(props_ref))
 
     def test_properties_from_final_attributes_3(self):
         props_ref = {'default': None, 'required': False}
-        s = String(**props_ref)
-        self.assertEqual(properties_from(s), props_ref)
+        self.assertEqual(properties_from(self.build_rdef(props_ref)),
+                         self.build_props_dict(props_ref))
 
     def test_constraint_properties_1(self):
         props_ref = {'maxsize': 150, 'required': False}
-        s = String(**props_ref)
-        self.assertEqual(properties_from(s), props_ref)
+        self.assertEqual(properties_from(self.build_rdef(props_ref)),
+                         self.build_props_dict(props_ref))
 
     def test_constraint_properties_2(self):
         props_ref = {'unique': True, 'required': False}
-        s = String(**props_ref)
-        self.assertEqual(properties_from(s), props_ref)
+        self.assertEqual(properties_from(self.build_rdef(props_ref)),
+                         self.build_props_dict(props_ref))
 
     def test_constraint_properties_3(self):
         props_ref = {'vocabulary': ('aaa', 'bbbb', 'ccccc'), 'required': False, 'maxsize': 20}
-        s = String(**props_ref)
+        rdef = self.build_rdef(props_ref)
         props_ref['maxsize'] = 5
-        self.assertEqual(properties_from(s), props_ref)
+        self.assertEqual(properties_from(rdef),
+                         self.build_props_dict(props_ref))
 
 
 class SchemaDiff(TestCase):
