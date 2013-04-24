@@ -1,4 +1,4 @@
-# copyright 2004-2010 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
+# copyright 2004-2013 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
 # contact http://www.logilab.fr/ -- mailto:contact@logilab.fr
 #
 # This file is part of yams.
@@ -58,7 +58,6 @@ class Person(EntityType):
 
 
 class Societe(EntityType):
-    meta = False # test bw compat
     nom  = String(maxsize=64, fulltextindexed=True)
     web = String(maxsize=128)
     tel  = Int()
