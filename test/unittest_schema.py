@@ -1,5 +1,5 @@
 # -*- coding: iso-8859-1 -*-
-# copyright 2004-2012 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
+# copyright 2004-2013 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
 # contact http://www.logilab.fr/ -- mailto:contact@logilab.fr
 #
 # This file is part of yams.
@@ -215,6 +215,11 @@ class EntitySchemaTC(BaseSchemaTC):
         self.assertEqual(schema.eschema('String').final, True)
         self.assertEqual(schema.rschema('ref').final, True)
         self.assertEqual(schema.rschema('concerne').final, False)
+
+    def test_attribute_description(self):
+        schema = SchemaLoader().load([self.datadir], 'Test')
+        self.assertEqual(schema['EPermission'].rdef('name').description,
+                         'name or identifier of the permission')
 
     def test_deepcopy_specialization(self):
         schema2 = deepcopy(SchemaLoader().load([self.datadir], 'Test'))

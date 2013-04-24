@@ -23,6 +23,7 @@ _ = unicode
 import warnings
 from copy import deepcopy
 from decimal import Decimal
+from itertools import chain
 
 from logilab.common import attrdict
 from logilab.common.decorators import cached, clear_cache
@@ -958,6 +959,13 @@ class RelationDefinitionSchema(PermissionMixIn):
     BASE_TYPE_PROPERTIES = {'String': {'fulltextindexed': False,
                                        'internationalizable': False},
                             'Bytes': {'fulltextindexed': False}}
+
+    @classmethod
+    def ALL_PROPERTIES(cls):
+        return set(chain(cls._RPROPERTIES,
+                         cls._NONFINAL_RPROPERTIES,
+                         cls._FINAL_RPROPERTIES,
+                         *cls.BASE_TYPE_PROPERTIES.itervalues()))
 
     def __init__(self, subject, rtype, object, values=None):
         if values is not None:
