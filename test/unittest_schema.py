@@ -25,11 +25,14 @@ from logilab.common.testlib import TestCase, unittest_main
 from copy import copy, deepcopy
 from tempfile import mktemp
 
-from yams import BadSchemaDefinition
-from yams.buildobjs import (register_base_types, EntityType, RelationType,
-                            RelationDefinition, _add_relation)
-from yams.schema import *
-from yams.constraints import *
+from yams import (BASE_TYPES, ValidationError, BadSchemaDefinition,
+                  register_base_type, unregister_base_type)
+from yams.buildobjs import (register_base_types, make_type, _add_relation,
+                            EntityType, RelationType, RelationDefinition)
+from yams.schema import Schema, RelationDefinitionSchema
+from yams.interfaces import IVocabularyConstraint
+from yams.constraints import (BASE_CHECKERS, SizeConstraint, RegexpConstraint,
+                              StaticVocabularyConstraint, IntervalBoundConstraint)
 from yams.reader import SchemaLoader
 
 
@@ -551,6 +554,32 @@ class SymetricTC(TestCase):
                           [('Bug', ['Bug', 'Project', 'Story']),
                            ('Project', ['Bug', 'Project', 'Story']),
                            ('Story', ['Bug', 'Project', 'Story'])])
+
+
+class CustomTypeTC(TestCase):
+
+    def tearDown(self):
+        try:
+            unregister_base_type('Test')
+        except AssertionError:
+            pass
+
+    def test_register_base_type(self):
+        register_base_type('Test', ('test1', 'test2'))
+        self.assertIn('Test', BASE_TYPES)
+        self.assertIn('Test', RelationDefinitionSchema.BASE_TYPE_PROPERTIES)
+        self.assertEqual(RelationDefinitionSchema.BASE_TYPE_PROPERTIES['Test'],
+                         {'test1': None, 'test2': None})
+        self.assertTrue('Test' in BASE_CHECKERS)
+
+    def test_make_base_type_class(self):
+        register_base_type('Test', ('test1', 'test2'))
+        Test = make_type('Test')
+        self.assertIsInstance(Test, type)
+        self.assertEqual(Test.etype, 'Test')
+        t = Test(test1=1)
+        self.assertEqual(t.test1, 1)
+        self.assertFalse(hasattr(t, 'test2'))
 
 if __name__ == '__main__':
     unittest_main()
