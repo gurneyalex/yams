@@ -31,7 +31,6 @@ from yams.constraints import (SizeConstraint,
 from yams.reader import SchemaLoader
 
 
-ATTR_CARD_CONVERTER = {'11': True, '?1': False}
 
 
 def properties_from(attr):
@@ -44,7 +43,7 @@ def properties_from(attr):
         val = getattr(attr, prop)
         if prop == 'cardinality' and attr.final: # for attributes only
             prop = 'required'
-            val = ATTR_CARD_CONVERTER[val]
+            val = val[0] == '1'
         elif prop == 'constraints':
             for constraint in val:
                 if isinstance(constraint, SizeConstraint):
