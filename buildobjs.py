@@ -596,7 +596,6 @@ def _pow_etypes(schema):
 class ObjectRelation(Relation):
     cardinality = MARKER
     constraints = MARKER
-    type_parameters = ()
 
     def __init__(self, etype, **kwargs):
         if self.__class__.__name__ == 'ObjectRelation':
@@ -616,9 +615,7 @@ class ObjectRelation(Relation):
             warn('[yams 0.27.0] symetric has been respelled symmetric',
                  DeprecationWarning, stacklevel=2)
         try:
-            # Add additional parameters for custom base types
-            rdef_properties = REL_PROPERTIES + self.type_parameters
-            _check_kwargs(kwargs, rdef_properties)
+            _check_kwargs(kwargs, REL_PROPERTIES)
         except BadSchemaDefinition, bad:
             # XXX (auc) bad field name + required attribute can lead there instead of schema.py ~ 920
             bsd_ex = BadSchemaDefinition(('%s in relation to entity %r (also is %r defined ? (check two '
@@ -688,7 +685,7 @@ class AbstractTypedAttribute(SubjectRelation):
         super(AbstractTypedAttribute, self).__init__(self.etype, **kwargs)
         # reassign creation rank
         #
-        # Main attribute are marked as created before its metadata.
+        # Main attribute are marked as created before it's metadata.
         # order in meta data is preserved.
         if self.metadata:
             meta = sorted(metadata.values(), key= lambda x: x.creation_rank)
@@ -714,18 +711,8 @@ class AbstractTypedAttribute(SubjectRelation):
         return '<%(name)s(%(etype)s)>' % self.__dict__
 
 # build a specific class for each base type
-def _make_type(etype, type_parameters=()):
-    """Add params is a tuple of user defined / custom type parameters name.
-    It is now possible to create a specific type with user-defined params, e.g.:
-
-    etype = 'Geometry' (c.f. postgis)
-    type_parameters = ('geom_type', 'srid', 'coord_dimension')
-
-    This will allow the use of :
-        Geometry(geom_type='POINT', srid=-1, coord_dimension=2)
-    in a Yams schema.
-    """
-    return type(etype, (AbstractTypedAttribute,), {'etype' : etype, 'type_parameters': type_parameters})
+def _make_type(etype):
+    return type(etype, (AbstractTypedAttribute,), {'etype' : etype})
 
 String = _make_type('String')
 Password = _make_type('Password')
