@@ -1,31 +1,31 @@
 Affaire
 	nom: String
-		uid=False
 		default=None
-		internationalizable=False
-		required=False
+		description=
 		fulltextindexed=False
-		maxsize=150
 		indexed=False
+		internationalizable=False
+		maxsize=150
 		order=1
-		description=
-	numero: Int
-		description=
-		default=None
 		required=False
+		uid=False
+	numero: Int
+		default=None
+		description=
 		indexed=False
 		order=2
+		required=False
 		uid=False
 	associate_affaire: Affaire
-		composite=None
 		cardinality=**
+		composite=None
+		description=
 		order=3
-		description=
 	associate_person: PersonBase
-		composite=None
 		cardinality=**
-		order=4
+		composite=None
 		description=
+		order=4
 BigInt
 Boolean
 Bytes
@@ -38,23 +38,23 @@ Interval
 Password
 PersonBase
 	nom: String
-		uid=False
 		default=None
-		internationalizable=False
-		required=False
+		description=
 		fulltextindexed=False
 		indexed=False
+		internationalizable=False
 		order=1
-		description=
-	prenom: String
-		uid=False
-		default=None
-		internationalizable=False
 		required=False
+		uid=False
+	prenom: String
+		default=None
+		description=
 		fulltextindexed=False
 		indexed=False
+		internationalizable=False
 		order=2
-		description=
+		required=False
+		uid=False
 String
 TZDatetime
 TZTime
