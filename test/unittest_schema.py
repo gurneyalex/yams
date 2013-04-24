@@ -511,9 +511,9 @@ class SymetricTC(TestCase):
     def setUp(self):
         global schema
         schema = Schema('Test Schema')
-        ebug = schema.add_entity_type(EntityType('Bug'))
-        estory = schema.add_entity_type(EntityType('Story'))
-        eproject = schema.add_entity_type(EntityType('Project'))
+        schema.add_entity_type(EntityType('Bug'))
+        schema.add_entity_type(EntityType('Story'))
+        schema.add_entity_type(EntityType('Project'))
         schema.add_relation_type(RelationType('see_also', symmetric=True))
 
     def test_association_types(self):
