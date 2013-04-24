@@ -28,20 +28,35 @@ from logilab.common.decorators import iclassmethod
 from yams import BASE_TYPES, MARKER, BadSchemaDefinition, KNOWN_METAATTRIBUTES
 from yams.constraints import (SizeConstraint, UniqueConstraint,
                               StaticVocabularyConstraint, FORMAT_CONSTRAINT)
+from yams.schema import RelationDefinitionSchema
 
 __all__ = ('EntityType', 'RelationType', 'RelationDefinition',
            'SubjectRelation', 'ObjectRelation', 'BothWayRelation',
            'RichString', ) + tuple(BASE_TYPES)
 
+# EntityType properties
 ETYPE_PROPERTIES = ('description', '__permissions__', '__unique_together__')
-# don't put description inside, handled "manually"
+# RelationType properties. Don't put description inside, handled specifically
 RTYPE_PROPERTIES = ('symmetric', 'inlined', 'fulltext_container')
-RDEF_PROPERTIES = ('cardinality', 'constraints', 'composite',
-                   'order',  'default', 'uid', 'indexed',
-                   'fulltextindexed', 'internationalizable',
-                   '__permissions__',)
+# RelationDefinition properties have to be computed dynamically since new ones
+# may be added at runtime
+def _RDEF_PROPERTIES():
+    base = RelationDefinitionSchema.ALL_PROPERTIES()
+    # infered is an internal property and should not be specified explicitly
+    base.remove('infered')
+    # replace permissions by __permissions__ as it's spelled that way in schema
+    # definition files
+    base.remove('permissions')
+    base.add('__permissions__')
+    return tuple(base)
+# regroup all rtype/rdef properties as they may be defined one on each other in
+# some cases
+def _REL_PROPERTIES():
+    return RTYPE_PROPERTIES + _RDEF_PROPERTIES()
 
-REL_PROPERTIES = RTYPE_PROPERTIES+RDEF_PROPERTIES + ('description',)
+# pre 0.37 backward compat
+RDEF_PROPERTIES = () # stuff added here is also added to underlying dict, nevermind
+
 
 CREATION_RANK = 0
 
@@ -330,16 +345,17 @@ class EntityType(Definition):
         """
         order = 1
         name = getattr(cls, 'name', cls.__name__)
+        rdefprops = _RDEF_PROPERTIES()
         for relation in cls.__relations__:
             if isinstance(relation, SubjectRelation):
                 rdef = RelationDefinition(subject=name, name=relation.name,
                                           object=relation.etype, order=order)
-                _copy_attributes(relation, rdef, RDEF_PROPERTIES + ('description',))
+                _copy_attributes(relation, rdef, rdefprops)
             elif isinstance(relation, ObjectRelation):
                 rdef = RelationDefinition(subject=relation.etype,
                                           name=relation.name,
                                           object=name, order=order)
-                _copy_attributes(relation, rdef, RDEF_PROPERTIES + ('description',))
+                _copy_attributes(relation, rdef, rdefprops)
             elif isinstance(relation, RelationDefinition):
                 rdef = relation
             else:
@@ -442,8 +458,8 @@ class RelationType(Definition):
                 raise BadSchemaDefinition('duplicated relation type for %s'
                                           % name)
             # relation type created from a relation definition, override it
-            _copy_attributes(defined[name], cls,
-                             REL_PROPERTIES + ('subject', 'object'))
+            allprops = _REL_PROPERTIES() + ('subject', 'object')
+            _copy_attributes(defined[name], cls, allprops)
         defined[name] = cls
 
     @classmethod
@@ -456,7 +472,7 @@ class RelationType(Definition):
         if getattr(cls, 'subject', None) and getattr(cls, 'object', None):
             rdef = RelationDefinition(subject=cls.subject, name=name,
                                       object=cls.object)
-            _copy_attributes(cls, rdef, RDEF_PROPERTIES)
+            _copy_attributes(cls, rdef, _RDEF_PROPERTIES())
             rdef._add_relations(defined, schema)
 
 
@@ -475,7 +491,7 @@ class RelationDefinition(Definition):
     inlined = MARKER
 
     def __init__(self, subject=None, name=None, object=None, **kwargs):
-        """kwargs keys must have values in RDEF_PROPERTIES"""
+        """kwargs keys must have values in _RDEF_PROPERTIES()"""
         if subject:
             self.subject = subject
         else:
@@ -494,8 +510,9 @@ class RelationDefinition(Definition):
             warn('[yams 0.27.0] symetric has been respelled symmetric',
                  DeprecationWarning, stacklevel=2)
             kwargs['symmetric'] = kwargs.pop('symetric')
-        _check_kwargs(kwargs, RDEF_PROPERTIES + ('description',))
-        _copy_attributes(attrdict(**kwargs), self, RDEF_PROPERTIES + ('description',))
+        rdefprops = _RDEF_PROPERTIES()
+        _check_kwargs(kwargs, rdefprops)
+        _copy_attributes(attrdict(**kwargs), self, rdefprops)
         if self.constraints:
             self.constraints = list(self.constraints)
 
@@ -538,7 +555,10 @@ class RelationDefinition(Definition):
     def _add_relations(self, defined, schema):
         name = getattr(self, 'name', self.__class__.__name__)
         rtype = defined[name]
-        _copy_attributes(rtype, self, RDEF_PROPERTIES)
+        rdefprops = _RDEF_PROPERTIES()
+        # copy relation definition attributes set on the relation type, beside
+        # description
+        _copy_attributes(rtype, self, set(rdefprops) - set(('description',)))
         # process default cardinality and constraints if not set yet
         cardinality = self.cardinality
         if cardinality is MARKER:
@@ -563,7 +583,7 @@ class RelationDefinition(Definition):
         for subj in _actual_types(schema, self.subject):
             for obj in _actual_types(schema, self.object):
                 rdef = RelationDefinition(subj, name, obj, __permissions__=permissions)
-                _copy_attributes(self, rdef, RDEF_PROPERTIES + ('description',))
+                _copy_attributes(self, rdef, rdefprops)
                 schema.add_relation_def(rdef)
 
 def _actual_types(schema, etype):
@@ -618,7 +638,7 @@ class ObjectRelation(Relation):
             warn('[yams 0.37.0] meta is deprecated',
                  DeprecationWarning, stacklevel=3)
         try:
-            _check_kwargs(kwargs, REL_PROPERTIES)
+            _check_kwargs(kwargs, _REL_PROPERTIES())
         except BadSchemaDefinition, bad:
             # XXX (auc) bad field name + required attribute can lead there instead of schema.py ~ 920
             bsd_ex = BadSchemaDefinition(('%s in relation to entity %r (also is %r defined ? (check two '
