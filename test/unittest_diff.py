@@ -1,4 +1,4 @@
-# copyright 2004-2011 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
+# copyright 2013 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
 # contact http://www.logilab.fr/ -- mailto:contact@logilab.fr
 #
 # This file is part of yams.
@@ -17,22 +17,21 @@
 # with yams. If not, see <http://www.gnu.org/licenses/>.
 """unit tests for module yams.diff"""
 
+from __future__ import with_statement
+
+import os.path as osp
+
 from logilab.common.testlib import TestCase, unittest_main
 
-from yams.schema import Schema
 from yams.reader import build_schema_from_namespace
+from yams.buildobjs import String, Int, Float, EntityType, SubjectRelation
 from yams.diff import properties_from, schema_diff
-from yams.buildobjs import (String, Int, EntityType,
-                            Float, SubjectRelation)
-import os.path as osp
 
 DATADIR = osp.abspath(osp.join(osp.dirname(__file__), 'data'))
 
 def read_file(filename):
-    f = open(filename, "r")
-    schema = f.read()
-    f.close()
-    return schema
+    with open(filename) as f:
+        return f.read()
 
 class PersonBase(EntityType):
     nom    = String()
@@ -65,66 +64,66 @@ def create_schema_1():
     class Affaire(EntityType):
         nom = String()
         associate_affaire = SubjectRelation('Affaire')
-    schema = build_schema_from_namespace([('PersonBase', PersonBase),
-                                          ('Affaire',    Affaire),
-                                          ('PersonAttrMod', PersonAttrMod)])
-    return schema
+    return build_schema_from_namespace([('PersonBase', PersonBase),
+                                        ('Affaire',    Affaire),
+                                        ('PersonAttrMod', PersonAttrMod)])
 
 
 def create_schema_2():
     class Affaire(EntityType):
         nom = String(maxsize=150)
         numero = Int()
-        associate_affaire = SubjectRelation('Affaire', cardinality="**")
+        associate_affaire = SubjectRelation('Affaire', cardinality='**')
         associate_person = SubjectRelation('PersonBase')
-    schema = build_schema_from_namespace([('PersonBase', PersonBase),
-                                          ('Affaire',    Affaire)])
-    return schema
+    return build_schema_from_namespace([('PersonBase', PersonBase),
+                                        ('Affaire',    Affaire)])
 
 class PropertiesFromTC(TestCase):
 
-    def test_properties_from_final_attributes(self):
-
-        props_ref = {'required': True, 'default': "toto", 'composite': True,
-                     'inlined': True, 'description': "something"}
+    def test_properties_from_final_attributes_1(self):
+        props_ref = {'required': True, 'default': 'toto', 'composite': True,
+                     'inlined': True, 'description': 'something'}
         s = String(**props_ref)
         props = properties_from(s)
-        self.assertTrue(props == props_ref)
+        self.assertEqual(props, props_ref)
 
+    def test_properties_from_final_attributes_2(self):
         s = String()
-        self.assertTrue(properties_from(s) == {'required': False})
+        self.assertEqual(properties_from(s), {'required': False})
 
+    def test_properties_from_final_attributes_3(self):
         props_ref = {'default': None, 'required': False}
         s = String(**props_ref)
-        self.assertTrue(properties_from(s) == props_ref)
+        self.assertEqual(properties_from(s), props_ref)
 
-    def test_constraint_properties(self):
-
+    def test_constraint_properties_1(self):
         props_ref = {'maxsize': 150, 'required': False}
         s = String(**props_ref)
-        self.assertTrue(properties_from(s) == props_ref)
+        self.assertEqual(properties_from(s), props_ref)
 
+    def test_constraint_properties_2(self):
         props_ref = {'unique': True, 'required': False}
         s = String(**props_ref)
-        self.assertTrue(properties_from(s) == props_ref)
+        self.assertEqual(properties_from(s), props_ref)
 
-        props_ref = {'vocabulary': ('aaa', 'bbbb', 'ccccc'), 'required': False, "maxsize": 20}
+    def test_constraint_properties_3(self):
+        props_ref = {'vocabulary': ('aaa', 'bbbb', 'ccccc'), 'required': False, 'maxsize': 20}
         s = String(**props_ref)
         props_ref['maxsize'] = 5
-        self.assertTrue(properties_from(s) == props_ref)
+        self.assertEqual(properties_from(s), props_ref)
 
 
 class SchemaDiff(TestCase):
-
 
     def test_schema_diff(self):
         schema1 = create_schema_1()
         schema2 = create_schema_2()
         output1, output2 = schema_diff(schema1, schema2)
-        ref1 = osp.join(DATADIR, 'schema1.txt')
-        ref2 = osp.join(DATADIR, 'schema2.txt')
-        self.assertEqual(read_file(output1), read_file(ref1))
-        self.assertEqual(read_file(output2), read_file(ref2))
+        self.assertMultiLineEqual(read_file(output1),
+                                  read_file(self.datapath('schema1.txt')))
+        self.assertMultiLineEqual(read_file(output2),
+                                  read_file(self.datapath('schema2.txt')))
+
 
 if __name__ == '__main__':
     unittest_main()
