@@ -33,11 +33,9 @@ __all__ = ('EntityType', 'RelationType', 'RelationDefinition',
            'SubjectRelation', 'ObjectRelation', 'BothWayRelation',
            'RichString', ) + tuple(BASE_TYPES)
 
-ETYPE_PROPERTIES = ('description', '__permissions__', '__unique_together__',
-                    'meta') # XXX meta is deprecated
+ETYPE_PROPERTIES = ('description', '__permissions__', '__unique_together__')
 # don't put description inside, handled "manually"
-RTYPE_PROPERTIES = ('symmetric', 'inlined', 'fulltext_container',
-                    'meta') # XXX meta is deprecated
+RTYPE_PROPERTIES = ('symmetric', 'inlined', 'fulltext_container')
 RDEF_PROPERTIES = ('cardinality', 'constraints', 'composite',
                    'order',  'default', 'uid', 'indexed',
                    'fulltextindexed', 'internationalizable',
@@ -615,6 +613,10 @@ class ObjectRelation(Relation):
             kwargs['symmetric'] = kwargs.pop('symetric')
             warn('[yams 0.27.0] symetric has been respelled symmetric',
                  DeprecationWarning, stacklevel=2)
+        if kwargs.pop('meta', None):
+            # actually deprecated in 0.25 but not properly warned here
+            warn('[yams 0.37.0] meta is deprecated',
+                 DeprecationWarning, stacklevel=3)
         try:
             _check_kwargs(kwargs, REL_PROPERTIES)
         except BadSchemaDefinition, bad:
