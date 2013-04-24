@@ -95,6 +95,7 @@ def _copy_attributes(fromobj, toobj, attributes):
         setattr(toobj, attr, value)
 
 def register_base_types(schema):
+    """add base (final) entity types to the given schema"""
     for etype in BASE_TYPES:
         edef = EntityType(
             name=etype,

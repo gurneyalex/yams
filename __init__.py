@@ -21,7 +21,7 @@ __docformat__ = "restructuredtext en"
 
 from datetime import datetime, date, time
 
-# set _ builtin to unicode by default, should be overriden if necessary
+# XXX set _ builtin to unicode by default, should be overriden if necessary
 import __builtin__
 __builtin__._ = unicode
 
