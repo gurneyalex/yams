@@ -733,24 +733,42 @@ class AbstractTypedAttribute(SubjectRelation):
     def __repr__(self):
         return '<%(name)s(%(etype)s)>' % self.__dict__
 
-# build a specific class for each base type
-def _make_type(etype):
+
+def make_type(etype):
+    """create a python class for a Yams base type.
+
+    Notice it is now possible to create a specific type with user-defined
+    behaviour, e.g.:
+
+        Geometry = make_type('Geometry') # (c.f. postgis)
+
+    will allow the use of:
+
+        Geometry(geom_type='POINT')
+
+    in a Yams schema, provided in this example that `geom_type` is specified to
+    the :func:`yams.register_base_type` function which should be called prior to
+    make_type.
+    """
+    assert etype in BASE_TYPES
     return type(etype, (AbstractTypedAttribute,), {'etype' : etype})
 
-String = _make_type('String')
-Password = _make_type('Password')
-Bytes = _make_type('Bytes')
-Int = _make_type('Int')
-BigInt = _make_type('BigInt')
-Float = _make_type('Float')
-Boolean = _make_type('Boolean')
-Decimal = _make_type('Decimal')
-Time = _make_type('Time')
-Date = _make_type('Date')
-Datetime = _make_type('Datetime')
-TZTime = _make_type('TZTime')
-TZDatetime = _make_type('TZDatetime')
-Interval = _make_type('Interval')
+
+# build a specific class for each base type
+String = make_type('String')
+Password = make_type('Password')
+Bytes = make_type('Bytes')
+Int = make_type('Int')
+BigInt = make_type('BigInt')
+Float = make_type('Float')
+Boolean = make_type('Boolean')
+Decimal = make_type('Decimal')
+Time = make_type('Time')
+Date = make_type('Date')
+Datetime = make_type('Datetime')
+TZTime = make_type('TZTime')
+TZDatetime = make_type('TZDatetime')
+Interval = make_type('Interval')
 
 
 # provides a RichString factory for convenience
