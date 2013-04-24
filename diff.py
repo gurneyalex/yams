@@ -31,6 +31,8 @@ from yams.constraints import (SizeConstraint,
 from yams.reader import SchemaLoader
 
 
+def serialize_dict(d):
+    return '\n'.join('\t\t%s=%s' % (k, v)for k, v in sorted(d.iteritems()))
 
 
 def properties_from(attr):
@@ -67,18 +69,16 @@ def schema2descr(schema):
                        properties_from(entity.rdef(attr[0].type)))
                       for attr in entity.attribute_definitions()]
         for attr_name, attr_type, attr_props in attributes:
-            txt += "\t%s: %s\n" % (attr_name, attr_type)
-            for k, v in attr_props.iteritems():
-                txt +="\t\t%s=%s\n" % (k, v)
+            txt += '\t%s: %s\n%s\n' % (attr_name, attr_type,
+                                       serialize_dict(attr_props))
 
         relations = [(rel[0].type,
                       rel[1][0].type,
                       properties_from(entity.rdef(rel[0].type)))
                      for rel in entity.relation_definitions() if rel[2] == 'subject']
         for rel_name, rel_type, rel_props in relations:
-            txt += "\t%s: %s\n" % (rel_name, rel_type)
-            for k, v in rel_props.iteritems():
-                txt += "\t\t%s=%s\n" % (k, v)
+            txt += '\t%s: %s\n%s\n' % (rel_name, rel_type,
+                                       serialize_dict(rel_props))
     return txt
 
 def schema2file(schema, output):
