@@ -475,6 +475,12 @@ class SchemaTC(BaseSchemaTC):
                          {'fax-subject': u'value 1000001 must be <= 999999',
                           'tel-subject': u'value 1000000 must be <= 999999'})
 
+    def test_validation_error_translation_4(self):
+        verr = ValidationError(1, {None: 'global message about eid %(eid)s'}, {'eid': 1})
+        verr.translate(unicode)
+        self.assertEqual(verr.errors,
+                         {None: 'global message about eid 1'})
+
     def test_pickle(self):
         """schema should be pickeable"""
         import pickle
