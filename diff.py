@@ -59,7 +59,7 @@ def properties_from(attr):
 def schema2descr(schema):
     """convert a yams schema into a text description"""
     txt = ""
-    for entity in sorted(schema.entities(), key=lambda e: e.type):
+    for entity in sorted(schema.entities()):
         txt += "%s\n" % str(entity.type)
 
         attributes = [(attr[0].type,
