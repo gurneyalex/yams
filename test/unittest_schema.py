@@ -448,8 +448,7 @@ class SchemaTC(BaseSchemaTC):
                 # check automatic call to translation works properly
                 unicode(cm.exception)
 
-    def test_validation_error_translation(self):
-        """check bad values of entity raises ValidationError exception"""
+    def test_validation_error_translation_1(self):
         eschema = schema.eschema('Person')
         with self.assertRaises(ValidationError) as cm:
             eschema.check({'nom': 1, 'promo': 2})
@@ -457,6 +456,9 @@ class SchemaTC(BaseSchemaTC):
         self.assertEqual(cm.exception.errors,
                          {'nom-subject': u'incorrect value (1) for type "String"',
                           'promo-subject': u'incorrect value (2) for type "String"'})
+
+    def test_validation_error_translation_2(self):
+        eschema = schema.eschema('Person')
         with self.assertRaises(ValidationError) as cm:
             eschema.check({'nom': u'x'*21, 'prenom': u'x'*65})
         cm.exception.translate(unicode)
@@ -464,6 +466,8 @@ class SchemaTC(BaseSchemaTC):
                          {'nom-subject': u'value should have maximum size of 20 but found 21',
                           'prenom-subject': u'value should have maximum size of 64 but found 65'})
 
+    def test_validation_error_translation_3(self):
+        eschema = schema.eschema('Person')
         with self.assertRaises(ValidationError) as cm:
             eschema.check({'tel': 1000000, 'fax': 1000001})
         cm.exception.translate(unicode)
