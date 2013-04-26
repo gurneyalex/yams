@@ -1,6 +1,12 @@
 ChangeLog for yams
 ------------------
 
+2013-04-26 -- 0.37.0
+
+    * add schema comparison utility (#112914)
+    * allow user defined base type (#124342)
+    * fix bug #135221
+
 2013-01-23 -- 0.36.0
     * don't translate validation error right away (#109550)
     * fix relation definition inheritance (#115958)
