@@ -1,4 +1,4 @@
-# copyright 2004-2010 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
+# copyright 2004-2013 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
 # contact http://www.logilab.fr/ -- mailto:contact@logilab.fr
 #
 # This file is part of yams.
@@ -37,7 +37,7 @@ class State(EntityType):
     name = String(required=True,
                   indexed=True, internationalizable=True,
                   constraints=[SizeConstraint(256)])
-    description = String(fulltextindexed=True, meta=True) # XXX meta to test bw compat
+    description = String(fulltextindexed=True)
     # relations
     state_of = SubjectRelation('Eetype', cardinality='+*')
     next_state = SubjectRelation('State', cardinality='**')

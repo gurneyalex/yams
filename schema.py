@@ -1,4 +1,4 @@
-# copyright 2004-2012 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
+# copyright 2004-2013 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
 # contact http://www.logilab.fr/ -- mailto:contact@logilab.fr
 #
 # This file is part of yams.
@@ -23,6 +23,7 @@ _ = unicode
 import warnings
 from copy import deepcopy
 from decimal import Decimal
+from itertools import chain
 
 from logilab.common import attrdict
 from logilab.common.decorators import cached, clear_cache
@@ -954,9 +955,17 @@ class RelationDefinitionSchema(PermissionMixIn):
     _FINAL_RPROPERTIES = {'default': None,
                           'uid': False,
                           'indexed': False}
-    _STRING_RPROPERTIES = {'fulltextindexed': False,
-                           'internationalizable': False}
-    _BYTES_RPROPERTIES = {'fulltextindexed': False}
+    # Use a TYPE_PROPERTIES dictionnary to store type-dependant parameters.
+    BASE_TYPE_PROPERTIES = {'String': {'fulltextindexed': False,
+                                       'internationalizable': False},
+                            'Bytes': {'fulltextindexed': False}}
+
+    @classmethod
+    def ALL_PROPERTIES(cls):
+        return set(chain(cls._RPROPERTIES,
+                         cls._NONFINAL_RPROPERTIES,
+                         cls._FINAL_RPROPERTIES,
+                         *cls.BASE_TYPE_PROPERTIES.itervalues()))
 
     def __init__(self, subject, rtype, object, values=None):
         if values is not None:
@@ -1008,10 +1017,7 @@ class RelationDefinitionSchema(PermissionMixIn):
             propdefs.update(cls._NONFINAL_RPROPERTIES)
         else:
             propdefs.update(cls._FINAL_RPROPERTIES)
-            if desttype == 'String':
-                propdefs.update(cls._STRING_RPROPERTIES)
-            elif desttype == 'Bytes':
-                propdefs.update(cls._BYTES_RPROPERTIES)
+            propdefs.update(cls.BASE_TYPE_PROPERTIES.get(desttype, {}))
         return propdefs
 
     def rproperties(self):
