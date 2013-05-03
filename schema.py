@@ -299,9 +299,15 @@ class EntitySchema(PermissionMixIn, ERSchema):
         rschema = self.schema.rschema(rtype)
         if targettype is None:
             if role == 'subject':
-                targettype = rschema.objects(self)[0]
+                types = rschema.objects(self)
             else:
-                targettype = rschema.subjects(self)[0]
+                types = rschema.subjects(self)
+            if len(types) != 1:
+                warnings.warn('[yams 0.38] no targettype specified and there are several '
+                              'relation definitions for rtype %s: %s. Yet you get the first '
+                              'rdef.' % (rtype, [eschema.type for eschema in types]),
+                              Warning, stacklevel=2)
+            targettype = types[0]
         return rschema.role_rdef(self, targettype, role)
 
     @cached
