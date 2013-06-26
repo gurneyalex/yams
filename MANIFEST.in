@@ -1,0 +1,6 @@
+include ChangeLog
+include COPYING
+include COPYING.LESSER
+recursive-include test/data *.sql *.rel *.esql *.py toignore
+recursive-include bin yams-*
+
