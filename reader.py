@@ -49,17 +49,6 @@ for objname in dir(constraints):
     except TypeError:
         continue
 
-class DeprecatedDict(dict):
-    def __init__(self, context, message):
-        dict.__init__(self, context)
-        self.message = message
-
-    def __getitem__(self, key):
-        warn(self.message, DeprecationWarning, stacklevel=2)
-        return super(DeprecatedDict, self).__getitem__(key)
-    def __contains__(self, key):
-        warn(self.message, DeprecationWarning, stacklevel=2)
-        return super(DeprecatedDict, self).__contains__(key)
 
 def obsolete(cls):
     def wrapped(*args, **kwargs):
@@ -258,9 +247,6 @@ class SchemaLoader(object):
                     val = obsolete(val)
                 setattr(__builtin__, key, val)
             __builtin__.import_erschema = self.import_erschema
-            __builtin__.defined_types = DeprecatedDict(self.defined,
-                                                        'defined_types is deprecated, '
-                                                        'use yams.reader.context')
             fglobals['__file__'] = filepath
             fglobals['__name__'] = modname
             package = '.'.join(modname.split('.')[:-1])
@@ -275,12 +261,6 @@ class SchemaLoader(object):
                        obj.__module__ == modname:
                     for parent in obj.__bases__:
                         pname = parent.__name__
-                        if pname in ('MetaEntityType', 'MetaUserEntityType',
-                                     'MetaRelationType', 'MetaUserRelationType',
-                                     'MetaAttributeRelationType'):
-                            warn('%s: %s is deprecated, use EntityType/RelationType'
-                                 ' with explicit permission (%s)' % (filepath, pname, name),
-                                 DeprecationWarning)
                         if pname in fglobals or not pname in self.context:
                             # imported
                             continue
