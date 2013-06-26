@@ -195,7 +195,7 @@ class EntitySchema(PermissionMixIn, ERSchema):
         for unique_together in self._unique_together:
             for name in unique_together:
                 try:
-                    rschema = self.rdef(name)
+                    rschema = self.rdef(name, takefirst=True)
                 except KeyError:
                     errors.append('no such attribute or relation %s' % name)
                 else:
@@ -289,12 +289,12 @@ class EntitySchema(PermissionMixIn, ERSchema):
         """
         return self.objrels.values()
 
-    def rdef(self, rtype, role='subject', targettype=None):
+    def rdef(self, rtype, role='subject', targettype=None, takefirst=False):
         """return a relation definition schema for a relation of this entity type
 
         Notice that when targettype is not specified and the relation may lead
         to different entity types (ambiguous relation), one of them is picked
-        randomly.
+        randomly. If also takefirst is False, a warning will be emitted.
         """
         rschema = self.schema.rschema(rtype)
         if targettype is None:
@@ -302,7 +302,7 @@ class EntitySchema(PermissionMixIn, ERSchema):
                 types = rschema.objects(self)
             else:
                 types = rschema.subjects(self)
-            if len(types) != 1:
+            if len(types) != 1 and not takefirst:
                 warnings.warn('[yams 0.38] no targettype specified and there are several '
                               'relation definitions for rtype %s: %s. Yet you get the first '
                               'rdef.' % (rtype, [eschema.type for eschema in types]),
@@ -382,7 +382,7 @@ class EntitySchema(PermissionMixIn, ERSchema):
 
     def default(self, rtype):
         """return the default value of a subject relation"""
-        rdef = self.rdef(rtype)
+        rdef = self.rdef(rtype, takefirst=True)
         default =  rdef.default
         if callable(default):
             default = default()
@@ -501,7 +501,7 @@ class EntitySchema(PermissionMixIn, ERSchema):
         for rschema in self.object_relations():
             if (rschema, 'object') in skiprels:
                 continue
-            rdef = self.rdef(rschema, 'object')
+            rdef = self.rdef(rschema, 'object', takefirst=True)
             if rdef.composite == 'subject':
                 if not strict or rdef.cardinality[1] in '1+':
                     return True
@@ -510,7 +510,7 @@ class EntitySchema(PermissionMixIn, ERSchema):
                 continue
             if rschema.final:
                 continue
-            rdef = self.rdef(rschema, 'subject')
+            rdef = self.rdef(rschema, 'subject', takefirst=True)
             if rdef.composite == 'object':
                 if not strict or rdef.cardinality[0] in '1+':
                     return True
