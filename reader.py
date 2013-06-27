@@ -73,8 +73,10 @@ def fill_schema(schema, erdefs, register_base_types=True,
                 remove_unused_rtypes=False, post_build_callbacks=[]):
     if register_base_types:
         buildobjs.register_base_types(schema)
+    # relation definitions may appear multiple times
+    erdefs_vals = set(erdefs.itervalues())
     # register relation types and non final entity types
-    for definition in erdefs.itervalues():
+    for definition in erdefs_vals:
         if isinstance(definition, type):
             definition = definition()
         if isinstance(definition, buildobjs.RelationType):
@@ -82,7 +84,7 @@ def fill_schema(schema, erdefs, register_base_types=True,
         elif isinstance(definition, buildobjs.EntityType):
             schema.add_entity_type(definition)
     # register relation definitions
-    for definition in erdefs.itervalues():
+    for definition in erdefs_vals:
         if isinstance(definition, type):
             definition = definition()
         definition.expand_relation_definitions(erdefs, schema)

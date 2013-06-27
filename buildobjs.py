@@ -537,11 +537,27 @@ class RelationDefinition(Definition):
             _copy_attributes(rtype, defined[name], RTYPE_PROPERTIES)
         else:
             defined[name] = rtype
-        key = (cls.subject, name, cls.object)
-        if key in defined:
-            raise BadSchemaDefinition('duplicated relation definition %s (%s.%s)'
-                                      % (key, cls.__module__, cls.__name__))
-        defined[key] = cls
+
+        # subject and object in defined's keys are only strings not tuples
+        if isinstance(cls.subject, tuple):
+            subjects = cls.subject
+        else:
+            subjects = (cls.subject, )
+        if isinstance(cls.object, tuple):
+            objects = cls.object
+        else:
+            objects = (cls.object, )
+        for sub in subjects:
+            for obj in objects:
+                key = (sub, name, obj)
+                if key in defined:
+                    raise BadSchemaDefinition(
+                        'duplicated relation definition (%s) %s (%s.%s)'
+                        % (defined[key], key, cls.__module__, cls.__name__))
+                defined[key] = cls
+
+        # XXX keep this for bw compat
+        defined[(cls.subject, name, cls.object)] = cls
 
     @classmethod
     def expand_relation_definitions(cls, defined, schema):
