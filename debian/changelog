@@ -1,3 +1,9 @@
+yams (0.38.0-1.1) unstable; urgency=low
+
+  * new upstream release
+
+ -- Florent Cayre <florent.cayre@logilab.fr>  Fri, 28 Jun 2013 16:42:19 +0200
+
 yams (0.37.0-1) unstable; urgency=low
 
   * new upstream release
