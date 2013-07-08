@@ -28,22 +28,35 @@ from logilab.common.decorators import iclassmethod
 from yams import BASE_TYPES, MARKER, BadSchemaDefinition, KNOWN_METAATTRIBUTES
 from yams.constraints import (SizeConstraint, UniqueConstraint,
                               StaticVocabularyConstraint, FORMAT_CONSTRAINT)
+from yams.schema import RelationDefinitionSchema
 
 __all__ = ('EntityType', 'RelationType', 'RelationDefinition',
            'SubjectRelation', 'ObjectRelation', 'BothWayRelation',
            'RichString', ) + tuple(BASE_TYPES)
 
-ETYPE_PROPERTIES = ('description', '__permissions__', '__unique_together__',
-                    'meta') # XXX meta is deprecated
-# don't put description inside, handled "manually"
-RTYPE_PROPERTIES = ('symmetric', 'inlined', 'fulltext_container',
-                    'meta') # XXX meta is deprecated
-RDEF_PROPERTIES = ('cardinality', 'constraints', 'composite',
-                   'order',  'default', 'uid', 'indexed',
-                   'fulltextindexed', 'internationalizable',
-                   '__permissions__',)
+# EntityType properties
+ETYPE_PROPERTIES = ('description', '__permissions__', '__unique_together__')
+# RelationType properties. Don't put description inside, handled specifically
+RTYPE_PROPERTIES = ('symmetric', 'inlined', 'fulltext_container')
+# RelationDefinition properties have to be computed dynamically since new ones
+# may be added at runtime
+def _RDEF_PROPERTIES():
+    base = RelationDefinitionSchema.ALL_PROPERTIES()
+    # infered is an internal property and should not be specified explicitly
+    base.remove('infered')
+    # replace permissions by __permissions__ as it's spelled that way in schema
+    # definition files
+    base.remove('permissions')
+    base.add('__permissions__')
+    return tuple(base)
+# regroup all rtype/rdef properties as they may be defined one on each other in
+# some cases
+def _REL_PROPERTIES():
+    return RTYPE_PROPERTIES + _RDEF_PROPERTIES()
 
-REL_PROPERTIES = RTYPE_PROPERTIES+RDEF_PROPERTIES + ('description',)
+# pre 0.37 backward compat
+RDEF_PROPERTIES = () # stuff added here is also added to underlying dict, nevermind
+
 
 CREATION_RANK = 0
 
@@ -95,6 +108,7 @@ def _copy_attributes(fromobj, toobj, attributes):
         setattr(toobj, attr, value)
 
 def register_base_types(schema):
+    """add base (final) entity types to the given schema"""
     for etype in BASE_TYPES:
         edef = EntityType(
             name=etype,
@@ -331,16 +345,17 @@ class EntityType(Definition):
         """
         order = 1
         name = getattr(cls, 'name', cls.__name__)
+        rdefprops = _RDEF_PROPERTIES()
         for relation in cls.__relations__:
             if isinstance(relation, SubjectRelation):
                 rdef = RelationDefinition(subject=name, name=relation.name,
                                           object=relation.etype, order=order)
-                _copy_attributes(relation, rdef, RDEF_PROPERTIES + ('description',))
+                _copy_attributes(relation, rdef, rdefprops)
             elif isinstance(relation, ObjectRelation):
                 rdef = RelationDefinition(subject=relation.etype,
                                           name=relation.name,
                                           object=name, order=order)
-                _copy_attributes(relation, rdef, RDEF_PROPERTIES + ('description',))
+                _copy_attributes(relation, rdef, rdefprops)
             elif isinstance(relation, RelationDefinition):
                 rdef = relation
             else:
@@ -443,8 +458,8 @@ class RelationType(Definition):
                 raise BadSchemaDefinition('duplicated relation type for %s'
                                           % name)
             # relation type created from a relation definition, override it
-            _copy_attributes(defined[name], cls,
-                             REL_PROPERTIES + ('subject', 'object'))
+            allprops = _REL_PROPERTIES() + ('subject', 'object')
+            _copy_attributes(defined[name], cls, allprops)
         defined[name] = cls
 
     @classmethod
@@ -457,7 +472,7 @@ class RelationType(Definition):
         if getattr(cls, 'subject', None) and getattr(cls, 'object', None):
             rdef = RelationDefinition(subject=cls.subject, name=name,
                                       object=cls.object)
-            _copy_attributes(cls, rdef, RDEF_PROPERTIES)
+            _copy_attributes(cls, rdef, _RDEF_PROPERTIES())
             rdef._add_relations(defined, schema)
 
 
@@ -476,7 +491,7 @@ class RelationDefinition(Definition):
     inlined = MARKER
 
     def __init__(self, subject=None, name=None, object=None, **kwargs):
-        """kwargs keys must have values in RDEF_PROPERTIES"""
+        """kwargs keys must have values in _RDEF_PROPERTIES()"""
         if subject:
             self.subject = subject
         else:
@@ -495,8 +510,9 @@ class RelationDefinition(Definition):
             warn('[yams 0.27.0] symetric has been respelled symmetric',
                  DeprecationWarning, stacklevel=2)
             kwargs['symmetric'] = kwargs.pop('symetric')
-        _check_kwargs(kwargs, RDEF_PROPERTIES + ('description',))
-        _copy_attributes(attrdict(**kwargs), self, RDEF_PROPERTIES + ('description',))
+        rdefprops = _RDEF_PROPERTIES()
+        _check_kwargs(kwargs, rdefprops)
+        _copy_attributes(attrdict(**kwargs), self, rdefprops)
         if self.constraints:
             self.constraints = list(self.constraints)
 
@@ -539,7 +555,10 @@ class RelationDefinition(Definition):
     def _add_relations(self, defined, schema):
         name = getattr(self, 'name', self.__class__.__name__)
         rtype = defined[name]
-        _copy_attributes(rtype, self, RDEF_PROPERTIES)
+        rdefprops = _RDEF_PROPERTIES()
+        # copy relation definition attributes set on the relation type, beside
+        # description
+        _copy_attributes(rtype, self, set(rdefprops) - set(('description',)))
         # process default cardinality and constraints if not set yet
         cardinality = self.cardinality
         if cardinality is MARKER:
@@ -564,7 +583,7 @@ class RelationDefinition(Definition):
         for subj in _actual_types(schema, self.subject):
             for obj in _actual_types(schema, self.object):
                 rdef = RelationDefinition(subj, name, obj, __permissions__=permissions)
-                _copy_attributes(self, rdef, RDEF_PROPERTIES + ('description',))
+                _copy_attributes(self, rdef, rdefprops)
                 schema.add_relation_def(rdef)
 
 def _actual_types(schema, etype):
@@ -614,8 +633,12 @@ class ObjectRelation(Relation):
             kwargs['symmetric'] = kwargs.pop('symetric')
             warn('[yams 0.27.0] symetric has been respelled symmetric',
                  DeprecationWarning, stacklevel=2)
+        if kwargs.pop('meta', None):
+            # actually deprecated in 0.25 but not properly warned here
+            warn('[yams 0.37.0] meta is deprecated',
+                 DeprecationWarning, stacklevel=3)
         try:
-            _check_kwargs(kwargs, REL_PROPERTIES)
+            _check_kwargs(kwargs, _REL_PROPERTIES())
         except BadSchemaDefinition, bad:
             # XXX (auc) bad field name + required attribute can lead there instead of schema.py ~ 920
             bsd_ex = BadSchemaDefinition(('%s in relation to entity %r (also is %r defined ? (check two '
@@ -710,24 +733,42 @@ class AbstractTypedAttribute(SubjectRelation):
     def __repr__(self):
         return '<%(name)s(%(etype)s)>' % self.__dict__
 
-# build a specific class for each base type
-def _make_type(etype):
+
+def make_type(etype):
+    """create a python class for a Yams base type.
+
+    Notice it is now possible to create a specific type with user-defined
+    behaviour, e.g.:
+
+        Geometry = make_type('Geometry') # (c.f. postgis)
+
+    will allow the use of:
+
+        Geometry(geom_type='POINT')
+
+    in a Yams schema, provided in this example that `geom_type` is specified to
+    the :func:`yams.register_base_type` function which should be called prior to
+    make_type.
+    """
+    assert etype in BASE_TYPES
     return type(etype, (AbstractTypedAttribute,), {'etype' : etype})
 
-String = _make_type('String')
-Password = _make_type('Password')
-Bytes = _make_type('Bytes')
-Int = _make_type('Int')
-BigInt = _make_type('BigInt')
-Float = _make_type('Float')
-Boolean = _make_type('Boolean')
-Decimal = _make_type('Decimal')
-Time = _make_type('Time')
-Date = _make_type('Date')
-Datetime = _make_type('Datetime')
-TZTime = _make_type('TZTime')
-TZDatetime = _make_type('TZDatetime')
-Interval = _make_type('Interval')
+
+# build a specific class for each base type
+String = make_type('String')
+Password = make_type('Password')
+Bytes = make_type('Bytes')
+Int = make_type('Int')
+BigInt = make_type('BigInt')
+Float = make_type('Float')
+Boolean = make_type('Boolean')
+Decimal = make_type('Decimal')
+Time = make_type('Time')
+Date = make_type('Date')
+Datetime = make_type('Datetime')
+TZTime = make_type('TZTime')
+TZDatetime = make_type('TZDatetime')
+Interval = make_type('Interval')
 
 
 # provides a RichString factory for convenience

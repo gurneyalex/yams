@@ -1,4 +1,4 @@
-# copyright 2004-2011 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
+# copyright 2004-2013 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
 # contact http://www.logilab.fr/ -- mailto:contact@logilab.fr
 #
 # This file is part of yams.
@@ -21,7 +21,7 @@ __docformat__ = "restructuredtext en"
 
 from datetime import datetime, date, time
 
-# set _ builtin to unicode by default, should be overriden if necessary
+# XXX set _ builtin to unicode by default, should be overriden if necessary
 import __builtin__
 __builtin__._ = unicode
 
@@ -89,3 +89,29 @@ def ensure_new_subjobj(val, cls=None, attr=None):
             msg += ' for attribute %s of class %s' % (attr, cls.__name__)
         warn(DeprecationWarning, msg)
         return SUBJECT
+
+def register_base_type(name, parameters=(), check_function=None):
+    """register a yams base (final) type. You'll have to call
+    base_type_class to generate the class.
+    """
+    from yams.schema import RelationDefinitionSchema
+    from yams.constraints import BASE_CHECKERS, yes
+    # Add the datatype to yams base types
+    assert name not in BASE_TYPES, '%s alreadt in BASE_TYPES %s' % (name, BASE_TYPES)
+    BASE_TYPES.add(name)
+    # Add the new datatype to the authorized types of RelationDefinitionSchema
+    if not isinstance(parameters, dict):
+        # turn tuple/list into dict with None values
+        parameters = dict((p, None) for p in parameters)
+    RelationDefinitionSchema.BASE_TYPE_PROPERTIES[name] = parameters
+    # Add a yams checker or yes is not specified
+    BASE_CHECKERS[name] = check_function or yes
+
+def unregister_base_type(name):
+    """Unregister a yams base (final) type"""
+    from yams.schema import RelationDefinitionSchema
+    from yams.constraints import BASE_CHECKERS
+    assert name in BASE_TYPES, '%s not in BASE_TYPES %s' % (name, BASE_TYPES)
+    BASE_TYPES.remove(name)
+    RelationDefinitionSchema.BASE_TYPE_PROPERTIES.pop(name)
+    BASE_CHECKERS.pop(name)

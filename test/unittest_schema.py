@@ -1,5 +1,5 @@
 # -*- coding: iso-8859-1 -*-
-# copyright 2004-2012 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
+# copyright 2004-2013 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
 # contact http://www.logilab.fr/ -- mailto:contact@logilab.fr
 #
 # This file is part of yams.
@@ -25,11 +25,14 @@ from logilab.common.testlib import TestCase, unittest_main
 from copy import copy, deepcopy
 from tempfile import mktemp
 
-from yams import BadSchemaDefinition
-from yams.buildobjs import (register_base_types, EntityType, RelationType,
-                            RelationDefinition, _add_relation)
-from yams.schema import *
-from yams.constraints import *
+from yams import (BASE_TYPES, ValidationError, BadSchemaDefinition,
+                  register_base_type, unregister_base_type)
+from yams.buildobjs import (register_base_types, make_type, _add_relation,
+                            EntityType, RelationType, RelationDefinition)
+from yams.schema import Schema, RelationDefinitionSchema
+from yams.interfaces import IVocabularyConstraint
+from yams.constraints import (BASE_CHECKERS, SizeConstraint, RegexpConstraint,
+                              StaticVocabularyConstraint, IntervalBoundConstraint)
 from yams.reader import SchemaLoader
 
 
@@ -215,6 +218,11 @@ class EntitySchemaTC(BaseSchemaTC):
         self.assertEqual(schema.eschema('String').final, True)
         self.assertEqual(schema.rschema('ref').final, True)
         self.assertEqual(schema.rschema('concerne').final, False)
+
+    def test_attribute_description(self):
+        schema = SchemaLoader().load([self.datadir], 'Test')
+        self.assertEqual(schema['EPermission'].rdef('name').description,
+                         'name or identifier of the permission')
 
     def test_deepcopy_specialization(self):
         schema2 = deepcopy(SchemaLoader().load([self.datadir], 'Test'))
@@ -440,8 +448,7 @@ class SchemaTC(BaseSchemaTC):
                 # check automatic call to translation works properly
                 unicode(cm.exception)
 
-    def test_validation_error_translation(self):
-        """check bad values of entity raises ValidationError exception"""
+    def test_validation_error_translation_1(self):
         eschema = schema.eschema('Person')
         with self.assertRaises(ValidationError) as cm:
             eschema.check({'nom': 1, 'promo': 2})
@@ -449,6 +456,9 @@ class SchemaTC(BaseSchemaTC):
         self.assertEqual(cm.exception.errors,
                          {'nom-subject': u'incorrect value (1) for type "String"',
                           'promo-subject': u'incorrect value (2) for type "String"'})
+
+    def test_validation_error_translation_2(self):
+        eschema = schema.eschema('Person')
         with self.assertRaises(ValidationError) as cm:
             eschema.check({'nom': u'x'*21, 'prenom': u'x'*65})
         cm.exception.translate(unicode)
@@ -456,12 +466,20 @@ class SchemaTC(BaseSchemaTC):
                          {'nom-subject': u'value should have maximum size of 20 but found 21',
                           'prenom-subject': u'value should have maximum size of 64 but found 65'})
 
+    def test_validation_error_translation_3(self):
+        eschema = schema.eschema('Person')
         with self.assertRaises(ValidationError) as cm:
             eschema.check({'tel': 1000000, 'fax': 1000001})
         cm.exception.translate(unicode)
         self.assertEqual(cm.exception.errors,
                          {'fax-subject': u'value 1000001 must be <= 999999',
                           'tel-subject': u'value 1000000 must be <= 999999'})
+
+    def test_validation_error_translation_4(self):
+        verr = ValidationError(1, {None: 'global message about eid %(eid)s'}, {'eid': 1})
+        verr.translate(unicode)
+        self.assertEqual(verr.errors,
+                         {None: 'global message about eid 1'})
 
     def test_pickle(self):
         """schema should be pickeable"""
@@ -511,9 +529,9 @@ class SymetricTC(TestCase):
     def setUp(self):
         global schema
         schema = Schema('Test Schema')
-        ebug = schema.add_entity_type(EntityType('Bug'))
-        estory = schema.add_entity_type(EntityType('Story'))
-        eproject = schema.add_entity_type(EntityType('Project'))
+        schema.add_entity_type(EntityType('Bug'))
+        schema.add_entity_type(EntityType('Story'))
+        schema.add_entity_type(EntityType('Project'))
         schema.add_relation_type(RelationType('see_also', symmetric=True))
 
     def test_association_types(self):
@@ -546,6 +564,32 @@ class SymetricTC(TestCase):
                           [('Bug', ['Bug', 'Project', 'Story']),
                            ('Project', ['Bug', 'Project', 'Story']),
                            ('Story', ['Bug', 'Project', 'Story'])])
+
+
+class CustomTypeTC(TestCase):
+
+    def tearDown(self):
+        try:
+            unregister_base_type('Test')
+        except AssertionError:
+            pass
+
+    def test_register_base_type(self):
+        register_base_type('Test', ('test1', 'test2'))
+        self.assertIn('Test', BASE_TYPES)
+        self.assertIn('Test', RelationDefinitionSchema.BASE_TYPE_PROPERTIES)
+        self.assertEqual(RelationDefinitionSchema.BASE_TYPE_PROPERTIES['Test'],
+                         {'test1': None, 'test2': None})
+        self.assertTrue('Test' in BASE_CHECKERS)
+
+    def test_make_base_type_class(self):
+        register_base_type('Test', ('test1', 'test2'))
+        Test = make_type('Test')
+        self.assertIsInstance(Test, type)
+        self.assertEqual(Test.etype, 'Test')
+        t = Test(test1=1)
+        self.assertEqual(t.test1, 1)
+        self.assertFalse(hasattr(t, 'test2'))
 
 if __name__ == '__main__':
     unittest_main()
