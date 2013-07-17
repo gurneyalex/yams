@@ -45,3 +45,5 @@ class SubSubDivision(SubDivision):
 class custom_attr(RelationDefinition):
     subject = 'Person'
     object = 'String'
+    __permissions__ = {'read': ('managers', ),
+                       'update': ('managers', )}
