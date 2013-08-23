@@ -117,7 +117,7 @@ def register_base_type(name, parameters=(), check_function=None):
     from yams.schema import RelationDefinitionSchema
     from yams.constraints import BASE_CHECKERS, yes
     # Add the datatype to yams base types
-    assert name not in BASE_TYPES, '%s alreadt in BASE_TYPES %s' % (name, BASE_TYPES)
+    assert name not in BASE_TYPES, '%s already in BASE_TYPES %s' % (name, BASE_TYPES)
     BASE_TYPES.add(name)
     # Add the new datatype to the authorized types of RelationDefinitionSchema
     if not isinstance(parameters, dict):
