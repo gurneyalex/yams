@@ -1,4 +1,4 @@
-# copyright 2004-2011 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
+# copyright 2004-2013 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
 # contact http://www.logilab.fr/ -- mailto:contact@logilab.fr
 #
 # This file is part of yams.
@@ -29,6 +29,7 @@ from os import listdir
 from os.path import exists, join, splitext, basename, abspath
 from warnings import warn
 
+from logilab.common import tempattr
 from logilab.common.modutils import modpath_from_file, cleanup_sys_modules
 
 from yams import UnknownType, BadSchemaDefinition, BASE_TYPES
@@ -139,8 +140,10 @@ class SchemaLoader(object):
 
     def _load_definition_files(self, directories):
         for directory in directories:
+            package = basename(directory)
             for filepath in self.get_schema_files(directory):
-                self.handle_file(filepath)
+                with tempattr(buildobjs, 'PACKAGE', package):
+                    self.handle_file(filepath)
 
     # has to be overridable sometimes (usually for test purpose)
     main_schema_directory = 'schema'
