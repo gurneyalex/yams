@@ -108,6 +108,7 @@ class ERSchema(object):
         self.schema = schema
         self.type = erdef.name
         self.description = erdef.description or ''
+        self.package = erdef.package
 
     def __cmp__(self, other):
         return cmp(self.type, getattr(other, 'type', other))
@@ -710,7 +711,8 @@ class RelationSchema(ERSchema):
         if key in self.rdefs:
             msg = '(%s, %s) already defined for %s' % (subject, object, self)
             raise BadSchemaDefinition(msg)
-        self.rdefs[key] = rdef = RelationDefinitionSchema(subject, self, object)
+        self.rdefs[key] = rdef = RelationDefinitionSchema(subject, self, object,
+                                                          buildrdef.package)
         for prop, default in rdef.rproperties().iteritems():
             rdefval = getattr(buildrdef, prop, MARKER)
             if rdefval is MARKER:
@@ -815,12 +817,13 @@ class RelationDefinitionSchema(PermissionMixIn):
                          cls._FINAL_RPROPERTIES,
                          *cls.BASE_TYPE_PROPERTIES.itervalues()))
 
-    def __init__(self, subject, rtype, object, values=None):
+    def __init__(self, subject, rtype, object, package, values=None):
         if values is not None:
             self.update(values)
         self.subject = subject
         self.rtype = rtype
         self.object = object
+        self.package = package
 
     @property
     def ACTIONS(self):
@@ -875,6 +878,7 @@ class RelationDefinitionSchema(PermissionMixIn):
 
     def dump(self, subject, object):
         return RelationDefinitionSchema(subject, self.rtype, object,
+                                        self.package,
                                         self.__dict__)
 
     def role_cardinality(self, role):

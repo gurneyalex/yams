@@ -30,6 +30,9 @@ from yams.constraints import (SizeConstraint, UniqueConstraint,
                               StaticVocabularyConstraint, FORMAT_CONSTRAINT)
 from yams.schema import RelationDefinitionSchema
 
+PACKAGE = '<builtin>' # will be modified by the yams'reader when schema is
+                      # beeing read
+
 __all__ = ('EntityType', 'RelationType', 'RelationDefinition',
            'SubjectRelation', 'ObjectRelation', 'BothWayRelation',
            'RichString', ) + tuple(BASE_TYPES)
@@ -130,8 +133,14 @@ class Relation(object):
 
 # first class schema definition objects #######################################
 
+class autopackage(type):
+    def __new__(mcs, name, bases, classdict):
+        classdict['package'] = PACKAGE
+        return super(autopackage, mcs).__new__(mcs, name, bases, classdict)
+
 class Definition(object):
     """Abstract class for entity / relation definition classes."""
+    __metaclass__ = autopackage
 
     meta = MARKER
     description = MARKER
@@ -179,13 +188,12 @@ class Definition(object):
         cls.__permissions__ = permissions
 
 
-class metadefinition(type):
-    """Metaclass that builds the __relations__ attribute of
-    EntityType's subclasses.
+class metadefinition(autopackage):
+    """Metaclass that builds the __relations__ attribute of EntityType's
+    subclasses.
     """
     stacklevel = 3
     def __new__(mcs, name, bases, classdict):
-
         ### Move (any) relation from the class dict to __relations__ attribute
         rels = classdict.setdefault('__relations__', [])
         relations = dict((rdef.name, rdef) for rdef in rels)
@@ -317,12 +325,14 @@ class EntityType(Definition):
         for relation in cls.__relations__:
             if isinstance(relation, SubjectRelation):
                 rdef = RelationDefinition(subject=name, name=relation.name,
-                                          object=relation.etype, order=order)
+                                          object=relation.etype, order=order,
+                                          package=relation.package)
                 _copy_attributes(relation, rdef, rdefprops)
             elif isinstance(relation, ObjectRelation):
                 rdef = RelationDefinition(subject=relation.etype,
                                           name=relation.name,
-                                          object=name, order=order)
+                                          object=name, order=order,
+                                          package=relation.package)
                 _copy_attributes(relation, rdef, rdefprops)
             elif isinstance(relation, RelationDefinition):
                 rdef = relation
@@ -456,7 +466,8 @@ class RelationDefinition(Definition):
     symmetric = MARKER
     inlined = MARKER
 
-    def __init__(self, subject=None, name=None, object=None, **kwargs):
+    def __init__(self, subject=None, name=None, object=None, package=None,
+                 **kwargs):
         """kwargs keys must have values in _RDEF_PROPERTIES()"""
         if subject:
             self.subject = subject
@@ -470,6 +481,10 @@ class RelationDefinition(Definition):
         global CREATION_RANK
         CREATION_RANK += 1
         self.creation_rank = CREATION_RANK
+        if package is not None:
+            self.package = package
+        elif self.package == '<builtin>':
+            self.package = PACKAGE
         if kwargs.pop('meta', None):
             warn('[yams 0.37] meta is deprecated', DeprecationWarning)
         rdefprops = _RDEF_PROPERTIES()
@@ -553,7 +568,9 @@ class RelationDefinition(Definition):
             permissions = self.__permissions__
         for subj in _actual_types(schema, self.subject):
             for obj in _actual_types(schema, self.object):
-                rdef = RelationDefinition(subj, name, obj, __permissions__=permissions)
+                rdef = RelationDefinition(subj, name, obj,
+                                          __permissions__=permissions,
+                                          package=self.package)
                 _copy_attributes(self, rdef, rdefprops)
                 schema.add_relation_def(rdef)
 
@@ -595,6 +612,7 @@ class ObjectRelation(Relation):
         global CREATION_RANK
         CREATION_RANK += 1
         self.creation_rank = CREATION_RANK
+        self.package = PACKAGE
         self.name = '<undefined>'
         self.etype = etype
         if self.constraints:
