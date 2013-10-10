@@ -110,12 +110,7 @@ def _copy_attributes(fromobj, toobj, attributes):
 def register_base_types(schema):
     """add base (final) entity types to the given schema"""
     for etype in BASE_TYPES:
-        edef = EntityType(
-            name=etype,
-            # unused actually
-            # XXX add a group in read perms to satisfy schema constraints in cw
-            __permissions__={'read': ('users',), 'add': (), 'delete': (),
-                             'update': ()})
+        edef = EntityType(name=etype)
         schema.add_entity_type(edef)
 
 # XXX use a "frozendict"
@@ -184,34 +179,7 @@ class Definition(object):
         cls.__permissions__ = permissions
 
 
-class XXX_backward_permissions_compat(type):
-    stacklevel = 2
-    def __new__(mcs, name, bases, classdict):
-        if 'permissions' in classdict:
-            classdict['__permissions__'] = classdict.pop('permissions')
-            warn('[yams 0.27.0] permissions is deprecated, use __permissions__ instead (class %s)' % name,
-                 DeprecationWarning, stacklevel=mcs.stacklevel)
-        if 'symetric' in classdict:
-            classdict['symmetric'] = classdict.pop('symetric')
-            warn('[yams 0.27.0] symetric has been respelled symmetric (class %s)' % name,
-                 DeprecationWarning, stacklevel=mcs.stacklevel)
-        return super(XXX_backward_permissions_compat, mcs).__new__(mcs, name, bases, classdict)
-
-    # XXX backward compatiblity
-    def get_permissions(cls):
-        warn('[yams 0.27.0] %s.permissions is deprecated, use .__permissions__ instead'
-             % cls.__name__, DeprecationWarning, stacklevel=2)
-        return cls.__permissions__
-
-    def set_permissions(cls, newperms):
-        warn('[yams 0.27.0] %s.permissions is deprecated, use .__permissions__ instead'
-             % cls.__name__, DeprecationWarning, stacklevel=2)
-        cls.__permissions__ = newperms
-
-    permissions = property(get_permissions, set_permissions)
-
-
-class metadefinition(XXX_backward_permissions_compat):
+class metadefinition(type):
     """Metaclass that builds the __relations__ attribute of
     EntityType's subclasses.
     """
@@ -427,8 +395,6 @@ class EntityType(Definition):
 
 
 class RelationType(Definition):
-    __metaclass__ = XXX_backward_permissions_compat
-
     symmetric = MARKER
     inlined = MARKER
     fulltext_container = MARKER
@@ -437,7 +403,7 @@ class RelationType(Definition):
         """kwargs must have values in RTYPE_PROPERTIES"""
         super(RelationType, self).__init__(name)
         if kwargs.pop('meta', None):
-            warn('[yams 0.25] meta is deprecated', DeprecationWarning, stacklevel=2)
+            warn('[yams 0.37] meta is deprecated', DeprecationWarning, stacklevel=2)
         _check_kwargs(kwargs, RTYPE_PROPERTIES + ('description', '__permissions__'))
         self.__dict__.update(kwargs)
 
@@ -505,11 +471,7 @@ class RelationDefinition(Definition):
         CREATION_RANK += 1
         self.creation_rank = CREATION_RANK
         if kwargs.pop('meta', None):
-            warn('[yams 0.25] meta is deprecated', DeprecationWarning)
-        if 'symetric' in kwargs:
-            warn('[yams 0.27.0] symetric has been respelled symmetric',
-                 DeprecationWarning, stacklevel=2)
-            kwargs['symmetric'] = kwargs.pop('symetric')
+            warn('[yams 0.37] meta is deprecated', DeprecationWarning)
         rdefprops = _RDEF_PROPERTIES()
         _check_kwargs(kwargs, rdefprops)
         _copy_attributes(attrdict(**kwargs), self, rdefprops)
@@ -527,21 +489,32 @@ class RelationDefinition(Definition):
         """
         name = getattr(cls, 'name', cls.__name__)
         rtype = RelationType(name)
-        if hasattr(cls, 'symetric'):
-            cls.symmetric = cls.symetric
-            del cls.symetric
-            warn('[yams 0.27.0] symetric has been respelled symmetric (class %s)' % name,
-                 DeprecationWarning)
         _copy_attributes(cls, rtype, RTYPE_PROPERTIES)
         if name in defined:
             _copy_attributes(rtype, defined[name], RTYPE_PROPERTIES)
         else:
             defined[name] = rtype
-        key = (cls.subject, name, cls.object)
-        if key in defined:
-            raise BadSchemaDefinition('duplicated relation definition %s (%s.%s)'
-                                      % (key, cls.__module__, cls.__name__))
-        defined[key] = cls
+
+        # subject and object in defined's keys are only strings not tuples
+        if isinstance(cls.subject, tuple):
+            subjects = cls.subject
+        else:
+            subjects = (cls.subject, )
+        if isinstance(cls.object, tuple):
+            objects = cls.object
+        else:
+            objects = (cls.object, )
+        for sub in subjects:
+            for obj in objects:
+                key = (sub, name, obj)
+                if key in defined:
+                    raise BadSchemaDefinition(
+                        'duplicated relation definition (%s) %s (%s.%s)'
+                        % (defined[key], key, cls.__module__, cls.__name__))
+                defined[key] = cls
+
+        # XXX keep this for bw compat
+        defined[(cls.subject, name, cls.object)] = cls
 
     @classmethod
     def expand_relation_definitions(cls, defined, schema):
@@ -573,8 +546,6 @@ class RelationDefinition(Definition):
         if not self.constraints:
             self.constraints = ()
         rschema = schema.rschema(name)
-        if self.subject == '**' or self.object == '**':
-            warn('[yams 0.25] ** is deprecated, use * (%s)' % rtype, DeprecationWarning)
         if self.__permissions__ is MARKER:
             final = iter(_actual_types(schema, self.object)).next() in BASE_TYPES
             permissions = rtype.get_permissions(final)
@@ -587,7 +558,7 @@ class RelationDefinition(Definition):
                 schema.add_relation_def(rdef)
 
 def _actual_types(schema, etype):
-    if etype in ('**', '*'): # XXX ** is deprecated
+    if etype == '*':
         return _pow_etypes(schema)
     if isinstance(etype, (list, tuple)):
         return etype
@@ -629,12 +600,7 @@ class ObjectRelation(Relation):
         if self.constraints:
             self.constraints = list(self.constraints)
         self.override = kwargs.pop('override', False)
-        if 'symetric' in kwargs:
-            kwargs['symmetric'] = kwargs.pop('symetric')
-            warn('[yams 0.27.0] symetric has been respelled symmetric',
-                 DeprecationWarning, stacklevel=2)
         if kwargs.pop('meta', None):
-            # actually deprecated in 0.25 but not properly warned here
             warn('[yams 0.37.0] meta is deprecated',
                  DeprecationWarning, stacklevel=3)
         try:
@@ -798,38 +764,4 @@ def RichString(default_format='text/plain', format_constraints=None, **kwargs):
         format_args['constraints'] = format_constraints
     meta = {'format':String(internationalizable=True, **format_args)}
     return String(metadata=meta, **kwargs)
-
-
-# various derivated classes with some predefined values XXX deprecated
-
-class MetaEntityType(EntityType):
-    __permissions__ = {
-        'read':   ('managers', 'users', 'guests',),
-        'add':    ('managers',),
-        'update': ('managers', 'owners',),
-        'delete': ('managers',),
-        }
-
-class MetaUserEntityType(EntityType):
-    pass
-
-class MetaRelationType(RelationType):
-    __permissions__ = {
-        'read':   ('managers', 'users', 'guests',),
-        'add':    ('managers',),
-        'delete': ('managers',),
-        }
-
-class MetaUserRelationType(RelationType):
-    pass
-
-class MetaAttributeRelationType(RelationType):
-    # just set permissions to None so default permissions are set
-    __permissions__ = MARKER
-
-
-__all__ += ('MetaEntityType', 'MetaUserEntityType',
-            'MetaRelationType', 'MetaUserRelationType',
-            'MetaAttributeRelationType')
-
 

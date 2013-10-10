@@ -49,17 +49,6 @@ for objname in dir(constraints):
     except TypeError:
         continue
 
-class DeprecatedDict(dict):
-    def __init__(self, context, message):
-        dict.__init__(self, context)
-        self.message = message
-
-    def __getitem__(self, key):
-        warn(self.message, DeprecationWarning, stacklevel=2)
-        return super(DeprecatedDict, self).__getitem__(key)
-    def __contains__(self, key):
-        warn(self.message, DeprecationWarning, stacklevel=2)
-        return super(DeprecatedDict, self).__contains__(key)
 
 def obsolete(cls):
     def wrapped(*args, **kwargs):
@@ -73,8 +62,10 @@ def fill_schema(schema, erdefs, register_base_types=True,
                 remove_unused_rtypes=False, post_build_callbacks=[]):
     if register_base_types:
         buildobjs.register_base_types(schema)
+    # relation definitions may appear multiple times
+    erdefs_vals = set(erdefs.itervalues())
     # register relation types and non final entity types
-    for definition in erdefs.itervalues():
+    for definition in erdefs_vals:
         if isinstance(definition, type):
             definition = definition()
         if isinstance(definition, buildobjs.RelationType):
@@ -82,7 +73,7 @@ def fill_schema(schema, erdefs, register_base_types=True,
         elif isinstance(definition, buildobjs.EntityType):
             schema.add_entity_type(definition)
     # register relation definitions
-    for definition in erdefs.itervalues():
+    for definition in erdefs_vals:
         if isinstance(definition, type):
             definition = definition()
         definition.expand_relation_definitions(erdefs, schema)
@@ -256,9 +247,6 @@ class SchemaLoader(object):
                     val = obsolete(val)
                 setattr(__builtin__, key, val)
             __builtin__.import_erschema = self.import_erschema
-            __builtin__.defined_types = DeprecatedDict(self.defined,
-                                                        'defined_types is deprecated, '
-                                                        'use yams.reader.context')
             fglobals['__file__'] = filepath
             fglobals['__name__'] = modname
             package = '.'.join(modname.split('.')[:-1])
@@ -273,12 +261,6 @@ class SchemaLoader(object):
                        obj.__module__ == modname:
                     for parent in obj.__bases__:
                         pname = parent.__name__
-                        if pname in ('MetaEntityType', 'MetaUserEntityType',
-                                     'MetaRelationType', 'MetaUserRelationType',
-                                     'MetaAttributeRelationType'):
-                            warn('%s: %s is deprecated, use EntityType/RelationType'
-                                 ' with explicit permission (%s)' % (filepath, pname, name),
-                                 DeprecationWarning)
                         if pname in fglobals or not pname in self.context:
                             # imported
                             continue
