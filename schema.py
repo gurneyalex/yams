@@ -31,7 +31,7 @@ from logilab.common.interface import implements
 
 import yams
 from yams import (BASE_TYPES, MARKER, ValidationError, BadSchemaDefinition,
-                  KNOWN_METAATTRIBUTES)
+                  KNOWN_METAATTRIBUTES, convert_default_value)
 from yams.interfaces import (ISchema, IRelationSchema, IEntitySchema,
                              IVocabularyConstraint)
 from yams.constraints import BASE_CHECKERS, BASE_CONVERTERS, UniqueConstraint
@@ -90,7 +90,6 @@ def rehash(dictionary):
 def _format_properties(props):
     res = [('%s=%s' % item) for item in props.items() if item[1]]
     return ','.join(res)
-
 
 class ERSchema(object):
     """Base class shared by entity and relation schema."""
@@ -375,27 +374,7 @@ class EntitySchema(PermissionMixIn, ERSchema):
         if default is MARKER:
             default = None
         elif default is not None:
-            # rdef.object is the attribute type
-            if rdef.object == 'Boolean':
-                if not isinstance(default, bool):
-                    default = default == 'True' # XXX duh?
-            elif rdef.object in ('Int', 'BigInt'):
-                if not isinstance(default, (int, long)):
-                    default = int(default)
-            elif rdef.object == 'Float':
-                if not isinstance(default, float):
-                    default = float(default)
-            elif rdef.object == 'Decimal':
-                if not isinstance(default, Decimal):
-                    default = Decimal(default)
-            elif rdef.object in ('Date', 'Datetime', 'Time'):
-                key = '%s.%s' % (rdef.object, default.upper())
-                try:
-                    default = yams.KEYWORD_MAP[key]()
-                except KeyError:
-                    default = yams.DATE_FACTORY_MAP[rdef.object](default)
-            else:
-                default = unicode(default)
+            return convert_default_value(rdef, default)
         return default
 
     def has_unique_values(self, rtype):

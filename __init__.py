@@ -19,6 +19,7 @@
 """
 __docformat__ = "restructuredtext en"
 
+import warnings
 from datetime import datetime, date, time
 
 # XXX set _ builtin to unicode by default, should be overriden if necessary
@@ -41,16 +42,54 @@ BASE_TYPES = set(('String', 'Password', 'Bytes',
 # base groups used in permissions
 BASE_GROUPS = set((_('managers'), _('users'), _('guests'), _('owners')))
 
-KEYWORD_MAP = {'Datetime.NOW' : datetime.now,
-               'Datetime.TODAY': datetime.today,
-               'TZDatetime.NOW' : datetime.utcnow,
-               'TZDatetime.TODAY': datetime.today,
-               'Date.TODAY': date.today}
+# This provides a way to specify callable objects as default values
+# First level is the final type, second is the keyword to callable map
+KEYWORD_MAP = {
+    'Datetime':{'NOW' : datetime.now,
+                'TODAY': datetime.today},
+    'TZDatetime': {'NOW' : datetime.utcnow,
+                   'TODAY': datetime.today},
+    'Date': {'TODAY': date.today}
+}
+
+
+# bw compat for literal date/time values stored as strings in schemas
 DATE_FACTORY_MAP = {
     'Datetime' : lambda x: ':' in x and strptime(x, '%Y/%m/%d %H:%M') or strptime(x, '%Y/%m/%d'),
     'Date' : lambda x : strptime(x, '%Y/%m/%d'),
     'Time' : strptime_time
     }
+
+
+def convert_default_value(rdef, default):
+    # rdef can be either a yams.schema.RelationDefinitionSchema or a yams.buildobjs.RelationDefinition
+    rtype = getattr(rdef, 'name', None) or rdef.rtype.type
+    if isinstance(default, basestring) and rdef.object != 'String':
+        # real Strings can be anything, including things that look like keywords
+        # for other base types
+        if rdef.object in KEYWORD_MAP:
+            try:
+                return KEYWORD_MAP[rdef.object][default.upper()]()
+            except KeyError:
+                # the default was likely not a special constant like TODAY but some literal
+                pass
+        # bw compat for old schemas
+        if rdef.object in DATE_FACTORY_MAP:
+            warnings.warn('using strings as default values for attribute %s of type %s '
+                          'is deprecated; you should use the plain python objects instead'
+                          % (rtype, rdef.object),
+                          DeprecationWarning)
+            try:
+                return DATE_FACTORY_MAP[rdef.object](default)
+            except ValueError, verr:
+                raise ValueError('creating a default value for attribute %s of type %s '
+                                 'from the string %r is not supported (cause %s)'
+                                 % (rtype, rdef.object, default, verr))
+    if rdef.object == 'String':
+        default = unicode(default)
+    return default # general case: untouched default
+
+
 
 KNOWN_METAATTRIBUTES = set(('format', 'encoding', 'name'))
 

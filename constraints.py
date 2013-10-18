@@ -437,7 +437,7 @@ class NOW(object):
         return '%s(%r)' % (self.__class__.__name__, self.offset)
 
     def value(self, entity):
-        now = yams.KEYWORD_MAP['Datetime.NOW']()
+        now = yams.KEYWORD_MAP['Datetime']['NOW']()
         if self.offset:
             now += self.offset
         return now
@@ -452,7 +452,7 @@ class TODAY(object):
         return '%s(%r, %r)' % (self.__class__.__name__, self.offset, self.type)
 
     def value(self, entity):
-        now = yams.KEYWORD_MAP['%s.TODAY' % self.type]()
+        now = yams.KEYWORD_MAP[self.type]['TODAY']()
         if self.offset:
             now += self.offset
         return now
