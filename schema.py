@@ -51,6 +51,8 @@ def check_permission_definitions(schema):
         assert isinstance(groups, tuple), \
                ('permission for action %s of %s isn\'t a tuple as '
                 'expected' % (action, schema))
+    if schema.final:
+        schema.advertise_new_add_permission()
     for action in schema.ACTIONS:
         assert action in schema.permissions, \
                'missing expected permissions for action %s for %s' % (action, schema)
@@ -206,6 +208,10 @@ class EntitySchema(PermissionMixIn, ERSchema):
     def _rehash(self):
         self.subjrels = rehash(self.subjrels)
         self.objrels = rehash(self.objrels)
+
+    def advertise_new_add_permission(self):
+        pass
+
 
     # schema building methods #################################################
 
@@ -828,7 +834,7 @@ class RelationDefinitionSchema(PermissionMixIn):
     @property
     def ACTIONS(self):
         if self.rtype.final:
-            return ('read', 'update')
+            return ('read', 'add', 'update')
         else:
             return ('read', 'add', 'delete')
 
@@ -848,6 +854,26 @@ class RelationDefinitionSchema(PermissionMixIn):
 
     def as_triple(self):
         return (self.subject, self.rtype, self.object)
+
+    def advertise_new_add_permission(self):
+        """handle backward compatibility with pre-add permissions
+
+        * if the update permission was () [empty tuple], use the
+          default attribute permissions for `add`
+
+        * else copy the `update` rule for `add`
+        """
+        if not 'add' in self.permissions:
+            from yams.buildobjs import DEFAULT_ATTRPERMS
+            if self.permissions['update'] == ():
+                defaultaddperms = DEFAULT_ATTRPERMS['add']
+            else:
+                defaultaddperms = self.permissions['update']
+            self.permissions['add'] = defaultaddperms
+            warnings.warn('[yams 0.39] %s: new "add" permissions on attribute '
+                          'set to %s by default, but you must make it explicit' %
+                          (self, defaultaddperms), DeprecationWarning)
+
 
     @classmethod
     def rproperty_defs(cls, desttype):

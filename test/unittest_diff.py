@@ -95,7 +95,7 @@ class PropertiesFromTC(TestCase):
                      'description': 'something'}
         self.assertEqual({'default': 'toto',
                           'required': True,
-                          '__permissions__': " {\n\t\t\t'read': ('managers','users','guests'),\n\t\t\t'update': ('managers','owners')\n\t\t}",
+                          '__permissions__': " {\n\t\t\t'read': ('managers','users','guests'),\n\t\t\t'add': ('managers','users'),\n\t\t\t'update': ('managers','owners')\n\t\t}",
                           'description': "'something'",
                           'order': 1},
                          properties_from(self.build_rdef(props_ref)),
@@ -103,26 +103,26 @@ class PropertiesFromTC(TestCase):
 
     def test_properties_from_final_attributes_2(self):
         props_ref = {}
-        self.assertEqual({'__permissions__': " {\n\t\t\t'read': ('managers','users','guests'),\n\t\t\t'update': ('managers','owners')\n\t\t}",
+        self.assertEqual({'__permissions__': " {\n\t\t\t'read': ('managers','users','guests'),\n\t\t\t'add': ('managers','users'),\n\t\t\t'update': ('managers','owners')\n\t\t}",
                           'order': 1},
                          properties_from(self.build_rdef(props_ref)))
 
     def test_properties_from_final_attributes_3(self):
         props_ref = {'default': None, 'required': False}
-        self.assertEqual({'__permissions__': " {\n\t\t\t'read': ('managers','users','guests'),\n\t\t\t'update': ('managers','owners')\n\t\t}",
+        self.assertEqual({'__permissions__': " {\n\t\t\t'read': ('managers','users','guests'),\n\t\t\t'add': ('managers','users'),\n\t\t\t'update': ('managers','owners')\n\t\t}",
                           'order': 1},
                          properties_from(self.build_rdef(props_ref)))
 
     def test_constraint_properties_1(self):
         props_ref = {'maxsize': 150, 'required': False}
         self.assertEqual({'maxsize': 150,
-                          '__permissions__': " {\n\t\t\t'read': ('managers','users','guests'),\n\t\t\t'update': ('managers','owners')\n\t\t}",
+                          '__permissions__': " {\n\t\t\t'read': ('managers','users','guests'),\n\t\t\t'add': ('managers','users'),\n\t\t\t'update': ('managers','owners')\n\t\t}",
                           'order': 1},
                          properties_from(self.build_rdef(props_ref)))
 
     def test_constraint_properties_2(self):
         props_ref = {'unique': True, 'required': False}
-        self.assertEqual({'__permissions__': " {\n\t\t\t'read': ('managers','users','guests'),\n\t\t\t'update': ('managers','owners')\n\t\t}",
+        self.assertEqual({'__permissions__': " {\n\t\t\t'read': ('managers','users','guests'),\n\t\t\t'add': ('managers','users'),\n\t\t\t'update': ('managers','owners')\n\t\t}",
                           'unique': True,
                           'order': 1},
                          properties_from(self.build_rdef(props_ref)))
@@ -132,7 +132,7 @@ class PropertiesFromTC(TestCase):
         rdef = self.build_rdef(props_ref)
         props_ref['maxsize'] = 5
         self.assertEqual({'maxsize': 5,
-                          '__permissions__': " {\n\t\t\t'read': ('managers','users','guests'),\n\t\t\t'update': ('managers','owners')\n\t\t}",
+                          '__permissions__': " {\n\t\t\t'read': ('managers','users','guests'),\n\t\t\t'add': ('managers','users'),\n\t\t\t'update': ('managers','owners')\n\t\t}",
                           'order': 1,
                           'vocabulary': [u'aaa', u'bbbb', u'ccccc']},
                          properties_from(rdef))

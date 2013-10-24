@@ -116,14 +116,14 @@ def register_base_types(schema):
         edef = EntityType(name=etype)
         schema.add_entity_type(edef)
 
-# XXX use a "frozendict"
+
 DEFAULT_RELPERMS = {'read': ('managers', 'users', 'guests',),
                     'delete': ('managers', 'users'),
                     'add': ('managers', 'users',)}
 
 DEFAULT_ATTRPERMS = {'read': ('managers', 'users', 'guests',),
-                     'update': ('managers', 'owners'),
-                     }
+                     'add': ('managers', 'users'),
+                     'update': ('managers', 'owners')}
 
 class Relation(object):
     """Abstract class which have to be defined before the metadefinition
@@ -258,7 +258,6 @@ class EntityType(Definition):
     #:  .. automethod:: EntityType.get_relations
 
     __metaclass__ = metadefinition
-    # XXX use a "frozendict"
     __permissions__ = {
         'read': ('managers', 'users', 'guests',),
         'update': ('managers', 'owners',),

@@ -9,6 +9,7 @@ class Affaire(EntityType):
 	nom = String(
 		__permissions__= {
 			'read': ('managers','users','guests'),
+			'add': ('managers','users'),
 			'update': ('managers','owners')
 		},
 		order=1)
@@ -35,6 +36,7 @@ class PersonAttrMod(EntityType):
 	nom = String(
 		__permissions__= {
 			'read': ('managers','users','guests'),
+			'add': ('managers','users'),
 			'update': ('managers','owners')
 		},
 		order=1)
@@ -42,6 +44,7 @@ class PersonAttrMod(EntityType):
 	prenom = Float(
 		__permissions__= {
 			'read': ('managers','users','guests'),
+			'add': ('managers','users'),
 			'update': ('managers','owners')
 		},
 		order=2)
@@ -59,6 +62,7 @@ class PersonBase(EntityType):
 	nom = String(
 		__permissions__= {
 			'read': ('managers','users','guests'),
+			'add': ('managers','users'),
 			'update': ('managers','owners')
 		},
 		order=1)
@@ -66,6 +70,7 @@ class PersonBase(EntityType):
 	prenom = String(
 		__permissions__= {
 			'read': ('managers','users','guests'),
+			'add': ('managers','users'),
 			'update': ('managers','owners')
 		},
 		order=2)

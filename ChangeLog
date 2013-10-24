@@ -9,6 +9,7 @@ ChangeLog for yams
     * add package attribute on (etype, rtype, rdef) (#69392)
     * [schema2sql] provide an index name computation function for unique
       together constraints (#189299)
+    * an "add" permission on attributes
 
 2013-06-28 -- 0.38.0
     * [xy] fail assertion only if existing prefix is being changed (#139999)
