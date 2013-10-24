@@ -120,7 +120,9 @@ class SpecializationTC(TestCase):
         self.assertIn('custom_attr', self.schema['Student'].subjrels)
         self.assertEqual(
             self.schema['custom_attr'].rdefs[('Student', 'String')].permissions,
-            {'read': ('managers', ), 'update': ('managers', )})
+            {'read': ('managers',),
+             'add': ('managers',),
+             'update': ('managers',)})
 
     def test_remove_infered_relations(self):
         self.schema.remove_infered_definitions()
