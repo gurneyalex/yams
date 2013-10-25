@@ -85,6 +85,10 @@ class SizeConstraint(BaseConstraint):
 
     def __init__(self, max=None, min=None):
         assert (max is not None or min is not None), "No max or min"
+        if min is not None:
+            assert isinstance(min, int), 'min must be an int, not %r' % min
+        if max is not None:
+            assert isinstance(max, int), 'max must be an int, not %r' % max
         self.max = max
         self.min = min
 
