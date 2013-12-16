@@ -38,8 +38,8 @@ class XYRegistry(object):
             prefix, xmlns = xmlns, prefix
         if not overwrite and prefix in self.prefixes \
                 and self.prefixes.get(prefix) != xmlns:
-                raise Exception('prefix %r already defined with different value'
-                                % prefix)
+            raise Exception('prefix %r already defined with different value'
+                            % prefix)
         self.prefixes[prefix] = xmlns
 
     def _norm_yams_key(self, yamssnippet):
