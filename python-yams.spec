@@ -19,7 +19,7 @@ BuildArch:      noarch
 Vendor:         Logilab <contact@logilab.fr>
 Url:            http://www.logilab.org/project/yams
 
-Requires:       %{python}, %{python}-logilab-common >= 0.55.2, %{python}-logilab-database >= 1.5.0
+Requires:       %{python}, %{python}-logilab-common >= 0.55.2, %{python}-logilab-database >= 1.11
 BuildRequires:  %{python}
 
 
