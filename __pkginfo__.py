@@ -60,5 +60,5 @@ scripts = ['bin/yams-check', 'bin/yams-view']
 
 install_requires = [
     'logilab-common >= 0.55.2',
-    'logilab-database >= 1.5.0',
+    'logilab-database >= 1.11',
     ]
