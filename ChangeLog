@@ -1,6 +1,15 @@
 ChangeLog for yams
 ------------------
 
+2014-01-09 -- 0.39.0
+    * [schema] extend .rdef(...) with a parameter to silence the ambiguity
+      warning added in 0.38
+    * [schema] cleanup default values handling in entity schema (#109207)
+    * improve schema-diff feature from 0.37 (#174042)
+    * add package attribute on (etype, rtype, rdef) (#69392)
+    * [schema2sql] provide an index name computation function for unique
+      together constraints (#189299)
+
 2013-06-28 -- 0.38.0
     * [xy] fail assertion only if existing prefix is being changed (#139999)
     * [schema] add a warning to avoid a potential silent bug if looking up an
