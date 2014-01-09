@@ -1,6 +1,13 @@
 ChangeLog for yams
 ------------------
 
+2013-06-28 -- 0.38.0
+    * [xy] fail assertion only if existing prefix is being changed (#139999)
+    * [schema] add a warning to avoid a potential silent bug if looking up an
+      rdef ambiguously
+    * [schema building] Fix key in context.defined for RelationDefinition
+      (#149660)
+
 2013-04-26 -- 0.37.0
 
     * add schema comparison utility (#112914)
