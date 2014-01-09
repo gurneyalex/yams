@@ -1,4 +1,4 @@
-# copyright 2004-2013 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
+# copyright 2004-2014 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
 # contact http://www.logilab.fr/ -- mailto:contact@logilab.fr
 #
 # This file is part of yams.
@@ -246,7 +246,7 @@ class SchemaLoader(object):
             # wrap callable that should be imported
             for key, val in self.context.items():
                 if key in BASE_TYPES or key == 'RichString' or key in CONSTRAINTS or \
-                       key in ('SubjectRelation', 'ObjectRelation', 'BothWayRelation'):
+                       key in ('SubjectRelation', 'ObjectRelation'):
                     val = obsolete(val)
                 setattr(__builtin__, key, val)
             __builtin__.import_erschema = self.import_erschema
