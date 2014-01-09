@@ -1,4 +1,4 @@
-# copyright 2004-2013 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
+# copyright 2004-2014 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
 # contact http://www.logilab.fr/ -- mailto:contact@logilab.fr
 #
 # This file is part of yams.
@@ -379,8 +379,8 @@ class PySchemaTC(TestCase):
         # dates
         self.assertEqual(d1, _today)
         self.assertIsInstance(d1, date)
-        self.assertEqual(d2, datetime(2007, 12, 11, 0, 0))
-        self.assertIsInstance(d2, datetime)
+        self.assertEqual(d2, date(2007, 12, 11))
+        self.assertIsInstance(d2, date)
         # times
         self.assertEqual(t1, time(8, 40))
         self.assertIsInstance(t1, time)
