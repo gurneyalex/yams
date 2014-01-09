@@ -1,4 +1,4 @@
-# copyright 2004-2010 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
+# copyright 2004-2014 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
 # contact http://www.logilab.fr/ -- mailto:contact@logilab.fr
 #
 # This file is part of yams.
@@ -15,13 +15,14 @@
 #
 # You should have received a copy of the GNU Lesser General Public License along
 # with yams. If not, see <http://www.gnu.org/licenses/>.
+from datetime import time, date
 from yams.buildobjs import EntityType, Datetime, Date, Time
 
 class Datetest(EntityType):
     dt1 = Datetime(default=u'now')
     dt2 = Datetime(default=u'today')
     d1  = Date(default=u'today')
-    d2  = Date(default=u'2007/12/11')
-    t1  = Time(default=u'08:40')
-    t2  = Time(default=u'09:45')
+    d2  = Date(default=date(2007, 12, 11))
+    t1  = Time(default=time(8, 40))
+    t2  = Time(default=time(9, 45))
 
