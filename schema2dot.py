@@ -1,4 +1,4 @@
-# copyright 2004-2010 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
+# copyright 2004-2014 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
 # contact http://www.logilab.fr/ -- mailto:contact@logilab.fr
 #
 # This file is part of yams.
@@ -49,8 +49,14 @@ class SchemaDotPropsHandler(object):
 
     def edge_properties(self, rschema, subjnode, objnode):
         """return default DOT drawing options for a relation schema"""
-        # symmetric rels are handled differently, let yams decide what's best
-        if rschema.symmetric:
+        # rschema can be none if the subject is a specialization of the object
+        # we get there because we want to draw a specialization arrow anyway
+        if rschema is None:
+            kwargs = {'label': 'Parent class',
+                      'color' : 'grey',  'style' : 'filled',
+                      'arrowhead': 'empty'}
+        elif rschema.symmetric:
+            # symmetric rels are handled differently, let yams decide what's best
             kwargs = {'label': rschema.type,
                       'color': '#887788', 'style': 'dashed',
                       'dir': 'both', 'arrowhead': 'normal', 'arrowtail': 'normal'}

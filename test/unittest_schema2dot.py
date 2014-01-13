@@ -1,4 +1,4 @@
-# copyright 2004-2010 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
+# copyright 2004-2014 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
 # contact http://www.logilab.fr/ -- mailto:contact@logilab.fr
 #
 # This file is part of yams.
@@ -36,9 +36,12 @@ charset="utf-8"
 splines=true
 overlap=false
 sep=0.2
-"Person" [shape="record", fontname="Courier", style="filled", label="{Person|nom\lprenom\lsexe\lpromo\ltitre\ladel\lass\lweb\ltel\lfax\ldatenaiss\ltest\lsalary\l}"];
+"Salaried" [shape="record", fontname="Courier", style="filled", label="{Salaried|nom\lprenom\lsexe\lpromo\ltitre\ladel\lass\lweb\ltel\lfax\ldatenaiss\ltest\lsalary\l}"];
 "Societe" [shape="record", fontname="Courier", style="filled", label="{Societe|nom\lweb\ltel\lfax\lrncs\lad1\lad2\lad3\lcp\lville\l}"];
-"Person" -> "Societe" [taillabel="0..n", style="filled", arrowhead="normal", color="#aa0000", label="travaille", headlabel="0..n", arrowtail="none", decorate="false", fontcolor="#aa0000"];
+"Person" [shape="record", fontname="Courier", style="filled", label="{Person|nom\lprenom\lsexe\lpromo\ltitre\ladel\lass\lweb\ltel\lfax\ldatenaiss\ltest\lsalary\l}"];
+"Salaried" -> "Person" [style="filled", arrowhead="empty", color="grey", label="Parent class", decorate="false", fontcolor="grey"];
+"Salaried" -> "Societe" [taillabel="0..n", style="filled", arrowhead="normal", color="#aa0000", label="travaille", headlabel="0..n", arrowtail="none", decorate="false", fontcolor="#aa0000"];
+"Person" -> "Societe" [taillabel="0..n", style="filled", arrowhead="normal", color="#00aa00", label="travaille", headlabel="0..n", arrowtail="none", decorate="false", fontcolor="#00aa00"];
 }
 '''
 
@@ -47,7 +50,7 @@ class DotTC(TestCase):
 
     def test_schema2dot(self):
         """tests dot conversion without attributes information"""
-        wanted_entities = set(('Person', 'Societe'))
+        wanted_entities = set(('Person', 'Salaried', 'Societe'))
         skipped_entities = set(ent for ent in schema.entities()
                                if ent.type not in wanted_entities)
         schema2dot.schema2dot(schema, 'toto.dot', skiptypes=skipped_entities)

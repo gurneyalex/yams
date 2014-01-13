@@ -53,7 +53,7 @@ class SchemaLoaderTC(TestCase):
                               ['Affaire', 'BigInt', 'Boolean', 'Bytes', 'Company',
                                'Date', 'Datetest', 'Datetime', 'Decimal',
                                'Division', 'EPermission', 'Eetype',  'Employee', 'Float', 'Int', 'Interval',
-                               'Note', 'Password', 'Person', 'Societe', 'State', 'String',
+                               'Note', 'Password', 'Person', 'Salaried', 'Societe', 'State', 'String',
                                'Subcompany', 'Subdivision', 'TZDatetime', 'TZTime', 'Time', 'pkginfo'])
         self.assertListEqual(sorted(SCHEMA.relations()),
                               ['ad1', 'ad2', 'ad3', 'adel', 'ass', 'author', 'author_email',
@@ -166,15 +166,15 @@ class SchemaLoaderTC(TestCase):
         self.assertEqual(rschema.symmetric, False)
         self.assertEqual(rschema.description, '')
         self.assertEqual(rschema.final, False)
-        self.assertListEqual(sorted(rschema.subjects()), ['Person', 'Societe'])
+        self.assertListEqual(sorted(rschema.subjects()), ['Person', 'Salaried', 'Societe'])
         self.assertListEqual(sorted(rschema.objects()), ['Note'])
 
         rschema = SCHEMA.rschema('sym_rel')
         self.assertEqual(rschema.symmetric, True)
         self.assertEqual(rschema.description, '')
         self.assertEqual(rschema.final, False)
-        self.assertListEqual(sorted(rschema.subjects()), ['Affaire', 'Person'])
-        self.assertListEqual(sorted(rschema.objects()), ['Affaire', 'Person'])
+        self.assertListEqual(sorted(rschema.subjects()), ['Affaire', 'Person', 'Salaried'])
+        self.assertListEqual(sorted(rschema.objects()), ['Affaire', 'Person', 'Salaried'])
 
         rschema = SCHEMA.rschema('initial_state')
         self.assertEqual(rschema.symmetric, False)

@@ -1,4 +1,4 @@
-# copyright 2004-2010 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
+# copyright 2004-2014 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
 # contact http://www.logilab.fr/ -- mailto:contact@logilab.fr
 #
 # This file is part of yams.
@@ -99,6 +99,23 @@ CREATE TABLE Person(
  salary float
 );
 CREATE UNIQUE INDEX unique_e6c2d219772dbf1715597f7d9a6b3892 ON Person(nom,prenom);
+
+CREATE TABLE Salaried(
+ nom varchar(64) NOT NULL,
+ prenom varchar(64),
+ sexe varchar(1) DEFAULT 'M',
+ promo varchar(6),
+ titre varchar(128),
+ adel varchar(128),
+ ass varchar(128),
+ web varchar(128),
+ tel integer,
+ fax integer,
+ datenaiss date,
+ test boolean,
+ salary float
+);
+CREATE UNIQUE INDEX unique_98da0f9de8588baa8966f0b1a6f850a3 ON Salaried(nom,prenom);
 
 CREATE TABLE Societe(
  nom varchar(64),
