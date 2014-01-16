@@ -548,6 +548,7 @@ class EntitySchema(PermissionMixIn, ERSchema):
                     msg, args = constraint.failed_message(qname, value)
                     errors[qname] = msg
                     msgargs.update(args)
+                    break
         if errors:
             raise ValidationError(entity, errors, msgargs, i18nvalues)
 
