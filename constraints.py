@@ -85,6 +85,10 @@ class SizeConstraint(BaseConstraint):
 
     def __init__(self, max=None, min=None):
         assert (max is not None or min is not None), "No max or min"
+        if min is not None:
+            assert isinstance(min, int), 'min must be an int, not %r' % min
+        if max is not None:
+            assert isinstance(max, int), 'max must be an int, not %r' % max
         self.max = max
         self.min = min
 
@@ -437,7 +441,7 @@ class NOW(object):
         return '%s(%r)' % (self.__class__.__name__, self.offset)
 
     def value(self, entity):
-        now = yams.KEYWORD_MAP['Datetime.NOW']()
+        now = yams.KEYWORD_MAP['Datetime']['NOW']()
         if self.offset:
             now += self.offset
         return now
@@ -452,7 +456,7 @@ class TODAY(object):
         return '%s(%r, %r)' % (self.__class__.__name__, self.offset, self.type)
 
     def value(self, entity):
-        now = yams.KEYWORD_MAP['%s.TODAY' % self.type]()
+        now = yams.KEYWORD_MAP[self.type]['TODAY']()
         if self.offset:
             now += self.offset
         return now

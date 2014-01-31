@@ -36,8 +36,10 @@ class XYRegistry(object):
             warn('[yams 0.30] register_prefix arguments has been switched to '
                  '(prefix, xmlns)', DeprecationWarning, stacklevel=2)
             prefix, xmlns = xmlns, prefix
-        if not overwrite:
-            assert not prefix in self.prefixes, 'prefix already defined'
+        if not overwrite and prefix in self.prefixes \
+                and self.prefixes.get(prefix) != xmlns:
+            raise Exception('prefix %r already defined with different value'
+                            % prefix)
         self.prefixes[prefix] = xmlns
 
     def _norm_yams_key(self, yamssnippet):

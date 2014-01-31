@@ -1,4 +1,4 @@
-# copyright 2004-2012 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
+# copyright 2004-2013 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
 # contact http://www.logilab.fr/ -- mailto:contact@logilab.fr
 #
 # This file is part of yams.
@@ -256,6 +256,7 @@ class SchemaLoaderTC(TestCase):
         rschema = schema.rschema('tel')
         self.assertEqual(rschema.rdef('Person', 'Int').permissions,
                           {'read': (),
+                           'add': ('managers',),
                            'update': ('managers',)})
 
 
@@ -461,17 +462,19 @@ class SchemaLoaderTC2(TestCase):
     def test_schema(self):
         SchemaLoader.main_schema_directory = 'schema2'
         schema = SchemaLoader().load([DATADIR], 'Test')
+        self.assertEqual('data', schema['Anentity'].package)
         rel = schema['rel']
-        self.assertEqual(rel.rdef('Anentity', 'Anentity').composite,
-                          'subject')
-        self.assertEqual(rel.rdef('Anotherentity', 'Anentity').composite,
-                          'subject')
-        self.assertEqual(rel.rdef('Anentity', 'Anentity').cardinality,
-                          '1*')
-        self.assertEqual(rel.rdef('Anotherentity', 'Anentity').cardinality,
-                          '1*')
-        self.assertEqual(rel.symmetric, True)
-        self.assertEqual(rel.inlined, True)
+        self.assertEqual(True, rel.symmetric)
+        self.assertEqual(True, rel.inlined)
+        self.assertEqual('data', rel.package)
+        rdef1 = rel.rdef('Anentity', 'Anentity')
+        self.assertEqual('subject', rdef1.composite)
+        self.assertEqual('1*', rdef1.cardinality)
+        self.assertEqual('data', rdef1.package)
+        rdef2 = rel.rdef('Anotherentity', 'Anentity')
+        self.assertEqual('subject', rdef2.composite)
+        self.assertEqual('1*', rdef2.cardinality)
+        self.assertEqual('data', rdef2.package)
 
     def test_imports(self):
         SchemaLoader.main_schema_directory = 'schema'
