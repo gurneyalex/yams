@@ -1,4 +1,4 @@
-# copyright 2004-2013 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
+# copyright 2004-2014 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
 # contact http://www.logilab.fr/ -- mailto:contact@logilab.fr
 #
 # This file is part of yams.
@@ -48,14 +48,16 @@ class Person(EntityType):
     datenaiss = Date()
     test   = Boolean()
     salary = Float()
-
     travaille = SubjectRelation('Societe',
                                 __permissions__={'read': (),
                                                  'add': (),
                                                  'delete': ('managers',),
                                                  })
+
     evaluee = SubjectRelation('Note')
 
+class Salaried(Person):
+    __specializes_schema__ = True
 
 class Societe(EntityType):
     nom  = String(maxsize=64, fulltextindexed=True)

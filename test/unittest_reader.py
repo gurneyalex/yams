@@ -1,4 +1,4 @@
-# copyright 2004-2013 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
+# copyright 2004-2014 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
 # contact http://www.logilab.fr/ -- mailto:contact@logilab.fr
 #
 # This file is part of yams.
@@ -29,12 +29,9 @@ from yams import BadSchemaDefinition, buildobjs
 from yams.schema import Schema
 from yams.reader import SchemaLoader, build_schema_from_namespace
 from yams.constraints import StaticVocabularyConstraint, SizeConstraint
+from yams.buildobjs import EntityType, RelationDefinition, Int, String
 
-sys.path.insert(0, osp.join(osp.dirname(__file__)))
-
-DATADIR = osp.abspath(osp.join(osp.dirname(__file__), 'data'))
-
-schema = SchemaLoader().load([DATADIR])
+sys.path.insert(0, osp.dirname(__file__))
 
 
 class SchemaLoaderTC(TestCase):
@@ -42,7 +39,7 @@ class SchemaLoaderTC(TestCase):
     # test helper functions ###################################################
 
     def test_get_schema_files(self):
-        files = [osp.basename(f) for f in SchemaLoader().get_schema_files(DATADIR)]
+        files = [osp.basename(f) for f in SchemaLoader().get_schema_files(self.datadir)]
         self.assertEqual(files[0], '__init__.py')
         self.assertEqual(sorted(files),
                           ['Company.py', 'Dates.py', 'State.py', '__init__.py', 'schema.py'])
@@ -50,15 +47,15 @@ class SchemaLoaderTC(TestCase):
     # test load_schema read entity and relation types #######################
 
     def test_load_schema(self):
-        self.assert_(isinstance(schema, Schema))
-        self.assertEqual(schema.name, 'NoName')
-        self.assertListEqual(sorted(schema.entities()),
+        self.assert_(isinstance(SCHEMA, Schema))
+        self.assertEqual(SCHEMA.name, 'NoName')
+        self.assertListEqual(sorted(SCHEMA.entities()),
                               ['Affaire', 'BigInt', 'Boolean', 'Bytes', 'Company',
                                'Date', 'Datetest', 'Datetime', 'Decimal',
                                'Division', 'EPermission', 'Eetype',  'Employee', 'Float', 'Int', 'Interval',
-                               'Note', 'Password', 'Person', 'Societe', 'State', 'String',
+                               'Note', 'Password', 'Person', 'Salaried', 'Societe', 'State', 'String',
                                'Subcompany', 'Subdivision', 'TZDatetime', 'TZTime', 'Time', 'pkginfo'])
-        self.assertListEqual(sorted(schema.relations()),
+        self.assertListEqual(sorted(SCHEMA.relations()),
                               ['ad1', 'ad2', 'ad3', 'adel', 'ass', 'author', 'author_email',
                                'concerne', 'copyright', 'cp',
                                'd1', 'd2', 'date', 'datenaiss', 'debian_handler', 'description', 'division_of', 'dt1', 'dt2',
@@ -76,7 +73,7 @@ class SchemaLoaderTC(TestCase):
                                'ville', 'web', 'works_for'])
 
     def test_eschema(self):
-        eschema = schema.eschema('Societe')
+        eschema = SCHEMA.eschema('Societe')
         self.assertEqual(eschema.description, '')
         self.assertEqual(eschema.final, False)
         self.assertListEqual(sorted(eschema.subject_relations()),
@@ -86,7 +83,7 @@ class SchemaLoaderTC(TestCase):
         self.assertListEqual(sorted(eschema.object_relations()),
                           ['concerne', 'obj_wildcard', 'travaille'])
 
-        eschema = schema.eschema('Eetype')
+        eschema = SCHEMA.eschema('Eetype')
         self.assertEqual(eschema.description, 'define an entity type, used to build the application schema')
         self.assertEqual(eschema.final, False)
         self.assertListEqual(sorted(str(r) for r in eschema.subject_relations()),
@@ -95,7 +92,7 @@ class SchemaLoaderTC(TestCase):
         self.assertListEqual(sorted(str(r) for r in eschema.object_relations()),
                               ['obj_wildcard', 'state_of'])
 
-        eschema = schema.eschema('Boolean')
+        eschema = SCHEMA.eschema('Boolean')
         self.assertEqual(eschema.description, '')
         self.assertEqual(eschema.final, True)
         self.assertListEqual(sorted(eschema.subject_relations()),
@@ -106,35 +103,35 @@ class SchemaLoaderTC(TestCase):
     # test base entity type's subject relation properties #####################
 
     def test_indexed(self):
-        eschema = schema.eschema('Person')
+        eschema = SCHEMA.eschema('Person')
         self.assert_(not eschema.rdef('nom').indexed)
-        eschema = schema.eschema('State')
+        eschema = SCHEMA.eschema('State')
         self.assert_(eschema.rdef('name').indexed)
 
     def test_uid(self):
-        eschema = schema.eschema('State')
+        eschema = SCHEMA.eschema('State')
         self.assert_(eschema.rdef('eid').uid)
         self.assert_(not eschema.rdef('name').uid)
 
     def test_fulltextindexed(self):
-        eschema = schema.eschema('Person')
+        eschema = SCHEMA.eschema('Person')
         self.assertRaises(AttributeError, getattr, eschema.rdef('tel'), 'fulltextindexed') # tel is an INT
         self.assert_(eschema.rdef('nom').fulltextindexed)
         self.assert_(eschema.rdef('prenom').fulltextindexed)
         self.assert_(not eschema.rdef('sexe').fulltextindexed)
         indexable = sorted(eschema.indexable_attributes())
         self.assertEqual(['nom', 'prenom', 'titre'], indexable)
-        self.assertEqual(schema.rschema('works_for').fulltext_container, None)
-        self.assertEqual(schema.rschema('require_permission').fulltext_container,
+        self.assertEqual(SCHEMA.rschema('works_for').fulltext_container, None)
+        self.assertEqual(SCHEMA.rschema('require_permission').fulltext_container,
                           'subject')
-        eschema = schema.eschema('Company')
+        eschema = SCHEMA.eschema('Company')
         indexable = sorted(eschema.indexable_attributes())
         self.assertEqual([], indexable)
         indexable = sorted(eschema.fulltext_relations())
         self.assertEqual([('require_permission', 'subject')], indexable)
         containers = sorted(eschema.fulltext_containers())
         self.assertEqual([], containers)
-        eschema = schema.eschema('EPermission')
+        eschema = SCHEMA.eschema('EPermission')
         indexable = sorted(eschema.indexable_attributes())
         self.assertEqual(['name'], indexable)
         indexable = sorted(eschema.fulltext_relations())
@@ -143,50 +140,50 @@ class SchemaLoaderTC(TestCase):
         self.assertEqual([('require_permission', 'subject')], containers)
 
     def test_internationalizable(self):
-        eschema = schema.eschema('Eetype')
+        eschema = SCHEMA.eschema('Eetype')
         self.assert_(eschema.rdef('name').internationalizable)
-        eschema = schema.eschema('State')
+        eschema = SCHEMA.eschema('State')
         self.assert_(eschema.rdef('name').internationalizable)
-        eschema = schema.eschema('Societe')
+        eschema = SCHEMA.eschema('Societe')
         self.assert_(not eschema.rdef('ad1').internationalizable)
 
     # test advanced entity type's subject relation properties #################
 
     def test_vocabulary(self):
-        eschema = schema.eschema('pkginfo')
+        eschema = SCHEMA.eschema('pkginfo')
         self.assertEqual(eschema.vocabulary('license'), ('GPL', 'ZPL'))
         self.assertEqual(eschema.vocabulary('debian_handler'), ('machin', 'bidule'))
 
     def test_default(self):
-        eschema = schema.eschema('pkginfo')
+        eschema = SCHEMA.eschema('pkginfo')
         self.assertEqual(eschema.default('version'), '0.1')
         self.assertEqual(eschema.default('license'), None)
 
     # test relation type properties ###########################################
 
     def test_rschema(self):
-        rschema = schema.rschema('evaluee')
+        rschema = SCHEMA.rschema('evaluee')
         self.assertEqual(rschema.symmetric, False)
         self.assertEqual(rschema.description, '')
         self.assertEqual(rschema.final, False)
-        self.assertListEqual(sorted(rschema.subjects()), ['Person', 'Societe'])
+        self.assertListEqual(sorted(rschema.subjects()), ['Person', 'Salaried', 'Societe'])
         self.assertListEqual(sorted(rschema.objects()), ['Note'])
 
-        rschema = schema.rschema('sym_rel')
+        rschema = SCHEMA.rschema('sym_rel')
         self.assertEqual(rschema.symmetric, True)
         self.assertEqual(rschema.description, '')
         self.assertEqual(rschema.final, False)
-        self.assertListEqual(sorted(rschema.subjects()), ['Affaire', 'Person'])
-        self.assertListEqual(sorted(rschema.objects()), ['Affaire', 'Person'])
+        self.assertListEqual(sorted(rschema.subjects()), ['Affaire', 'Person', 'Salaried'])
+        self.assertListEqual(sorted(rschema.objects()), ['Affaire', 'Person', 'Salaried'])
 
-        rschema = schema.rschema('initial_state')
+        rschema = SCHEMA.rschema('initial_state')
         self.assertEqual(rschema.symmetric, False)
         self.assertEqual(rschema.description, 'indicate which state should be used by default when an entity using states is created')
         self.assertEqual(rschema.final, False)
         self.assertListEqual(sorted(rschema.subjects()), ['Eetype'])
         self.assertListEqual(sorted(rschema.objects()), ['State'])
 
-        rschema = schema.rschema('name')
+        rschema = SCHEMA.rschema('name')
         self.assertEqual(rschema.symmetric, False)
         self.assertEqual(rschema.description, '')
         self.assertEqual(rschema.final, True)
@@ -194,42 +191,42 @@ class SchemaLoaderTC(TestCase):
         self.assertListEqual(sorted(rschema.objects()), ['String'])
 
     def test_cardinality(self):
-        rschema = schema.rschema('evaluee')
+        rschema = SCHEMA.rschema('evaluee')
         self.assertEqual(rschema.rdef('Person', 'Note').cardinality, '**')
-        rschema = schema.rschema('inline_rel')
+        rschema = SCHEMA.rschema('inline_rel')
         self.assertEqual(rschema.rdef('Affaire', 'Person').cardinality, '?*')
-        rschema = schema.rschema('initial_state')
+        rschema = SCHEMA.rschema('initial_state')
         self.assertEqual(rschema.rdef('Eetype', 'State').cardinality, '?*')
-        rschema = schema.rschema('state_of')
+        rschema = SCHEMA.rschema('state_of')
         self.assertEqual(rschema.rdef('State', 'Eetype').cardinality, '+*')
-        rschema = schema.rschema('name')
+        rschema = SCHEMA.rschema('name')
         self.assertEqual(rschema.rdef('State', 'String').cardinality, '11')
-        rschema = schema.rschema('description')
+        rschema = SCHEMA.rschema('description')
         self.assertEqual(rschema.rdef('State', 'String').cardinality, '?1')
 
     def test_constraints(self):
-        eschema = schema.eschema('Person')
+        eschema = SCHEMA.eschema('Person')
         self.assertEqual(len(eschema.rdef('nom').constraints), 1)
         self.assertEqual(len(eschema.rdef('promo').constraints), 2)
         self.assertEqual(len(eschema.rdef('tel').constraints), 0)
-        eschema = schema.eschema('State')
+        eschema = SCHEMA.eschema('State')
         self.assertEqual(len(eschema.rdef('name').constraints), 1)
         self.assertEqual(len(eschema.rdef('description').constraints), 0)
-        eschema = schema.eschema('Eetype')
+        eschema = SCHEMA.eschema('Eetype')
         self.assertEqual(len(eschema.rdef('name').constraints), 2)
 
     def test_inlined(self):
-        rschema = schema.rschema('evaluee')
+        rschema = SCHEMA.rschema('evaluee')
         self.assertEqual(rschema.inlined, False)
-        rschema = schema.rschema('state_of')
+        rschema = SCHEMA.rschema('state_of')
         self.assertEqual(rschema.inlined, False)
-        rschema = schema.rschema('inline_rel')
+        rschema = SCHEMA.rschema('inline_rel')
         self.assertEqual(rschema.inlined, True)
-        rschema = schema.rschema('initial_state')
+        rschema = SCHEMA.rschema('initial_state')
         self.assertEqual(rschema.inlined, True)
 
     def test_relation_permissions(self):
-        rschema = schema.rschema('evaluee')
+        rschema = SCHEMA.rschema('evaluee')
         self.assertEqual(rschema.rdef('Person', 'Note').permissions,
                           {'read': ('managers',),
                            'delete': ('managers',),
@@ -238,22 +235,22 @@ class SchemaLoaderTC(TestCase):
                           {'read': ('managers',),
                            'delete': ('managers',),
                            'add': ('managers',)})
-        rschema = schema.rschema('concerne')
+        rschema = SCHEMA.rschema('concerne')
         self.assertEqual(rschema.rdef('Person', 'Affaire').permissions,
                           {'read': ('managers',),
                            'delete': ('managers',),
                            'add': ('managers',)})
         self.assertEqual(rschema.rdef('Affaire', 'Societe').permissions,
                           buildobjs.DEFAULT_RELPERMS)
-        rschema = schema.rschema('travaille')
+        rschema = SCHEMA.rschema('travaille')
         self.assertEqual(rschema.rdef('Person', 'Societe').permissions,
                           {'read': (), 'add': (), 'delete': ('managers',)})
 
     def test_attributes_permissions(self):
-        rschema = schema.rschema('name')
+        rschema = SCHEMA.rschema('name')
         self.assertEqual(rschema.rdef('Company', 'String').permissions,
                           buildobjs.DEFAULT_ATTRPERMS)
-        rschema = schema.rschema('tel')
+        rschema = SCHEMA.rschema('tel')
         self.assertEqual(rschema.rdef('Person', 'Int').permissions,
                           {'read': (),
                            'add': ('managers',),
@@ -261,21 +258,21 @@ class SchemaLoaderTC(TestCase):
 
 
     def test_entity_permissions(self):
-        eschema = schema.eschema('State')
+        eschema = SCHEMA.eschema('State')
         self.assertEqual(eschema.permissions,
                           {'read':   ('managers', 'users', 'guests',),
                            'add':    ('managers', 'users',),
                            'delete': ('managers', 'owners',),
                            'update': ('managers', 'owners',)})
 
-        eschema = schema.eschema('Eetype')
+        eschema = SCHEMA.eschema('Eetype')
         self.assertEqual(eschema.permissions,
                           {'read':   ('managers', 'users', 'guests',),
                            'add':    ('managers',),
                            'delete': ('managers',),
                            'update': ('managers', 'owners',)})
 
-        eschema = schema.eschema('Person')
+        eschema = SCHEMA.eschema('Person')
         self.assertEqual(eschema.permissions,
                           {'read':   ('managers', 'users', 'guests',),
                            'add':    ('managers', 'users',),
@@ -291,31 +288,31 @@ class SchemaLoaderTC(TestCase):
 ##         self.assertListEqual(sorted(rschema.objects()), ['Company', 'Division'])
 ##
 
+SCHEMA = SchemaLoader().load([SchemaLoaderTC.datadir])
 
-from yams import buildobjs as B
 
-class BasePerson(B.EntityType):
-    firstname = B.String(vocabulary=('logilab', 'caesium'), maxsize=10)
-    lastname = B.String(constraints=[StaticVocabularyConstraint(['logilab', 'caesium'])])
+class BasePerson(buildobjs.EntityType):
+    firstname = buildobjs.String(vocabulary=('logilab', 'caesium'), maxsize=10)
+    lastname = buildobjs.String(constraints=[StaticVocabularyConstraint(['logilab', 'caesium'])])
 
 class Person(BasePerson):
-    email = B.String()
+    email = buildobjs.String()
 
 class Employee(Person):
-    company = B.String(vocabulary=('logilab', 'caesium'))
+    company = buildobjs.String(vocabulary=('logilab', 'caesium'))
 
 
 class Student(Person):
     __specializes_schema__ = True
-    college = B.String()
+    college = buildobjs.String()
 
 class X(Student):
     pass
 
-class Foo(B.EntityType):
-    i = B.Int(required=True, metadata={'name': B.String()})
-    f = B.Float()
-    d = B.Datetime()
+class Foo(buildobjs.EntityType):
+    i = buildobjs.Int(required=True, metadata={'name': buildobjs.String()})
+    f = buildobjs.Float()
+    d = buildobjs.Datetime()
 
 
 
@@ -362,7 +359,7 @@ class PySchemaTC(TestCase):
     def test_date_defaults(self):
         _today = date.today()
         _now = datetime.now()
-        datetest = schema.eschema('Datetest')
+        datetest = SCHEMA.eschema('Datetest')
         dt1 = datetest.default('dt1')
         dt2 = datetest.default('dt2')
         d1 = datetest.default('d1')
@@ -379,8 +376,8 @@ class PySchemaTC(TestCase):
         # dates
         self.assertEqual(d1, _today)
         self.assertIsInstance(d1, date)
-        self.assertEqual(d2, datetime(2007, 12, 11, 0, 0))
-        self.assertIsInstance(d2, datetime)
+        self.assertEqual(d2, date(2007, 12, 11))
+        self.assertIsInstance(d2, date)
         # times
         self.assertEqual(t1, time(8, 40))
         self.assertIsInstance(t1, time)
@@ -396,7 +393,7 @@ class SchemaLoaderTC2(TestCase):
     def test_broken_schema1(self):
         SchemaLoader.main_schema_directory = 'brokenschema1'
         with self.assertRaises(BadSchemaDefinition) as cm:
-            SchemaLoader().load([DATADIR], 'Test')
+            SchemaLoader().load([self.datadir], 'Test')
         try:
             self.assertEqual(str(cm.exception), "conflicting values False/True for property inlined of relation 'rel'")
         except AssertionError:
@@ -406,7 +403,7 @@ class SchemaLoaderTC2(TestCase):
     def test_broken_schema2(self):
         SchemaLoader.main_schema_directory = 'brokenschema2'
         with self.assertRaises(BadSchemaDefinition) as cm:
-            SchemaLoader().load([DATADIR], 'Test')
+            SchemaLoader().load([self.datadir], 'Test')
         try:
             self.assertEqual(str(cm.exception), "conflicting values True/False for property inlined of relation 'rel'")
         except AssertionError:
@@ -415,7 +412,7 @@ class SchemaLoaderTC2(TestCase):
     def test_broken_schema3(self):
         SchemaLoader.main_schema_directory = 'brokenschema3'
         with self.assertRaises(BadSchemaDefinition) as cm:
-            SchemaLoader().load([DATADIR], 'Test')
+            SchemaLoader().load([self.datadir], 'Test')
         try:
             self.assertEqual(str(cm.exception), "conflicting values True/False for property inlined of relation 'rel'")
         except AssertionError:
@@ -461,7 +458,7 @@ class SchemaLoaderTC2(TestCase):
 
     def test_schema(self):
         SchemaLoader.main_schema_directory = 'schema2'
-        schema = SchemaLoader().load([DATADIR], 'Test')
+        schema = SchemaLoader().load([self.datadir], 'Test')
         self.assertEqual('data', schema['Anentity'].package)
         rel = schema['rel']
         self.assertEqual(True, rel.symmetric)
@@ -478,11 +475,12 @@ class SchemaLoaderTC2(TestCase):
 
     def test_imports(self):
         SchemaLoader.main_schema_directory = 'schema'
-        schema = SchemaLoader().load([DATADIR, DATADIR+'2'], 'Test')
-        self.assertEqual(schema['Affaire'].permissions, {'read': (),
-                                                          'add': (),
-                                                          'update': (),
-                                                          'delete': ()})
+        schema = SchemaLoader().load([self.datadir, self.datadir+'2'], 'Test')
+        self.assertEqual({'read': (),
+                          'add': (),
+                          'update': (),
+                          'delete': ()},
+                         schema['Affaire'].permissions)
         self.assertEqual([str(r) for r,at in schema['MyNote'].attribute_definitions()],
                           ['date', 'type', 'para', 'text'])
 
@@ -517,7 +515,7 @@ class SchemaLoaderTC2(TestCase):
                               'new_sub']
 
         SchemaLoader.main_schema_directory = 'schema_unfinalized_manipulation'
-        schema = SchemaLoader().load([DATADIR], 'Test')
+        schema = SchemaLoader().load([self.datadir], 'Test')
         self.assertIn('MyEntity', schema.entities())
         my_entity = schema['MyEntity']
         attributes_def = my_entity.attribute_definitions()
@@ -529,14 +527,13 @@ class SchemaLoaderTC2(TestCase):
 
     def test_post_build_callback(self):
         SchemaLoader.main_schema_directory = 'post_build_callback'
-        schema = SchemaLoader().load([DATADIR], 'Test')
+        schema = SchemaLoader().load([self.datadir], 'Test')
         self.assertIn('Toto', schema.entities())
+
 
 class BuildSchemaTC(TestCase):
 
     def test_build_schema(self):
-        from yams.buildobjs import EntityType, RelationDefinition, Int, String
-
         class Question(EntityType):
             number = Int()
             text = String()
