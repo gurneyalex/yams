@@ -1,4 +1,4 @@
-# copyright 2004-2011 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
+# copyright 2004-2013 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
 # contact http://www.logilab.fr/ -- mailto:contact@logilab.fr
 #
 # This file is part of yams.
@@ -18,6 +18,8 @@
 """write a schema as sql"""
 
 __docformat__ = "restructuredtext en"
+
+from hashlib import md5
 
 from yams.constraints import SizeConstraint, UniqueConstraint
 
@@ -74,6 +76,14 @@ def eschema_attrs(eschema, skip_relations):
               if not rschema.final and rschema.inlined]
     return attrs
 
+def unique_index_name(eschema, columns):
+    return u'unique_%s' % md5(eschema.type +
+                              ',' +
+                              ','.join(sorted(columns))).hexdigest()
+
+def iter_unique_index_names(eschema):
+    for columns in eschema._unique_together or ():
+        yield columns, unique_index_name(eschema, columns)
 
 def dropeschema2sql(dbhelper, eschema, skip_relations=(), prefix=''):
     """return sql to drop an entity type's table"""
@@ -83,9 +93,9 @@ def dropeschema2sql(dbhelper, eschema, skip_relations=(), prefix=''):
     statements = []
     tablename = prefix + eschema.type
     if eschema._unique_together is not None:
-        for unique_together in eschema._unique_together:
-            cols  = ['%s%s' % (prefix, col) for col in unique_together]
-            sqls = dbhelper.sqls_drop_multicol_unique_index(tablename, cols)
+        for columns, index_name in iter_unique_index_names(eschema):
+            cols  = ['%s%s' % (prefix, col) for col in columns]
+            sqls = dbhelper.sqls_drop_multicol_unique_index(tablename, cols, index_name)
             statements += sqls
     statements += ['DROP TABLE %s;' % (tablename)]
     return statements
@@ -112,14 +122,14 @@ def eschema2sql(dbhelper, eschema, skip_relations=(), prefix=''):
         else:
             w(' %s%s %s,' % (prefix, rschema.type, sqltype))
     w(');')
-    # create index
+    # create indexes
     for i in xrange(len(attrs)):
         rschema, attrschema = attrs[i]
         if attrschema is None or eschema.rdef(rschema).indexed:
             w(dbhelper.sql_create_index(table, prefix + rschema.type))
-    for unique_together in eschema._unique_together:
-        cols  = ['%s%s' % (prefix, col) for col in unique_together]
-        sqls = dbhelper.sqls_create_multicol_unique_index(table, cols)
+    for columns, index_name in iter_unique_index_names(eschema):
+        cols  = ['%s%s' % (prefix, col) for col in columns]
+        sqls = dbhelper.sqls_create_multicol_unique_index(table, cols, index_name)
         for sql in sqls:
             w(sql)
     w('')

@@ -16,9 +16,6 @@
 # You should have received a copy of the GNU Lesser General Public License along
 # with yams. If not, see <http://www.gnu.org/licenses/>.
 """unit tests for module yams.diff"""
-
-from __future__ import with_statement
-
 import os.path as osp
 
 from logilab.common.testlib import TestCase, unittest_main
@@ -27,11 +24,6 @@ from yams.reader import build_schema_from_namespace
 from yams.buildobjs import String, Int, Float, EntityType, SubjectRelation
 from yams.diff import properties_from, schema_diff
 
-DATADIR = osp.abspath(osp.join(osp.dirname(__file__), 'data'))
-
-def read_file(filename):
-    with open(filename) as f:
-        return f.read()
 
 class PersonBase(EntityType):
     nom    = String()
@@ -101,35 +93,49 @@ class PropertiesFromTC(TestCase):
     def test_properties_from_final_attributes_1(self):
         props_ref = {'required': True, 'default': 'toto',
                      'description': 'something'}
-        self.assertEqual(properties_from(self.build_rdef(props_ref)),
-                         self.build_props_dict(props_ref))
+        self.assertEqual({'default': 'toto',
+                          'required': True,
+                          '__permissions__': " {\n\t\t\t'read': ('managers','users','guests'),\n\t\t\t'add': ('managers','users'),\n\t\t\t'update': ('managers','owners')\n\t\t}",
+                          'description': "'something'",
+                          'order': 1},
+                         properties_from(self.build_rdef(props_ref)),
+                         )
 
     def test_properties_from_final_attributes_2(self):
         props_ref = {}
-        self.assertEqual(properties_from(self.build_rdef(props_ref)),
-                         self.build_props_dict(props_ref))
+        self.assertEqual({'__permissions__': " {\n\t\t\t'read': ('managers','users','guests'),\n\t\t\t'add': ('managers','users'),\n\t\t\t'update': ('managers','owners')\n\t\t}",
+                          'order': 1},
+                         properties_from(self.build_rdef(props_ref)))
 
     def test_properties_from_final_attributes_3(self):
         props_ref = {'default': None, 'required': False}
-        self.assertEqual(properties_from(self.build_rdef(props_ref)),
-                         self.build_props_dict(props_ref))
+        self.assertEqual({'__permissions__': " {\n\t\t\t'read': ('managers','users','guests'),\n\t\t\t'add': ('managers','users'),\n\t\t\t'update': ('managers','owners')\n\t\t}",
+                          'order': 1},
+                         properties_from(self.build_rdef(props_ref)))
 
     def test_constraint_properties_1(self):
         props_ref = {'maxsize': 150, 'required': False}
-        self.assertEqual(properties_from(self.build_rdef(props_ref)),
-                         self.build_props_dict(props_ref))
+        self.assertEqual({'maxsize': 150,
+                          '__permissions__': " {\n\t\t\t'read': ('managers','users','guests'),\n\t\t\t'add': ('managers','users'),\n\t\t\t'update': ('managers','owners')\n\t\t}",
+                          'order': 1},
+                         properties_from(self.build_rdef(props_ref)))
 
     def test_constraint_properties_2(self):
         props_ref = {'unique': True, 'required': False}
-        self.assertEqual(properties_from(self.build_rdef(props_ref)),
-                         self.build_props_dict(props_ref))
+        self.assertEqual({'__permissions__': " {\n\t\t\t'read': ('managers','users','guests'),\n\t\t\t'add': ('managers','users'),\n\t\t\t'update': ('managers','owners')\n\t\t}",
+                          'unique': True,
+                          'order': 1},
+                         properties_from(self.build_rdef(props_ref)))
 
     def test_constraint_properties_3(self):
         props_ref = {'vocabulary': ('aaa', 'bbbb', 'ccccc'), 'required': False, 'maxsize': 20}
         rdef = self.build_rdef(props_ref)
         props_ref['maxsize'] = 5
-        self.assertEqual(properties_from(rdef),
-                         self.build_props_dict(props_ref))
+        self.assertEqual({'maxsize': 5,
+                          '__permissions__': " {\n\t\t\t'read': ('managers','users','guests'),\n\t\t\t'add': ('managers','users'),\n\t\t\t'update': ('managers','owners')\n\t\t}",
+                          'order': 1,
+                          'vocabulary': [u'aaa', u'bbbb', u'ccccc']},
+                         properties_from(rdef))
 
 
 class SchemaDiff(TestCase):
@@ -138,10 +144,10 @@ class SchemaDiff(TestCase):
         schema1 = create_schema_1()
         schema2 = create_schema_2()
         output1, output2 = schema_diff(schema1, schema2)
-        self.assertMultiLineEqual(read_file(output1),
-                                  read_file(self.datapath('schema1.txt')))
-        self.assertMultiLineEqual(read_file(output2),
-                                  read_file(self.datapath('schema2.txt')))
+        self.assertMultiLineEqual(open(output1).read(),
+                                  open(self.datapath('schema1.txt')).read())
+        self.assertMultiLineEqual(open(output2).read(),
+                                  open(self.datapath('schema2.txt')).read())
 
 
 if __name__ == '__main__':

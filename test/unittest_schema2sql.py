@@ -98,7 +98,7 @@ CREATE TABLE Person(
  test boolean,
  salary float
 );
-CREATE UNIQUE INDEX unique_person_nom_prenom_idx ON Person(nom,prenom);
+CREATE UNIQUE INDEX unique_e6c2d219772dbf1715597f7d9a6b3892 ON Person(nom,prenom);
 
 CREATE TABLE Societe(
  nom varchar(64),

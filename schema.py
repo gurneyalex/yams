@@ -28,11 +28,10 @@ from itertools import chain
 from logilab.common import attrdict
 from logilab.common.decorators import cached, clear_cache
 from logilab.common.interface import implements
-from logilab.common.deprecation import deprecated
 
 import yams
 from yams import (BASE_TYPES, MARKER, ValidationError, BadSchemaDefinition,
-                  KNOWN_METAATTRIBUTES)
+                  KNOWN_METAATTRIBUTES, convert_default_value)
 from yams.interfaces import (ISchema, IRelationSchema, IEntitySchema,
                              IVocabularyConstraint)
 from yams.constraints import BASE_CHECKERS, BASE_CONVERTERS, UniqueConstraint
@@ -47,18 +46,13 @@ def check_permission_definitions(schema):
     """check permissions are correctly defined"""
     # already initialized, check everything is fine
     for action, groups in schema.permissions.items():
-        # bw compat
-        if action in ('add', 'delete') and isinstance(schema, RelationDefinitionSchema) and schema.final:
-            warnings.warn('[yams 0.28] %s: "delete"/"add" permissions on attribute '
-                          'have been replaced by "update"' % schema,
-                          DeprecationWarning)
-            schema.permissions['update'] = schema.permissions['add']
-        else:
-            assert action in schema.ACTIONS, \
-                   'unknown action %s for %s' % (action, schema)
+        assert action in schema.ACTIONS, \
+            'unknown action %s for %s' % (action, schema)
         assert isinstance(groups, tuple), \
                ('permission for action %s of %s isn\'t a tuple as '
                 'expected' % (action, schema))
+    if schema.final:
+        schema.advertise_new_add_permission()
     for action in schema.ACTIONS:
         assert action in schema.permissions, \
                'missing expected permissions for action %s for %s' % (action, schema)
@@ -99,7 +93,6 @@ def _format_properties(props):
     res = [('%s=%s' % item) for item in props.items() if item[1]]
     return ','.join(res)
 
-
 class ERSchema(object):
     """Base class shared by entity and relation schema."""
 
@@ -117,6 +110,7 @@ class ERSchema(object):
         self.schema = schema
         self.type = erdef.name
         self.description = erdef.description or ''
+        self.package = erdef.package
 
     def __cmp__(self, other):
         return cmp(self.type, getattr(other, 'type', other))
@@ -195,7 +189,7 @@ class EntitySchema(PermissionMixIn, ERSchema):
         for unique_together in self._unique_together:
             for name in unique_together:
                 try:
-                    rschema = self.rdef(name)
+                    rschema = self.rdef(name, takefirst=True)
                 except KeyError:
                     errors.append('no such attribute or relation %s' % name)
                 else:
@@ -212,14 +206,12 @@ class EntitySchema(PermissionMixIn, ERSchema):
                                  [rs.type for rs in self.object_relations()])
 
     def _rehash(self):
-        try:
-            self.subjrels = rehash(self.subjrels)
-            self.objrels = rehash(self.objrels)
-        except AttributeError:
-            # yams < 0.25 pyro compat
-            self.subjrels = rehash(self._subj_relations)
-            self.objrels = rehash(self._obj_relations)
-            self.final = self.is_final()
+        self.subjrels = rehash(self.subjrels)
+        self.objrels = rehash(self.objrels)
+
+    def advertise_new_add_permission(self):
+        pass
+
 
     # schema building methods #################################################
 
@@ -289,19 +281,25 @@ class EntitySchema(PermissionMixIn, ERSchema):
         """
         return self.objrels.values()
 
-    def rdef(self, rtype, role='subject', targettype=None):
+    def rdef(self, rtype, role='subject', targettype=None, takefirst=False):
         """return a relation definition schema for a relation of this entity type
 
         Notice that when targettype is not specified and the relation may lead
         to different entity types (ambiguous relation), one of them is picked
-        randomly.
+        randomly. If also takefirst is False, a warning will be emitted.
         """
         rschema = self.schema.rschema(rtype)
         if targettype is None:
             if role == 'subject':
-                targettype = rschema.objects(self)[0]
+                types = rschema.objects(self)
             else:
-                targettype = rschema.subjects(self)[0]
+                types = rschema.subjects(self)
+            if len(types) != 1 and not takefirst:
+                warnings.warn('[yams 0.38] no targettype specified and there are several '
+                              'relation definitions for rtype %s: %s. Yet you get the first '
+                              'rdef.' % (rtype, [eschema.type for eschema in types]),
+                              Warning, stacklevel=2)
+            targettype = types[0]
         return rschema.role_rdef(self, targettype, role)
 
     @cached
@@ -376,34 +374,14 @@ class EntitySchema(PermissionMixIn, ERSchema):
 
     def default(self, rtype):
         """return the default value of a subject relation"""
-        rdef = self.rdef(rtype)
+        rdef = self.rdef(rtype, takefirst=True)
         default =  rdef.default
         if callable(default):
             default = default()
         if default is MARKER:
             default = None
         elif default is not None:
-            # rdef.object is the attribute type
-            if rdef.object == 'Boolean':
-                if not isinstance(default, bool):
-                    default = default == 'True' # XXX duh?
-            elif rdef.object in ('Int', 'BigInt'):
-                if not isinstance(default, (int, long)):
-                    default = int(default)
-            elif rdef.object == 'Float':
-                if not isinstance(default, float):
-                    default = float(default)
-            elif rdef.object == 'Decimal':
-                if not isinstance(default, Decimal):
-                    default = Decimal(default)
-            elif rdef.object in ('Date', 'Datetime', 'Time'):
-                key = '%s.%s' % (rdef.object, default.upper())
-                try:
-                    default = yams.KEYWORD_MAP[key]()
-                except KeyError:
-                    default = yams.DATE_FACTORY_MAP[rdef.object](default)
-            else:
-                default = unicode(default)
+            return convert_default_value(rdef, default)
         return default
 
     def has_unique_values(self, rtype):
@@ -495,7 +473,7 @@ class EntitySchema(PermissionMixIn, ERSchema):
         for rschema in self.object_relations():
             if (rschema, 'object') in skiprels:
                 continue
-            rdef = self.rdef(rschema, 'object')
+            rdef = self.rdef(rschema, 'object', takefirst=True)
             if rdef.composite == 'subject':
                 if not strict or rdef.cardinality[1] in '1+':
                     return True
@@ -504,7 +482,7 @@ class EntitySchema(PermissionMixIn, ERSchema):
                 continue
             if rschema.final:
                 continue
-            rdef = self.rdef(rschema, 'subject')
+            rdef = self.rdef(rschema, 'subject', takefirst=True)
             if rdef.composite == 'object':
                 if not strict or rdef.cardinality[0] in '1+':
                     return True
@@ -592,89 +570,6 @@ class EntitySchema(PermissionMixIn, ERSchema):
             raise AssertionError('field %s of entity %s has no vocabulary' %
                                  (rtype, self))
         return cstr.vocabulary()
-
-    # deprecated stuff #########################################################
-    rproperties = deprecated()(rdef)
-
-    @deprecated('[0.26]')
-    def rproperty(self, rtype, prop):
-        """convenience method to access a property of a final subject relation"""
-        rdef = self.rdef(rtype, 'subject', self.destination(rtype))
-        return getattr(rdef, prop)
-
-    @deprecated('[0.26]')
-    def set_rproperty(self, rtype, prop, value):
-        """convenience method to set the value of a property of a subject relation"""
-        rdef = self.rdef(rtype, 'subject', self.destination(rtype))
-        setattr(rdef, prop, value)
-
-    @deprecated('[0.26] use .rdef(rtype, role).role_cardinality(role)')
-    def cardinality(self, rtype, role):
-        """return cardinality (a single letter in 1?*+) for the given relation"""
-        return self.rdef(rtype, role).role_cardinality(role)
-
-    @deprecated('[0.26] use .rdef(rtype).<prop>')
-    def subjrproperty(self, rtype, prop):
-        """convenience method to access a property of a subject relation"""
-        return getattr(self.rdef(rtype), prop)
-
-    @deprecated('[0.26] use .rdef(rtype, "object").<prop>')
-    def objrproperty(self, rtype, prop):
-        """convenience method to access a property of an object relation"""
-        return getattr(self.rdef(rtype, 'object'), prop)
-
-    @deprecated('[0.26] use .rdef(rtype, [role, [ttype]]).<prop>')
-    def role_rproperty(self, role, rtype, prop, ttype=None):
-        """convenience method to access a property of a relation according to
-        this schema role
-        """
-        return getattr(self.rdef(rtype, role, ttype), prop)
-
-    @deprecated('[0.26] use rdef(rtype).constraints')
-    def constraints(self, rtype):
-        """return constraint of type <cstrtype> associated to the <rtype>
-        subjet relation
-
-        returns None if no constraint of type <cstrtype> is found
-        """
-        return self.rdef(rtype).constraints
-
-    @deprecated('[0.25] use .final attribute')
-    def is_final(self):
-        """return true if the entity is a final entity (and so cannot be used as
-        subject of a relation)
-        """
-        return self.type in BASE_TYPES
-
-    @deprecated('[0.25] use rtype in .subjrels')
-    def has_subject_relation(self, rtype):
-        """if this entity type as a `rtype` subject relation, return its schema
-        else return None
-        """
-        return self.subjrels.get(rtype)
-
-    @deprecated('[0.25] use .subjrels[rtype]')
-    def subject_relation(self, rtype):
-        """return the relation schema for the rtype subject relation
-
-        Raise `KeyError` if rtype is not a subject relation of this entity type
-        """
-        return self.subjrels[rtype]
-
-    @deprecated('[0.25] use rtype in .objrels')
-    def has_object_relation(self, rtype):
-        """if this entity type as a `rtype` object relation, return its schema
-        else return None
-        """
-        return self.objrels.get(rtype)
-
-    @deprecated('[0.25] use .objrels[rtype]')
-    def object_relation(self, rtype):
-        """return the relation schema for the rtype object relation
-
-        Raise `KeyError` if rtype is not an object relation of this entity type
-        """
-        return self.objrels[rtype]
 
 
 
@@ -817,21 +712,13 @@ class RelationSchema(ERSchema):
 
     # XXX move to RelationDefinitionSchema
 
-    @deprecated('[0.26] use RelationDefinitionSchema.rproperty_defs(desttype)')
-    def rproperty_defs(self, desttype):
-        """return a dictionary mapping property name to its definition for each
-        allowable properties when the relation has `desttype` as target entity's
-        type
-        """
-        desttype = self.schema.eschema(desttype)
-        return RelationDefinitionSchema.rproperty_defs(desttype)
-
     def init_rproperties(self, subject, object, buildrdef):
         key = subject, object
         if key in self.rdefs:
             msg = '(%s, %s) already defined for %s' % (subject, object, self)
             raise BadSchemaDefinition(msg)
-        self.rdefs[key] = rdef = RelationDefinitionSchema(subject, self, object)
+        self.rdefs[key] = rdef = RelationDefinitionSchema(subject, self, object,
+                                                          buildrdef.package)
         for prop, default in rdef.rproperties().iteritems():
             rdefval = getattr(buildrdef, prop, MARKER)
             if rdefval is MARKER:
@@ -906,37 +793,6 @@ class RelationSchema(ERSchema):
         for rdef in self.rdefs.itervalues():
             rdef.check_permission_definitions()
 
-    # deprecated stuff #########################################################
-
-    rproperties = deprecated()(rdef)
-
-    @deprecated('[0.25] use .final attribute')
-    def is_final(self):
-        """return true if this relation has final object entity's types
-
-        (we enforce that a relation can't point to both final and non final
-        entity's type)
-        """
-        return self.final
-
-    @deprecated('[0.26] use self.rdefs.iterkeys()')
-    def iter_rdefs(self):
-        """return an iterator on (subject, object) of this relation"""
-        return self.rdefs.iterkeys()
-
-    @deprecated('[0.26] use (subj, obj) in self.rdefs')
-    def has_rdef(self, subj, obj):
-        return (subj, obj) in self.rdefs
-
-    @deprecated('[0.26] use .rdef(subject, object).<property>')
-    def rproperty(self, subject, object, property):
-        """return the property for a relation definition"""
-        return getattr(self.rdef(subject, object), property)
-
-    @deprecated('[0.26] use .rdef(subject, object).<property> = value')
-    def set_rproperty(self, subject, object, pname, value):
-        """set value for a subject relation specific property"""
-        setattr(self.rdefs[(subject, object)], pname, value)
 
 
 class RelationDefinitionSchema(PermissionMixIn):
@@ -967,17 +823,18 @@ class RelationDefinitionSchema(PermissionMixIn):
                          cls._FINAL_RPROPERTIES,
                          *cls.BASE_TYPE_PROPERTIES.itervalues()))
 
-    def __init__(self, subject, rtype, object, values=None):
+    def __init__(self, subject, rtype, object, package, values=None):
         if values is not None:
             self.update(values)
         self.subject = subject
         self.rtype = rtype
         self.object = object
+        self.package = package
 
     @property
     def ACTIONS(self):
         if self.rtype.final:
-            return ('read', 'update')
+            return ('read', 'add', 'update')
         else:
             return ('read', 'add', 'delete')
 
@@ -995,16 +852,28 @@ class RelationDefinitionSchema(PermissionMixIn):
     def __repr__(self):
         return '<%s at @%#x>' % (self, id(self))
 
-    def __getitem__(self, key):
-        warnings.warn('[yams 0.27] use attribute notation',
-                      DeprecationWarning, stacklevel=2)
-        try:
-            return getattr(self, key)
-        except AttributeError:
-            raise KeyError
-
     def as_triple(self):
         return (self.subject, self.rtype, self.object)
+
+    def advertise_new_add_permission(self):
+        """handle backward compatibility with pre-add permissions
+
+        * if the update permission was () [empty tuple], use the
+          default attribute permissions for `add`
+
+        * else copy the `update` rule for `add`
+        """
+        if not 'add' in self.permissions:
+            from yams.buildobjs import DEFAULT_ATTRPERMS
+            if self.permissions['update'] == ():
+                defaultaddperms = DEFAULT_ATTRPERMS['add']
+            else:
+                defaultaddperms = self.permissions['update']
+            self.permissions['add'] = defaultaddperms
+            warnings.warn('[yams 0.39] %s: new "add" permissions on attribute '
+                          'set to %s by default, but you must make it explicit' %
+                          (self, defaultaddperms), DeprecationWarning)
+
 
     @classmethod
     def rproperty_defs(cls, desttype):
@@ -1035,6 +904,7 @@ class RelationDefinitionSchema(PermissionMixIn):
 
     def dump(self, subject, object):
         return RelationDefinitionSchema(subject, self.rtype, object,
+                                        self.package,
                                         self.__dict__)
 
     def role_cardinality(self, role):

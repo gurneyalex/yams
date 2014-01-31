@@ -1,3 +1,21 @@
+yams (0.39.0-1) unstable; urgency=low
+
+  * new upstream release.
+
+ -- Julien Cristau <julien.cristau@logilab.fr>  Fri, 10 Jan 2014 16:55:47 +0100
+
+yams (0.38.0-2) unstable; urgency=low
+
+  * fix debian/control
+
+ -- David Douard <david.douard@logilab.fr>  Thu, 03 Oct 2013 11:28:23 +0200
+
+yams (0.38.0-1) unstable; urgency=low
+
+  * new upstream release
+
+ -- Florent Cayre <florent.cayre@logilab.fr>  Fri, 28 Jun 2013 16:42:19 +0200
+
 yams (0.37.0-1) unstable; urgency=low
 
   * new upstream release
