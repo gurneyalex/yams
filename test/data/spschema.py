@@ -1,4 +1,4 @@
-# copyright 2004-2010 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
+# copyright 2004-2014 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
 # contact http://www.logilab.fr/ -- mailto:contact@logilab.fr
 #
 # This file is part of yams.
@@ -46,4 +46,5 @@ class custom_attr(RelationDefinition):
     subject = 'Person'
     object = 'String'
     __permissions__ = {'read': ('managers', ),
+                       'add': ('managers', ),
                        'update': ('managers', )}
