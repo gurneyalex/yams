@@ -371,7 +371,7 @@ class FormatConstraint(StaticVocabularyConstraint):
                        _('text/plain'),
                        )
     def __init__(self):
-        pass
+        self.values = self.vocabulary()
 
     def check_consistency(self, subjschema, objschema, rdef):
         if not objschema.final:
