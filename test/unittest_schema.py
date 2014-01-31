@@ -32,7 +32,8 @@ from yams.buildobjs import (register_base_types, make_type, _add_relation,
 from yams.schema import Schema, RelationDefinitionSchema
 from yams.interfaces import IVocabularyConstraint
 from yams.constraints import (BASE_CHECKERS, SizeConstraint, RegexpConstraint,
-                              StaticVocabularyConstraint, IntervalBoundConstraint)
+                              StaticVocabularyConstraint, IntervalBoundConstraint,
+                              FormatConstraint)
 from yams.reader import SchemaLoader
 
 
@@ -68,6 +69,7 @@ class BaseSchemaTC(TestCase):
             ('Person promo String'),
             ('Person promo_enlarged String'),
             ('Person promo_encoding String'),
+            ('Person promo_format String'),
             # real relations
             ('Person  travaille Societe'),
             ('Person  evaluee   Note'),
@@ -96,6 +98,7 @@ class BaseSchemaTC(TestCase):
         eperson.rdef('tel').constraints = [IntervalBoundConstraint(maxvalue=999999)]
         eperson.rdef('fax').constraints = [IntervalBoundConstraint(minvalue=12, maxvalue=999999)]
         eperson.rdef('promo').constraints = [StaticVocabularyConstraint( (u'bon', u'pasbon'))]
+        eperson.rdef('promo_format').constraints = [FormatConstraint()]
 
         estring = schema.eschema('String')
         eint = schema.eschema('Int')
@@ -121,6 +124,7 @@ ATTRIBUTE_BAD_VALUES = (
                 ('sexe', u'F'), ('sexe', u'MorF'), ('sexe', 'F'),
                 ('promo', 'bon'), ('promo', 'uyou'),
                 ('promo', u' pas bon du tout'),
+                ('promo_format', u'text/something'),
                 ('tel', 'notastring'),
                 ('tel', 1000000),
                 ('fax', 11),
@@ -246,7 +250,8 @@ class EntitySchemaTC(BaseSchemaTC):
         self.assertEqual(eperson.is_metadata('promo_enlarged'), None)
         self.assertEqual(eperson.is_metadata('promo_encoding'), ('promo', 'encoding'))
         self.assertEqual([(k.type, v)  for k, v in eperson.meta_attributes().items()],
-                          [('promo_encoding', ('encoding', 'promo'))])
+                          [('promo_encoding', ('encoding', 'promo')),
+                           ('promo_format', ('format', 'promo'))])
 
     def test_defaults(self):
         self.assertEqual(list(eperson.defaults()), [])
@@ -274,9 +279,9 @@ class EntitySchemaTC(BaseSchemaTC):
         """check subject relations a returned in the same order as in the
         schema definition"""
         rels = eperson.ordered_relations()
-        expected = ['nom', 'prenom', 'sexe', 'tel', 'fax', 'datenaiss',
-                    'TEST', 'promo', 'promo_enlarged', 'promo_encoding', 'travaille',
-                    'evaluee', 'concerne']
+        expected = ['nom', 'prenom', 'sexe', 'tel', 'fax', 'datenaiss', 'TEST',
+                    'promo', 'promo_enlarged', 'promo_encoding', 'promo_format',
+                    'travaille', 'evaluee', 'concerne']
         self.assertEqual([r.type for r in rels], expected)
 
     def test_object_relations(self):
@@ -412,7 +417,8 @@ class SchemaTC(BaseSchemaTC):
         all_relations = ['TEST', 'concerne', 'travaille', 'evaluee',
                          'date', 'type', 'sujet', 'ref', 'nom', 'prenom',
                          'starton', 'sexe', 'promo', 'promo_enlarged',
-                         'promo_encoding', 'tel', 'fax', 'datenaiss']
+                         'promo_encoding', 'promo_format', 'tel', 'fax',
+                         'datenaiss']
         all_relations.sort()
         relations = schema.relations()
         relations.sort()
