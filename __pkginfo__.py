@@ -1,4 +1,4 @@
-# copyright 2004-2010 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
+# copyright 2004-2014 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
 # contact http://www.logilab.fr/ -- mailto:contact@logilab.fr
 #
 # This file is part of yams.
@@ -24,7 +24,7 @@ __docformat__ = "restructuredtext en"
 modname = 'yams'
 
 # release version
-numversion = (0, 38, 0)
+numversion = (0, 38, 1)
 version = '.'.join(str(num) for num in numversion)
 
 # license and copyright
