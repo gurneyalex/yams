@@ -19,17 +19,49 @@
 """
 from logilab.common.testlib import TestCase, unittest_main
 
-from yams.reader import SchemaLoader
+from yams.reader import build_schema_from_namespace
+from yams.buildobjs import EntityType, String, SubjectRelation, RelationDefinition
 
+def build_schema():
+
+    class Person(EntityType):
+        firstname = String()
+        knows = SubjectRelation('Person')
+        works_for = SubjectRelation('Company')
+
+    class Student(Person):
+        __specializes_schema__ = True
+
+    class Company(EntityType):
+        name = String()
+
+    class SubCompany(Company):
+        __specializes_schema__ = True
+
+    class Division(Company):
+        __specializes_schema__ = True
+        division_of = SubjectRelation('Company')
+
+    class SubDivision(Division):
+        __specializes_schema__ = True
+
+    # This class doesn't extend the schema
+    class SubSubDivision(SubDivision):
+        pass
+
+    class custom_attr(RelationDefinition):
+        subject = 'Person'
+        object = 'String'
+        __permissions__ = {'read': ('managers', ),
+                           'add': ('managers', ),
+                           'update': ('managers', )}
+
+    return build_schema_from_namespace(locals().items())
 
 
 class SpecializationTC(TestCase):
     def setUp(self):
-        SchemaLoader.main_schema_directory = 'spschema'
-        self.schema = SchemaLoader().load([self.datadir], 'Test')
-
-    def tearDown(self):
-        SchemaLoader.main_schema_directory = 'schema'
+        self.schema = build_schema()
 
     def test_schema_specialization(self):
         schema = self.schema
