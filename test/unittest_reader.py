@@ -25,11 +25,14 @@ from datetime import datetime, date, time
 
 from logilab.common.testlib import TestCase, unittest_main
 
-from yams import BadSchemaDefinition, buildobjs
+from yams import BadSchemaDefinition
 from yams.schema import Schema
 from yams.reader import SchemaLoader, build_schema_from_namespace
 from yams.constraints import StaticVocabularyConstraint, SizeConstraint
-from yams.buildobjs import EntityType, RelationDefinition, Int, String
+from yams.buildobjs import (EntityType, RelationType, RelationDefinition,
+                            SubjectRelation,
+                            Int, String, Float, Datetime, Date, Boolean,
+                            DEFAULT_RELPERMS, DEFAULT_ATTRPERMS)
 
 sys.path.insert(0, osp.dirname(__file__))
 
@@ -241,7 +244,7 @@ class SchemaLoaderTC(TestCase):
                            'delete': ('managers',),
                            'add': ('managers',)})
         self.assertEqual(rschema.rdef('Affaire', 'Societe').permissions,
-                          buildobjs.DEFAULT_RELPERMS)
+                          DEFAULT_RELPERMS)
         rschema = SCHEMA.rschema('travaille')
         self.assertEqual(rschema.rdef('Person', 'Societe').permissions,
                           {'read': (), 'add': (), 'delete': ('managers',)})
@@ -249,7 +252,7 @@ class SchemaLoaderTC(TestCase):
     def test_attributes_permissions(self):
         rschema = SCHEMA.rschema('name')
         self.assertEqual(rschema.rdef('Company', 'String').permissions,
-                          buildobjs.DEFAULT_ATTRPERMS)
+                          DEFAULT_ATTRPERMS)
         rschema = SCHEMA.rschema('tel')
         self.assertEqual(rschema.rdef('Person', 'Int').permissions,
                           {'read': (),
@@ -291,28 +294,28 @@ class SchemaLoaderTC(TestCase):
 SCHEMA = SchemaLoader().load([SchemaLoaderTC.datadir])
 
 
-class BasePerson(buildobjs.EntityType):
-    firstname = buildobjs.String(vocabulary=('logilab', 'caesium'), maxsize=10)
-    lastname = buildobjs.String(constraints=[StaticVocabularyConstraint(['logilab', 'caesium'])])
+class BasePerson(EntityType):
+    firstname = String(vocabulary=('logilab', 'caesium'), maxsize=10)
+    lastname = String(constraints=[StaticVocabularyConstraint(['logilab', 'caesium'])])
 
 class Person(BasePerson):
-    email = buildobjs.String()
+    email = String()
 
 class Employee(Person):
-    company = buildobjs.String(vocabulary=('logilab', 'caesium'))
+    company = String(vocabulary=('logilab', 'caesium'))
 
 
 class Student(Person):
     __specializes_schema__ = True
-    college = buildobjs.String()
+    college = String()
 
 class X(Student):
     pass
 
-class Foo(buildobjs.EntityType):
-    i = buildobjs.Int(required=True, metadata={'name': buildobjs.String()})
-    f = buildobjs.Float()
-    d = buildobjs.Datetime()
+class Foo(EntityType):
+    i = Int(required=True, metadata={'name': String()})
+    f = Float()
+    d = Datetime()
 
 
 
@@ -386,95 +389,98 @@ class PySchemaTC(TestCase):
 
 
 class SchemaLoaderTC2(TestCase):
-
     def tearDown(self):
         SchemaLoader.main_schema_directory = 'schema'
 
-    def test_broken_schema1(self):
-        SchemaLoader.main_schema_directory = 'brokenschema1'
-        with self.assertRaises(BadSchemaDefinition) as cm:
-            SchemaLoader().load([self.datadir], 'Test')
+    def assertBadInlinedMessage(self, error):
         try:
-            self.assertEqual(str(cm.exception), "conflicting values False/True for property inlined of relation 'rel'")
+            self.assertEqual("conflicting values False/True for property inlined of relation 'rel'",
+                             str(error))
         except AssertionError:
-            self.assertEqual(str(cm.exception), "conflicting values True/False for property inlined of relation 'rel'")
+            self.assertEqual("conflicting values True/False for property inlined of relation 'rel'",
+                             str(error))
 
+    def test_bad_rtype_inlined_conflict1(self):
+        class Anentity(EntityType):
+            rel = SubjectRelation('Anentity', inlined=True)
+        class Anotherentity(EntityType):
+            rel = SubjectRelation('Anentity', inlined=False)
 
-    def test_broken_schema2(self):
-        SchemaLoader.main_schema_directory = 'brokenschema2'
         with self.assertRaises(BadSchemaDefinition) as cm:
-            SchemaLoader().load([self.datadir], 'Test')
-        try:
-            self.assertEqual(str(cm.exception), "conflicting values True/False for property inlined of relation 'rel'")
-        except AssertionError:
-            self.assertEqual(str(cm.exception), "conflicting values False/True for property inlined of relation 'rel'")
+            build_schema_from_namespace(locals().items())
+        self.assertBadInlinedMessage(cm.exception)
 
-    def test_broken_schema3(self):
-        SchemaLoader.main_schema_directory = 'brokenschema3'
-        with self.assertRaises(BadSchemaDefinition) as cm:
-            SchemaLoader().load([self.datadir], 'Test')
-        try:
-            self.assertEqual(str(cm.exception), "conflicting values True/False for property inlined of relation 'rel'")
-        except AssertionError:
-            self.assertEqual(str(cm.exception), "conflicting values False/True for property inlined of relation 'rel'")
 
-    def test_broken_schema4(self):
-        schema = Schema('toto')
-        schema.add_entity_type(buildobjs.EntityType(name='Entity'))
-        schema.add_entity_type(buildobjs.EntityType(name='Int'))
-        schema.add_relation_type(buildobjs.RelationType(name='toto'))
-        with self.assertRaises(BadSchemaDefinition) as cm:
-            schema.add_relation_def(buildobjs.RelationDefinition(
-                name='toto', subject='Entity', object='Int',
-                constraints=[SizeConstraint(40)]))
-        self.assertEqual(str(cm.exception), "size constraint doesn't apply to Int entity type")
+    def test_bad_rtype_inlined_conflict2(self):
+        class Anentity(EntityType):
+            rel = SubjectRelation('Anentity', inlined=True)
+        class rel(RelationType):
+            inlined = False
 
-    def test_broken_schema5(self):
-        schema = Schema('toto')
-        schema.add_entity_type(buildobjs.EntityType(name='Entity'))
-        schema.add_entity_type(buildobjs.EntityType(name='String'))
-        schema.add_relation_type(buildobjs.RelationType(name='toto'))
         with self.assertRaises(BadSchemaDefinition) as cm:
-            schema.add_relation_def(buildobjs.RelationDefinition(
-                name='toto', subject='Entity', object='String',
-                constraints=[StaticVocabularyConstraint(['ab', 'abc']),
-                             SizeConstraint(2)]))
-        self.assertEqual(str(cm.exception), "size constraint set to 2 but vocabulary contains string of greater size")
+            build_schema_from_namespace(locals().items())
+        self.assertBadInlinedMessage(cm.exception)
 
-    def test_broken_schema6(self):
-        schema = Schema('foo')
-        rtype = buildobjs.RelationType(name='foo', __permissions__={'read': ()})
-        schema.add_entity_type(buildobjs.EntityType(name='Entity'))
-        schema.add_entity_type(buildobjs.EntityType(name='String'))
-        schema.add_relation_type(rtype)
-        class rdef(buildobjs.RelationDefinition):
-            name = 'foo'
-            subject = 'Entity'
-            object = 'String'
-            __permissions__ = {'add':()}
+    def test_bad_int_size_constraint(self):
+        class Entity(EntityType):
+            attr = Int(maxsize=40)
+
         with self.assertRaises(BadSchemaDefinition) as cm:
-            rdef.expand_relation_definitions({'foo': rtype}, schema)
-        self.assertEqual(str(cm.exception), "conflicting values {'add': ()}/{'read': ()} for property __permissions__ of relation 'foo'")
+            build_schema_from_namespace(locals().items())
+        self.assertEqual("size constraint doesn't apply to Int entity type",
+                         str(cm.exception))
+
+    def test_bad_vocab_and_size(self):
+        class Entity(EntityType):
+            attr = String(constraints=[StaticVocabularyConstraint(['ab', 'abc']),
+                                       SizeConstraint(2)])
+                          # "auto-fixed" when using:
+                          #vocabulary=['ab', 'abc'], maxsize=1)
+
+        with self.assertRaises(BadSchemaDefinition) as cm:
+            schema = build_schema_from_namespace(locals().items())
+        self.assertEqual("size constraint set to 2 but vocabulary contains string of greater size",
+                         str(cm.exception))
+
+
+    def test_bad_rtype_rdef_conflict(self):
+        class foo(RelationType):
+            __permissions__={'read': ()}
+        class Entity(EntityType):
+            foo = String(__permissions__={'add': ()})
+
+        with self.assertRaises(BadSchemaDefinition) as cm:
+            build_schema_from_namespace(locals().items())
+        self.assertEqual("conflicting values {'add': ()}/{'read': ()} for property __permissions__ of relation 'foo'",
+                         str(cm.exception))
+
 
     def test_schema(self):
-        SchemaLoader.main_schema_directory = 'schema2'
-        schema = SchemaLoader().load([self.datadir], 'Test')
-        self.assertEqual('data', schema['Anentity'].package)
+        class Anentity(EntityType):
+            rel = SubjectRelation('Anentity', inlined=True)
+        class Anotherentity(EntityType):
+            rel = SubjectRelation('Anentity')
+        class rel(RelationType):
+            composite = 'subject'
+            cardinality = '1*'
+            symmetric = True
+
+        schema = build_schema_from_namespace(locals().items())
+        self.assertEqual('<builtin>', schema['Anentity'].package)
         rel = schema['rel']
         self.assertEqual(True, rel.symmetric)
         self.assertEqual(True, rel.inlined)
-        self.assertEqual('data', rel.package)
+        self.assertEqual('<builtin>', rel.package)
         rdef1 = rel.rdef('Anentity', 'Anentity')
         self.assertEqual('subject', rdef1.composite)
         self.assertEqual('1*', rdef1.cardinality)
-        self.assertEqual('data', rdef1.package)
+        self.assertEqual('<builtin>', rdef1.package)
         rdef2 = rel.rdef('Anotherentity', 'Anentity')
         self.assertEqual('subject', rdef2.composite)
         self.assertEqual('1*', rdef2.cardinality)
-        self.assertEqual('data', rdef2.package)
+        self.assertEqual('<builtin>', rdef2.package)
 
     def test_imports(self):
-        SchemaLoader.main_schema_directory = 'schema'
         schema = SchemaLoader().load([self.datadir, self.datadir+'2'], 'Test')
         self.assertEqual({'read': (),
                           'add': (),
@@ -508,25 +514,45 @@ class SchemaLoaderTC2(TestCase):
         self.assertEqual(loader.defined['RT1'], RT1)
 
     def test_unfinalized_manipulation(self):
-        expected_attributes = ['base_arg_a', 'base_arg_b', 'new_arg_a',
-                               'new_arg_b']
-        expected_relations = ['base_o_obj', 'base_o_sub', 'base_obj',
-                              'base_sub', 'new_o_obj', 'new_o_sub', 'new_obj',
-                              'new_sub']
+        class MyEntity(EntityType):
+            base_arg_b = String()
+            base_arg_a = Boolean()
+            base_sub = SubjectRelation('MyOtherEntity')
+        class base_obj(RelationDefinition):
+            subject = 'MyOtherEntity'
+            object = 'MyEntity'
+        class MyOtherEntity(EntityType):
+            base_o_obj = SubjectRelation('MyEntity')
+        class base_o_sub(RelationDefinition):
+            subject = 'MyEntity'
+            object = 'MyOtherEntity'
+        MyEntity.add_relation(Date(), name='new_arg_a')
+        MyEntity.add_relation(Int(), name='new_arg_b')
+        MyEntity.add_relation(SubjectRelation('MyOtherEntity'), name="new_sub")
+        MyOtherEntity.add_relation(SubjectRelation('MyEntity'), name="new_o_obj")
+        class new_obj(RelationDefinition):
+            subject = 'MyOtherEntity'
+            object = 'MyEntity'
+        class new_o_sub(RelationDefinition):
+            subject = 'MyEntity'
+            object = 'MyOtherEntity'
 
-        SchemaLoader.main_schema_directory = 'schema_unfinalized_manipulation'
-        schema = SchemaLoader().load([self.datadir], 'Test')
+        schema = build_schema_from_namespace(locals().items())
         self.assertIn('MyEntity', schema.entities())
         my_entity = schema['MyEntity']
         attributes_def = my_entity.attribute_definitions()
         attributes = sorted(attr[0].type for attr in attributes_def)
-        self.assertEqual( attributes, expected_attributes)
+        self.assertEqual(['base_arg_a', 'base_arg_b', 'new_arg_a', 'new_arg_b'],
+                         attributes)
         relations_def = my_entity.relation_definitions()
         relations = sorted( rel[0].type for rel in relations_def)
-        self.assertEqual( relations, expected_relations)
+        self.assertEqual(['base_o_obj', 'base_o_sub', 'base_obj',
+                          'base_sub', 'new_o_obj', 'new_o_sub', 'new_obj',
+                          'new_sub'],
+                         relations)
 
     def test_post_build_callback(self):
-        SchemaLoader.main_schema_directory = 'post_build_callback'
+        SchemaLoader.main_schema_directory = 'schema_post_build_callback'
         schema = SchemaLoader().load([self.datadir], 'Test')
         self.assertIn('Toto', schema.entities())
 

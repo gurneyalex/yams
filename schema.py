@@ -882,7 +882,7 @@ class RelationDefinitionSchema(PermissionMixIn):
         type
         """
         propdefs = cls._RPROPERTIES.copy()
-        if not desttype in BASE_TYPES:
+        if desttype not in BASE_TYPES:
             propdefs.update(cls._NONFINAL_RPROPERTIES)
         else:
             propdefs.update(cls._FINAL_RPROPERTIES)
