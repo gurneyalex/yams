@@ -126,19 +126,19 @@ class FullSchemaVisitor(SchemaVisitor):
         self._eindex = dict([(e.type, e) for e in entities])
 
     def nodes(self):
-        for eschema in self._eindex.values():
+        for eschema in sorted(self._eindex.values(), key=lambda x: x.type):
             yield eschema.type, eschema
 
     def edges(self):
         # Entities with inheritance relations.
-        for eschema in self._eindex.values():
+        for eschema in sorted(self._eindex.values(), key=lambda x: x.type):
             if eschema.specializes():
                 yield str(eschema), str(eschema.specializes()), None
         # Subject/object relations.
-        for rschema in self.schema.relations():
+        for rschema in sorted(self.schema.relations(), key=lambda x: x.type):
             if not self.should_display_schema(rschema):
                 continue
-            for setype, tetype in rschema.rdefs:
+            for setype, tetype in sorted(rschema.rdefs, key=lambda (s, o): (s.type, o.type)):
                 if not (setype in self._eindex and tetype in self._eindex):
                     continue
                 if not self.display_rel(rschema, setype, tetype):
