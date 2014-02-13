@@ -89,7 +89,9 @@ def fill_schema(schema, erdefs, register_base_types=True,
     # set permissions on entities and relations
     for erschema in schema.entities() + schema.relations():
         erschema.check_permission_definitions()
-    schema.infer_specialization_rules()
+    # Finalize schema
+    schema.finalize()
+    # check unique together consistency
     for eschema in schema.entities():
         eschema.check_unique_together()
     return schema
