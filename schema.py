@@ -1206,6 +1206,14 @@ class Schema(object):
         except KeyError:
             raise KeyError('No relation named %s in schema'%rtype)
 
+    def finalize(self):
+        """Finalize schema
+
+        Can be used to, e.g., infer relations from inheritance, computed
+        relations, etc.
+        """
+        self.infer_specialization_rules()
+
 
 import logging
 from logilab.common.logging_ext import set_log_methods
