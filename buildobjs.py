@@ -244,6 +244,8 @@ class AbstractTypedAttribute(SubjectRelation):
         maxsize = kwargs.pop('maxsize', None)
         if maxsize is not None:
             _add_constraint(kwargs, SizeConstraint(max=maxsize))
+        # formula
+        self.formula = kwargs.pop('formula', None)
         # transform vocabulary into StaticVocabularyConstraint
         vocabulary = kwargs.pop('vocabulary', None)
         if vocabulary is not None:

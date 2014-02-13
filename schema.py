@@ -848,7 +848,9 @@ class RelationDefinitionSchema(PermissionMixIn):
     _NONFINAL_RPROPERTIES = {'composite': None}
     _FINAL_RPROPERTIES = {'default': None,
                           'uid': False,
-                          'indexed': False}
+                          'indexed': False,
+                          'formula': None,
+                          }
     # Use a TYPE_PROPERTIES dictionnary to store type-dependant parameters.
     BASE_TYPE_PROPERTIES = {'String': {'fulltextindexed': False,
                                        'internationalizable': False},

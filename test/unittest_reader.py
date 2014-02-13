@@ -663,6 +663,30 @@ class ComputedSchemaTC(TestCase):
             'Cannot set add/delete permissions on computed relation est_paye_par',
             str(cm.exception))
 
+    def test_computed_attribute_type(self):
+        class Entity(EntityType):
+            attr = Int(formula='Any Z WHERE X oattr Z')
+            oattr = String()
+
+        schema = build_schema_from_namespace(vars().items())
+        self.assertEqual('Any Z WHERE X oattr Z',
+                         schema['Entity'].rdef('attr').formula)
+        self.assertIsNone(schema['Entity'].rdef('oattr').formula)
+
+    def test_computed_attribute_rdef(self):
+        class Entity(EntityType):
+            oattr = String()
+
+        class attr(RelationDefinition):
+            subject = 'Entity'
+            object = 'Int'
+            formula='Any Z WHERE X oattr Z'
+
+        schema = build_schema_from_namespace(vars().items())
+        self.assertEqual('Any Z WHERE X oattr Z',
+                         schema['Entity'].rdef('attr').formula)
+        self.assertIsNone(schema['Entity'].rdef('oattr').formula)
+
 
 if __name__ == '__main__':
     unittest_main()
