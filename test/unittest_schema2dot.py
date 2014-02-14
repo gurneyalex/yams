@@ -36,15 +36,14 @@ charset="utf-8"
 splines=true
 overlap=false
 sep=0.2
-"Salaried" [shape="record", fontname="Courier", style="filled", label="{Salaried|nom\lprenom\lsexe\lpromo\ltitre\ladel\lass\lweb\ltel\lfax\ldatenaiss\ltest\lsalary\l}"];
-"Societe" [shape="record", fontname="Courier", style="filled", label="{Societe|nom\lweb\ltel\lfax\lrncs\lad1\lad2\lad3\lcp\lville\l}"];
-"Person" [shape="record", fontname="Courier", style="filled", label="{Person|nom\lprenom\lsexe\lpromo\ltitre\ladel\lass\lweb\ltel\lfax\ldatenaiss\ltest\lsalary\l}"];
-"Salaried" -> "Person" [style="filled", arrowhead="empty", color="grey", label="Parent class", decorate="false", fontcolor="grey"];
-"Salaried" -> "Societe" [taillabel="0..n", style="filled", arrowhead="normal", color="#aa0000", label="travaille", headlabel="0..n", arrowtail="none", decorate="false", fontcolor="#aa0000"];
-"Person" -> "Societe" [taillabel="0..n", style="filled", arrowhead="normal", color="#00aa00", label="travaille", headlabel="0..n", arrowtail="none", decorate="false", fontcolor="#00aa00"];
+"Person" [fontname="Courier", label="{Person|nom\lprenom\lsexe\lpromo\ltitre\ladel\lass\lweb\ltel\lfax\ldatenaiss\ltest\lsalary\l}", shape="record", style="filled"];
+"Salaried" [fontname="Courier", label="{Salaried|nom\lprenom\lsexe\lpromo\ltitre\ladel\lass\lweb\ltel\lfax\ldatenaiss\ltest\lsalary\l}", shape="record", style="filled"];
+"Societe" [fontname="Courier", label="{Societe|nom\lweb\ltel\lfax\lrncs\lad1\lad2\lad3\lcp\lville\l}", shape="record", style="filled"];
+"Salaried" -> "Person" [arrowhead="empty", color="grey", decorate="false", fontcolor="grey", label="Parent class", style="filled"];
+"Person" -> "Societe" [arrowhead="normal", arrowtail="none", color="#aa0000", decorate="false", fontcolor="#aa0000", headlabel="0..n", label="travaille", style="filled", taillabel="0..n"];
+"Salaried" -> "Societe" [arrowhead="normal", arrowtail="none", color="#00aa00", decorate="false", fontcolor="#00aa00", headlabel="0..n", label="travaille", style="filled", taillabel="0..n"];
 }
 '''
-
 
 class DotTC(TestCase):
 
