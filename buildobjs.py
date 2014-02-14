@@ -1,4 +1,4 @@
-# copyright 2004-2013 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
+# copyright 2004-2014 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
 # contact http://www.logilab.fr/ -- mailto:contact@logilab.fr
 #
 # This file is part of yams.
@@ -34,7 +34,7 @@ PACKAGE = '<builtin>' # will be modified by the yams'reader when schema is
                       # beeing read
 
 __all__ = ('EntityType', 'RelationType', 'RelationDefinition',
-           'SubjectRelation', 'ObjectRelation', 'BothWayRelation',
+           'SubjectRelation', 'ObjectRelation',
            'RichString', ) + tuple(BASE_TYPES)
 
 # EntityType properties
@@ -74,15 +74,11 @@ def _add_constraint(kwargs, constraint):
 
 def _add_relation(relations, rdef, name=None, insertidx=None):
     """Add relation (param rdef) to list of relations (param relations)."""
-    if isinstance(rdef, BothWayRelation):
-        _add_relation(relations, rdef.subjectrel, name, insertidx)
-        _add_relation(relations, rdef.objectrel, name, insertidx)
-    else:
-        if name is not None:
-            rdef.name = name
-        if insertidx is None:
-            insertidx = len(relations)
-        relations.insert(insertidx, rdef)
+    if name is not None:
+        rdef.name = name
+    if insertidx is None:
+        insertidx = len(relations)
+    relations.insert(insertidx, rdef)
     if getattr(rdef, 'metadata', {}):
         for meta_name, value in rdef.metadata.iteritems():
             assert meta_name in KNOWN_METAATTRIBUTES
@@ -125,11 +121,6 @@ DEFAULT_ATTRPERMS = {'read': ('managers', 'users', 'guests',),
                      'add': ('managers', 'users'),
                      'update': ('managers', 'owners')}
 
-class Relation(object):
-    """Abstract class which have to be defined before the metadefinition
-    meta-class.
-    """
-    __permissions__ = MARKER
 
 # first class schema definition objects #######################################
 
@@ -188,6 +179,182 @@ class Definition(object):
         cls.__permissions__ = permissions
 
 
+# classes used to define relationships within entity type classes ##################
+
+# has to be defined before the metadefinition metaclass which "isinstance" this
+# class
+class ObjectRelation(object):
+    __permissions__ = MARKER
+    cardinality = MARKER
+    constraints = MARKER
+
+    def __init__(self, etype, **kwargs):
+        if self.__class__.__name__ == 'ObjectRelation':
+            warn('[yams 0.29] ObjectRelation is deprecated, '
+                 'use RelationDefinition subclass', DeprecationWarning,
+                 stacklevel=2)
+        global CREATION_RANK
+        CREATION_RANK += 1
+        self.creation_rank = CREATION_RANK
+        self.package = PACKAGE
+        self.name = '<undefined>'
+        self.etype = etype
+        if self.constraints:
+            self.constraints = list(self.constraints)
+        self.override = kwargs.pop('override', False)
+        if kwargs.pop('meta', None):
+            warn('[yams 0.37.0] meta is deprecated',
+                 DeprecationWarning, stacklevel=3)
+        try:
+            _check_kwargs(kwargs, _REL_PROPERTIES())
+        except BadSchemaDefinition, bad:
+            # XXX (auc) bad field name + required attribute can lead there instead of schema.py ~ 920
+            bsd_ex = BadSchemaDefinition(('%s in relation to entity %r (also is %r defined ? (check two '
+                                          'lines above in the backtrace))') % (bad.args, etype, etype))
+            bsd_ex.tb_offset = 2
+            raise bsd_ex
+        self.__dict__.update(kwargs)
+
+    def __repr__(self):
+        return '%(name)s %(etype)s' % self.__dict__
+
+
+class SubjectRelation(ObjectRelation):
+    uid = MARKER
+    indexed = MARKER
+    fulltextindexed = MARKER
+    internationalizable = MARKER
+    default = MARKER
+
+    def __repr__(self):
+        return '%(etype)s %(name)s' % self.__dict__
+
+
+class AbstractTypedAttribute(SubjectRelation):
+    """AbstractTypedAttribute is not directly instantiable
+
+    subclasses must provide a <etype> attribute to be instantiable
+    """
+    def __init__(self, metadata=None, **kwargs):
+        # Store metadata
+        if metadata is None:
+            metadata = {}
+        self.metadata = metadata
+        # transform "required" into "cardinality"
+        required = kwargs.pop('required', False)
+        if required:
+            cardinality = '11'
+        else:
+            cardinality = '?1'
+        kwargs['cardinality'] = cardinality
+        # transform maxsize into SizeConstraint
+        maxsize = kwargs.pop('maxsize', None)
+        if maxsize is not None:
+            _add_constraint(kwargs, SizeConstraint(max=maxsize))
+        # transform vocabulary into StaticVocabularyConstraint
+        vocabulary = kwargs.pop('vocabulary', None)
+        if vocabulary is not None:
+            self.set_vocabulary(vocabulary, kwargs)
+        # transform unique into UniqueConstraint
+        unique = kwargs.pop('unique', None)
+        if unique:
+            _add_constraint(kwargs, UniqueConstraint())
+        # use the etype attribute provided by subclasses
+        super(AbstractTypedAttribute, self).__init__(self.etype, **kwargs)
+        # reassign creation rank
+        #
+        # Main attribute are marked as created before it's metadata.
+        # order in meta data is preserved.
+        if self.metadata:
+            meta = sorted(metadata.values(), key= lambda x: x.creation_rank)
+            if meta[0].creation_rank < self.creation_rank:
+                m_iter = iter(meta)
+                previous = self
+                for next in meta:
+                    if previous.creation_rank < next.creation_rank:
+                        break
+                    previous.creation_rank, next.creation_rank = next.creation_rank, previous.creation_rank
+                    next = previous
+
+    def set_vocabulary(self, vocabulary, kwargs=None):
+        if kwargs is None:
+            kwargs = self.__dict__
+        #constraints = kwargs.setdefault('constraints', [])
+        _add_constraint(kwargs, StaticVocabularyConstraint(vocabulary))
+        if self.__class__.__name__ == 'String': # XXX
+            maxsize = max(len(x) for x in vocabulary)
+            _add_constraint(kwargs, SizeConstraint(max=maxsize))
+
+    def __repr__(self):
+        return '<%(name)s(%(etype)s)>' % self.__dict__
+
+
+def make_type(etype):
+    """create a python class for a Yams base type.
+
+    Notice it is now possible to create a specific type with user-defined
+    behaviour, e.g.:
+
+        Geometry = make_type('Geometry') # (c.f. postgis)
+
+    will allow the use of:
+
+        Geometry(geom_type='POINT')
+
+    in a Yams schema, provided in this example that `geom_type` is specified to
+    the :func:`yams.register_base_type` function which should be called prior to
+    make_type.
+    """
+    assert etype in BASE_TYPES
+    return type(etype, (AbstractTypedAttribute,), {'etype' : etype})
+
+
+# build a specific class for each base type
+String = make_type('String')
+Password = make_type('Password')
+Bytes = make_type('Bytes')
+Int = make_type('Int')
+BigInt = make_type('BigInt')
+Float = make_type('Float')
+Boolean = make_type('Boolean')
+Decimal = make_type('Decimal')
+Time = make_type('Time')
+Date = make_type('Date')
+Datetime = make_type('Datetime')
+TZTime = make_type('TZTime')
+TZDatetime = make_type('TZDatetime')
+Interval = make_type('Interval')
+
+
+# provides a RichString factory for convenience
+def RichString(default_format='text/plain', format_constraints=None, **kwargs):
+    """RichString is a convenience attribute type for attribute containing text
+    in a format that should be specified in another attribute.
+
+    The following declaration::
+
+      class Card(EntityType):
+          content = RichString(fulltextindexed=True, default_format='text/rest')
+
+    is equivalent to::
+
+      class Card(EntityType):
+          content_format = String(internationalizable=True,
+                                  default='text/rest', constraints=[FORMAT_CONSTRAINT])
+          content  = String(fulltextindexed=True)
+    """
+    format_args = {'default': default_format,
+                   'maxsize': 50}
+    if format_constraints is None:
+        format_args['constraints'] = [FORMAT_CONSTRAINT]
+    else:
+        format_args['constraints'] = format_constraints
+    meta = {'format':String(internationalizable=True, **format_args)}
+    return String(metadata=meta, **kwargs)
+
+
+# other schema definition classes ##############################################
+
 class metadefinition(autopackage):
     """Metaclass that builds the __relations__ attribute of EntityType's
     subclasses.
@@ -198,7 +365,7 @@ class metadefinition(autopackage):
         rels = classdict.setdefault('__relations__', [])
         relations = dict((rdef.name, rdef) for rdef in rels)
         for rname, rdef in classdict.items():
-            if isinstance(rdef, Relation):
+            if isinstance(rdef, ObjectRelation):
                 # relation's name **must** be removed from class namespace
                 # to avoid conflicts with instance's potential attributes
                 del classdict[rname]
@@ -590,195 +757,3 @@ def _pow_etypes(schema):
         if eschema.final:
             continue
         yield eschema.type
-
-
-# classes used to define relationships within entity type classes ##################
-
-
-# \(Object\|Subject\)Relation(relations, '\([a-z_A-Z]+\)',
-# -->
-# \2 = \1Relation(
-
-class ObjectRelation(Relation):
-    cardinality = MARKER
-    constraints = MARKER
-
-    def __init__(self, etype, **kwargs):
-        if self.__class__.__name__ == 'ObjectRelation':
-            warn('[yams 0.29] ObjectRelation is deprecated, '
-                 'use RelationDefinition subclass', DeprecationWarning,
-                 stacklevel=2)
-        global CREATION_RANK
-        CREATION_RANK += 1
-        self.creation_rank = CREATION_RANK
-        self.package = PACKAGE
-        self.name = '<undefined>'
-        self.etype = etype
-        if self.constraints:
-            self.constraints = list(self.constraints)
-        self.override = kwargs.pop('override', False)
-        if kwargs.pop('meta', None):
-            warn('[yams 0.37.0] meta is deprecated',
-                 DeprecationWarning, stacklevel=3)
-        try:
-            _check_kwargs(kwargs, _REL_PROPERTIES())
-        except BadSchemaDefinition, bad:
-            # XXX (auc) bad field name + required attribute can lead there instead of schema.py ~ 920
-            bsd_ex = BadSchemaDefinition(('%s in relation to entity %r (also is %r defined ? (check two '
-                                          'lines above in the backtrace))') % (bad.args, etype, etype))
-            bsd_ex.tb_offset = 2
-            raise bsd_ex
-        self.__dict__.update(kwargs)
-
-    def __repr__(self):
-        return '%(name)s %(etype)s' % self.__dict__
-
-
-class SubjectRelation(ObjectRelation):
-    uid = MARKER
-    indexed = MARKER
-    fulltextindexed = MARKER
-    internationalizable = MARKER
-    default = MARKER
-
-    def __repr__(self):
-        return '%(etype)s %(name)s' % self.__dict__
-
-
-class BothWayRelation(Relation):
-
-    def __init__(self, subjectrel, objectrel):
-        warn('[yams 0.29] BothWayRelation is deprecated, '
-             'use RelationDefinition subclass', DeprecationWarning,
-             stacklevel=2)
-        assert isinstance(subjectrel, SubjectRelation)
-        assert isinstance(objectrel, ObjectRelation)
-        self.subjectrel = subjectrel
-        self.objectrel = objectrel
-        self.creation_rank = subjectrel.creation_rank
-
-
-class AbstractTypedAttribute(SubjectRelation):
-    """AbstractTypedAttribute is not directly instantiable
-
-    subclasses must provide a <etype> attribute to be instantiable
-    """
-    def __init__(self, metadata=None, **kwargs):
-        # Store metadata
-        if metadata is None:
-            metadata = {}
-        self.metadata = metadata
-        # transform "required" into "cardinality"
-        required = kwargs.pop('required', False)
-        if required:
-            cardinality = '11'
-        else:
-            cardinality = '?1'
-        kwargs['cardinality'] = cardinality
-        # transform maxsize into SizeConstraint
-        maxsize = kwargs.pop('maxsize', None)
-        if maxsize is not None:
-            _add_constraint(kwargs, SizeConstraint(max=maxsize))
-        # transform vocabulary into StaticVocabularyConstraint
-        vocabulary = kwargs.pop('vocabulary', None)
-        if vocabulary is not None:
-            self.set_vocabulary(vocabulary, kwargs)
-        # transform unique into UniqueConstraint
-        unique = kwargs.pop('unique', None)
-        if unique:
-            _add_constraint(kwargs, UniqueConstraint())
-        # use the etype attribute provided by subclasses
-        super(AbstractTypedAttribute, self).__init__(self.etype, **kwargs)
-        # reassign creation rank
-        #
-        # Main attribute are marked as created before it's metadata.
-        # order in meta data is preserved.
-        if self.metadata:
-            meta = sorted(metadata.values(), key= lambda x: x.creation_rank)
-            if meta[0].creation_rank < self.creation_rank:
-                m_iter = iter(meta)
-                previous = self
-                for next in meta:
-                    if previous.creation_rank < next.creation_rank:
-                        break
-                    previous.creation_rank, next.creation_rank = next.creation_rank, previous.creation_rank
-                    next = previous
-
-    def set_vocabulary(self, vocabulary, kwargs=None):
-        if kwargs is None:
-            kwargs = self.__dict__
-        #constraints = kwargs.setdefault('constraints', [])
-        _add_constraint(kwargs, StaticVocabularyConstraint(vocabulary))
-        if self.__class__.__name__ == 'String': # XXX
-            maxsize = max(len(x) for x in vocabulary)
-            _add_constraint(kwargs, SizeConstraint(max=maxsize))
-
-    def __repr__(self):
-        return '<%(name)s(%(etype)s)>' % self.__dict__
-
-
-def make_type(etype):
-    """create a python class for a Yams base type.
-
-    Notice it is now possible to create a specific type with user-defined
-    behaviour, e.g.:
-
-        Geometry = make_type('Geometry') # (c.f. postgis)
-
-    will allow the use of:
-
-        Geometry(geom_type='POINT')
-
-    in a Yams schema, provided in this example that `geom_type` is specified to
-    the :func:`yams.register_base_type` function which should be called prior to
-    make_type.
-    """
-    assert etype in BASE_TYPES
-    return type(etype, (AbstractTypedAttribute,), {'etype' : etype})
-
-
-# build a specific class for each base type
-String = make_type('String')
-Password = make_type('Password')
-Bytes = make_type('Bytes')
-Int = make_type('Int')
-BigInt = make_type('BigInt')
-Float = make_type('Float')
-Boolean = make_type('Boolean')
-Decimal = make_type('Decimal')
-Time = make_type('Time')
-Date = make_type('Date')
-Datetime = make_type('Datetime')
-TZTime = make_type('TZTime')
-TZDatetime = make_type('TZDatetime')
-Interval = make_type('Interval')
-
-
-# provides a RichString factory for convenience
-
-
-def RichString(default_format='text/plain', format_constraints=None, **kwargs):
-    """RichString is a convenience attribute type for attribute containing text
-    in a format that should be specified in another attribute.
-
-    The following declaration::
-
-      class Card(EntityType):
-          content = RichString(fulltextindexed=True, default_format='text/rest')
-
-    is equivalent to::
-
-      class Card(EntityType):
-          content_format = String(internationalizable=True,
-                                  default='text/rest', constraints=[FORMAT_CONSTRAINT])
-          content  = String(fulltextindexed=True)
-    """
-    format_args = {'default': default_format,
-                   'maxsize': 50}
-    if format_constraints is None:
-        format_args['constraints'] = [FORMAT_CONSTRAINT]
-    else:
-        format_args['constraints'] = format_constraints
-    meta = {'format':String(internationalizable=True, **format_args)}
-    return String(metadata=meta, **kwargs)
-
