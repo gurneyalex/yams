@@ -1,4 +1,4 @@
-# copyright 2004-2011 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
+# copyright 2004-2014 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
 # contact http://www.logilab.fr/ -- mailto:contact@logilab.fr
 #
 # This file is part of yams.
@@ -185,6 +185,19 @@ class SpecializationTC(TestCase):
                               expected[subjobj])
         self.assertEqual(len(set(expected) - done), 0, 'missing %s' % (set(expected) - done))
 
+    def test_no_more_infered_relations(self):
+        rdef = self.schema['division_of'].rdefs['SubSubDivision', 'SubCompany']
+        self.assertEqual('**', rdef.cardinality)
+        rdef = RelationDefinition('SubSubDivision', 'division_of', 'SubCompany',
+                                  cardinality='1*')
+        # ensure add_relation_def doesn't raise an error
+        self.schema.add_relation_def(rdef)
+        rdef = self.schema['division_of'].rdefs['SubSubDivision', 'SubCompany']
+        self.assertEqual('1*', rdef.cardinality)
+        rdef = self.schema['SubSubDivision'].rdef('division_of', 'subject', 'SubCompany')
+        self.assertEqual('1*', rdef.cardinality)
+        rdef = self.schema['SubCompany'].rdef('division_of', 'object', 'SubSubDivision')
+        self.assertEqual('1*', rdef.cardinality)
 
 if __name__ == '__main__':
     unittest_main()
