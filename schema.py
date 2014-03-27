@@ -1,4 +1,4 @@
-# copyright 2004-2013 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
+# copyright 2004-2014 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
 # contact http://www.logilab.fr/ -- mailto:contact@logilab.fr
 #
 # This file is part of yams.
@@ -714,7 +714,9 @@ class RelationSchema(ERSchema):
 
     def init_rproperties(self, subject, object, buildrdef):
         key = subject, object
-        if key in self.rdefs:
+        # raise an error if already defined unless the defined relalation has
+        # been infered, in which case we may want to replace it
+        if key in self.rdefs and not self.rdefs[key].infered:
             msg = '(%s, %s) already defined for %s' % (subject, object, self)
             raise BadSchemaDefinition(msg)
         self.rdefs[key] = rdef = RelationDefinitionSchema(subject, self, object,
