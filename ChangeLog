@@ -1,39 +1,71 @@
 ChangeLog for yams
 ------------------
 
-2014-01-09 -- 0.39.0
+2014-03-28  --  0.39.1
+    * [schema] don't raise an error when some infered relation is overwritten
+     (#231956)
+
+    * [schema] stop checking constraints on the first failing constraint, in an
+     attempt to get the most appropriate error message (#202779)
+
+
+
+2014-01-09  --  0.39.0
     * [schema] extend .rdef(...) with a parameter to silence the ambiguity
       warning added in 0.38
+
     * [schema] cleanup default values handling in entity schema (#109207)
+
     * improve schema-diff feature from 0.37 (#174042)
+
     * add package attribute on (etype, rtype, rdef) (#69392)
+
     * [schema2sql] provide an index name computation function for unique
       together constraints (#189299)
+
     * an "add" permission on attributes
 
-2013-06-28 -- 0.38.0
+
+
+2013-06-28  --  0.38.0
     * [xy] fail assertion only if existing prefix is being changed (#139999)
+
     * [schema] add a warning to avoid a potential silent bug if looking up an
       rdef ambiguously
+
     * [schema building] Fix key in context.defined for RelationDefinition
       (#149660)
 
-2013-04-26 -- 0.37.0
 
+
+2013-04-26  --  0.37.0
     * add schema comparison utility (#112914)
+
     * allow user defined base type (#124342)
+
     * fix bug #135221
 
-2013-01-23 -- 0.36.0
+
+
+2013-01-23  --  0.36.0
     * don't translate validation error right away (#109550)
+
     * fix relation definition inheritance (#115958)
 
-2012-03-08 -- 0.35.0
+
+
+2012-03-08  --  0.35.0
     * generic metadata attributes handling (#83813)
+
     * fix debian packaging to be installable with python = 2.7 (#83759)
+
     * take into account of inheritance relations in schema2dot (#88599)
+
     * RichString is now a function
+
     * final types are now explicitly created to please pylint
+
+
 
 2011-11-03  --  0.34.0
     * fixed yams-view script
