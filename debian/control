@@ -1,0 +1,24 @@
+Source: yams
+Section: python
+Priority: optional
+Maintainer: Logilab Packaging Team <contact@logilab.fr>
+Uploaders: Sylvain Thenault <sylvain.thenault@logilab.fr>, Alexandre Fayolle <afayolle@debian.org>,
+    Nicolas Chauvat <nicolas.chauvat@logilab.fr>
+Build-Depends: debhelper (>= 7), python (>=2.5)
+Build-Depends-Indep: python-support
+Homepage: http://www.logilab.org/project/yams
+Standards-Version: 3.8.0
+XS-Python-Version: >= 2.5
+
+Package: python-yams
+Architecture: all
+Depends: ${python:Depends}, python-logilab-common (>= 0.55.2), python-logilab-database (>= 1.11)
+Breaks: cubicweb-common (<< 3.18)
+Conflicts: python-yams (<= 0.5.2)
+XB-Python-Version: ${python:Versions}
+Description: entity / relation schema
+ Yet Another Magic Schema !
+ A simple/generic but powerful entities / relations schema, suitable
+ to represent RDF like data. The schema is readable/writable from/to
+ various formats.
+

@@ -1,0 +1,79 @@
+class Affaire(EntityType):
+	__permissions__ =  {
+		'read': ('managers','users','guests'),
+		'add': ('managers','users'),
+		'update': ('managers','owners'),
+		'delete': ('managers','owners')
+	}
+
+	nom = String(
+		__permissions__= {
+			'read': ('managers','users','guests'),
+			'add': ('managers','users'),
+			'update': ('managers','owners')
+		},
+		order=1)
+
+	associate_affaire = SubjectRelation('Affaire'
+		__permissions__= {
+			'read': ('managers','users','guests'),
+			'add': ('managers','users'),
+			'delete': ('managers','users')
+		},
+		cardinality='**',
+		order=2)
+
+
+
+class PersonAttrMod(EntityType):
+	__permissions__ =  {
+		'read': ('managers','users','guests'),
+		'add': ('managers','users'),
+		'update': ('managers','owners'),
+		'delete': ('managers','owners')
+	}
+
+	nom = String(
+		__permissions__= {
+			'read': ('managers','users','guests'),
+			'add': ('managers','users'),
+			'update': ('managers','owners')
+		},
+		order=1)
+
+	prenom = Float(
+		__permissions__= {
+			'read': ('managers','users','guests'),
+			'add': ('managers','users'),
+			'update': ('managers','owners')
+		},
+		order=2)
+
+
+
+class PersonBase(EntityType):
+	__permissions__ =  {
+		'read': ('managers','users','guests'),
+		'add': ('managers','users'),
+		'update': ('managers','owners'),
+		'delete': ('managers','owners')
+	}
+
+	nom = String(
+		__permissions__= {
+			'read': ('managers','users','guests'),
+			'add': ('managers','users'),
+			'update': ('managers','owners')
+		},
+		order=1)
+
+	prenom = String(
+		__permissions__= {
+			'read': ('managers','users','guests'),
+			'add': ('managers','users'),
+			'update': ('managers','owners')
+		},
+		order=2)
+
+
+
