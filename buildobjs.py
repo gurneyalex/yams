@@ -25,7 +25,6 @@ from copy import copy
 from six import add_metaclass, string_types
 
 from logilab.common import attrdict
-from logilab.common.decorators import iclassmethod
 
 from yams import (BASE_TYPES, MARKER, BadSchemaDefinition, KNOWN_METAATTRIBUTES,
                   DEFAULT_ETYPEPERMS, DEFAULT_RELPERMS, DEFAULT_ATTRPERMS,
@@ -154,23 +153,16 @@ class Definition(object):
         """
         raise NotImplementedError()
 
-    @iclassmethod
-    def get_permissions(cls, final=False):
-        if cls.__permissions__ is MARKER:
+    def get_permissions(self, final=False):
+        if self.__permissions__ is MARKER:
             if final:
                 return DEFAULT_ATTRPERMS
             return DEFAULT_RELPERMS
-        return cls.__permissions__
+        return self.__permissions__
 
     @classmethod
     def set_permissions(cls, perms):
         cls.__permissions__ = perms
-
-    @classmethod
-    def set_action_permissions(cls, action, actionperms):
-        permissions = cls.get_permissions().copy()
-        permissions[action] = actionperms
-        cls.__permissions__ = permissions
 
 
 # classes used to define relationships within entity type classes ##################
