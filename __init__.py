@@ -52,6 +52,9 @@ DEFAULT_ATTRPERMS = {'read': ('managers', 'users', 'guests',),
 DEFAULT_COMPUTED_RELPERMS = {'read': ('managers', 'users', 'guests',),
                              'delete': (),
                              'add': ()}
+DEFAULT_COMPUTED_ATTRPERMS = {'read': ('managers', 'users', 'guests',),
+                              'add': (),
+                              'update': ()}
 
 
 # This provides a way to specify callable objects as default values
