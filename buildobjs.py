@@ -26,7 +26,7 @@ from logilab.common import attrdict
 from logilab.common.decorators import iclassmethod
 
 from yams import (BASE_TYPES, MARKER, BadSchemaDefinition, KNOWN_METAATTRIBUTES,
-                  DEFAULT_RELPERMS, DEFAULT_ATTRPERMS)
+                  DEFAULT_RELPERMS, DEFAULT_ATTRPERMS, DEFAULT_COMPUTED_ATTRPERMS)
 from yams.constraints import (SizeConstraint, UniqueConstraint,
                               StaticVocabularyConstraint, FORMAT_CONSTRAINT)
 from yams.schema import RelationDefinitionSchema
@@ -737,7 +737,13 @@ class RelationDefinition(Definition):
                 'Cannot add relation definition on a computed relation')
         if self.__permissions__ is MARKER:
             final = next(iter(_actual_types(schema, self.object))) in BASE_TYPES
-            permissions = rtype.get_permissions(final)
+            if final:
+                if self.formula is not None:
+                    permissions = DEFAULT_COMPUTED_ATTRPERMS
+                else:
+                    permissions = DEFAULT_ATTRPERMS
+            else:
+                permissions = DEFAULT_RELPERMS
         else:
             permissions = self.__permissions__
         for subj in _actual_types(schema, self.subject):

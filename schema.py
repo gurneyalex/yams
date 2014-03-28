@@ -43,21 +43,6 @@ def role_name(rtype, role):
     """
     return '%s-%s' % (rtype, role)
 
-def check_permission_definitions(schema):
-    """check permissions are correctly defined"""
-    # already initialized, check everything is fine
-    for action, groups in schema.permissions.items():
-        assert action in schema.ACTIONS, \
-            'unknown action %s for %s' % (action, schema)
-        assert isinstance(groups, tuple), \
-               ('permission for action %s of %s isn\'t a tuple as '
-                'expected' % (action, schema))
-    if schema.final:
-        schema.advertise_new_add_permission()
-    for action in schema.ACTIONS:
-        assert action in schema.permissions, \
-               'missing expected permissions for action %s for %s' % (action, schema)
-
 def rehash(dictionary):
     """this function manually builds a copy of `dictionary` but forces
     hash values to be recomputed. Note that dict(d) or d.copy() don't
@@ -148,7 +133,18 @@ class PermissionMixIn(object):
 
     def check_permission_definitions(self):
         """check permissions are correctly defined"""
-        check_permission_definitions(self)
+        # already initialized, check everything is fine
+        for action, groups in self.permissions.items():
+            assert action in self.ACTIONS, \
+                'unknown action %s for %s' % (action, self)
+            assert isinstance(groups, tuple), \
+                   ('permission for action %s of %s isn\'t a tuple as '
+                    'expected' % (action, self))
+        if self.final:
+            self.advertise_new_add_permission()
+        for action in self.ACTIONS:
+            assert action in self.permissions, \
+                   'missing expected permissions for action %s for %s' % (action, self)
 
 
 # Schema objects definition ###################################################
@@ -966,6 +962,14 @@ class RelationDefinitionSchema(PermissionMixIn):
             if implements(cstr, iface):
                 return cstr
         return None
+
+    def check_permission_definitions(self):
+        """check permissions are correctly defined"""
+        super(RelationDefinitionSchema, self).check_permission_definitions()
+        if (self.final and self.formula and
+                (self.permissions['add'] or self.permissions['update'])):
+            raise BadSchemaDefinition(
+                'Cannot set add/update permissions on computed %s' % self)
 
 
 class Schema(object):

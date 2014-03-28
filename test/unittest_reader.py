@@ -687,6 +687,57 @@ class ComputedSchemaTC(TestCase):
                          schema['Entity'].rdef('attr').formula)
         self.assertIsNone(schema['Entity'].rdef('oattr').formula)
 
+    def test_computed_attribute_perms(self):
+        class Entity(EntityType):
+            oattr = String()
+
+        class attr(RelationDefinition):
+            subject = 'Entity'
+            object = 'Int'
+            formula = 'Any Z WHERE X oattr Z'
+
+        schema = build_schema_from_namespace(vars().items())
+        self.assertEqual({'read':   ('managers', 'users', 'guests'),
+                          'update': (),
+                          'add': ()},
+                         schema['attr'].rdef('Entity', 'Int').permissions)
+
+    def test_cannot_set_addupdate_perms_on_computed_attribute(self):
+        class Entity(EntityType):
+            oattr = String()
+
+        class attr(RelationDefinition):
+            __permissions__ = {'read': ('managers', 'users', 'guests'),
+                               'add': ('hacker inside!', ),
+                               'update': ()}
+            subject = 'Entity'
+            object = 'Int'
+            formula = 'Any Z WHERE X oattr Z'
+
+        with self.assertRaises(BadSchemaDefinition) as cm:
+            schema = build_schema_from_namespace(vars().items())
+        self.assertEqual(
+            'Cannot set add/update permissions on computed attribute Entity.attr[Int]',
+            str(cm.exception))
+
+    def test_override_read_perms_on_computed_attribute(self):
+        class Entity(EntityType):
+            oattr = String()
+
+        class attr(RelationDefinition):
+            __permissions__ = {'read': ('clows', ),
+                               'add': (),
+                               'update': ()}
+            subject = 'Entity'
+            object = 'Int'
+            formula = 'Any Z WHERE X oattr Z'
+
+        schema = build_schema_from_namespace(vars().items())
+        self.assertEqual({'read':   ('clows', ),
+                          'update': (),
+                          'add': ()},
+                         schema['attr'].rdef('Entity', 'Int').permissions)
+
 
 if __name__ == '__main__':
     unittest_main()
