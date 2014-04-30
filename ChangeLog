@@ -1,0 +1,533 @@
+ChangeLog for yams
+------------------
+
+2014-03-28  --  0.39.1
+    * [schema] don't raise an error when some infered relation is overwritten
+     (#231956)
+
+    * [schema] stop checking constraints on the first failing constraint, in an
+     attempt to get the most appropriate error message (#202779)
+
+
+
+2014-01-09  --  0.39.0
+    * [schema] extend .rdef(...) with a parameter to silence the ambiguity
+      warning added in 0.38
+
+    * [schema] cleanup default values handling in entity schema (#109207)
+
+    * improve schema-diff feature from 0.37 (#174042)
+
+    * add package attribute on (etype, rtype, rdef) (#69392)
+
+    * [schema2sql] provide an index name computation function for unique
+      together constraints (#189299)
+
+    * an "add" permission on attributes
+
+
+
+2013-06-28  --  0.38.0
+    * [xy] fail assertion only if existing prefix is being changed (#139999)
+
+    * [schema] add a warning to avoid a potential silent bug if looking up an
+      rdef ambiguously
+
+    * [schema building] Fix key in context.defined for RelationDefinition
+      (#149660)
+
+
+
+2013-04-26  --  0.37.0
+    * add schema comparison utility (#112914)
+
+    * allow user defined base type (#124342)
+
+    * fix bug #135221
+
+
+
+2013-01-23  --  0.36.0
+    * don't translate validation error right away (#109550)
+
+    * fix relation definition inheritance (#115958)
+
+
+
+2012-03-08  --  0.35.0
+    * generic metadata attributes handling (#83813)
+
+    * fix debian packaging to be installable with python = 2.7 (#83759)
+
+    * take into account of inheritance relations in schema2dot (#88599)
+
+    * RichString is now a function
+
+    * final types are now explicitly created to please pylint
+
+
+
+2011-11-03  --  0.34.0
+    * fixed yams-view script
+
+    * sqldropscham2sql now takes a dbhelper as argument to handle db specificities
+
+    * dropped __hashmode__ hack
+
+    * enhanced error messages
+
+
+
+2011-06-09  --  0.33.0
+    * support BigInt
+
+    * refactored reader
+
+    * enhanced constraint error message
+
+
+
+2011-04-01  --  0.32.0
+    * support TZDatetime and TZTime
+
+
+
+2011-18-02  --  0.31.0
+    * new `skiprels` argument to EntitySchema.is_subjobject
+
+    * started a `serialize` module to serialize a yams schema as OWL
+
+    * fix py2.4 syntax error
+
+
+
+2011-01-17  --  0.30.3
+    * various packaging fixes
+
+
+
+2010-09-23  --  0.30.1
+    * updated to logilab.database 1.3.0 api
+
+
+
+2010-09-10  --  0.30.0
+    * fix [de]serialization bug of vocabulary constraints in case
+      where some vocabulary value contains a comma followed by a space
+
+    * support for __unique_together__ on EntityType to declare some
+      unique constraint on multiple attributes / relations (relations
+      should be inlined on the entity to which the constraint apply)
+
+
+
+2010-06-21  --  0.29.1
+    * not use a hardcoded datatype for string colums with a max length (closes
+      #35380). When a dbhelper provides a SizeConstrainedString entry in the
+      TYPE_MAPPING dictionary, use it, otherwise default to varchar(%s).
+
+    * avoid spurious warnings in functions defined in schema modules and called
+      after that module loading by another schema module (stop removing stuff from
+      module's globals...)
+
+    * xy: switch register_prefix argument
+
+
+
+2010-04-26  --  0.29.0
+    * setuptools compat
+
+    * nicer error messages on constraint failure
+
+    * rename BoundConstraint to BoundaryConstraint
+
+    * deprecate ObjectRelation and BothWayRelation
+
+
+
+2010-03-26  --  0.28.1
+    * EntitySchema.check() accepts an explicit set of relations to check
+
+    * provides a new role_name function to generate qualified name to put
+      in validation errors
+
+
+
+2010-02-26  --  0.28.0
+    * proper attribute permissions: should now use 'update' instead of 'add'/'delete'
+
+
+
+2010-02-10  --  0.27.0
+    * symetric respelled to symmetric
+
+    * permissions renamed __permissions__ in schema python files
+
+    * permissions are now handled by relation definition, no more
+      by the relation type
+
+    * introduce (finally) RelationDefinition objects into schema
+      instead of simple rproperties on the relation type. Update
+      the api consequently.
+
+
+
+2010-01-28  --  0.26.0
+    * #19467 add post_build_callback support
+
+
+
+2010-01-12  --  0.25.1
+    * Small improvement of error message
+
+    * Allow the use of add_relation on a declaration defined in the same file
+
+    * Fix a bug when multiple reference to the same declaration exist
+
+
+
+2009-10-21  --  0.25.0
+    * api cleanup
+
+    * optimization
+
+    * fix Interval support
+
+
+
+2009-10-07  --  0.24.4
+    * support new 'name' metadata (for e.g. files)
+
+    * remove deprecation warning on bound constraint: it is actually valuable
+      when only one boundary or when boundary inclusion/exclusion has to be
+      specified
+
+
+
+2009-09-01  --  0.24.2
+    * check for duplicated relation type
+
+    * when a relation type is explicitly defined in a schema, it should takes
+      precedence other those infered from relation def
+
+
+
+2009-08-31  --  0.24.1
+    * schema inheritance fixes
+
+    * fix schema import pb
+
+
+
+2009-08-07  --  0.24.0
+    * new Attribute, NOW and TODAY classes to handle more complex (interval
+      bound) constraints
+
+    * new owl2yams script
+
+    * added RichString base type
+
+    * maxsize / vocabulary constraint consistency
+
+
+
+2009-06-03  --  0.23.0
+    * stop setting default values in underlying sql schema
+
+
+
+2009-05-04  --  0.22.0
+    * new is_metadata method on entity schema
+
+    * refactoring of default groups assignment so we can get back default groups.
+
+
+
+2009-04-06  --  0.21.0
+    * py datetime support (must be explicitly activated until we drop mx.DateTime support) #8435
+
+    * new construction_mode argument to load() which allow to silently ignore some error #8439
+
+    * new has_metadata and meta_attributes methods on entity schema dealing with
+      attributes which are describing another attribute
+
+    * has_[subject|object]_relation now return the associated relation schema or None
+
+
+
+2008-12-09  --  0.20.2
+    * add a strict argument to ESchema.is_subobject to return True only if the
+      entity can't live outside another one
+
+
+
+2008-09-24  --  0.20.0
+    * support for inheritance
+
+
+
+2008-08-07  --  0.19.0
+    * add attributs to dots view
+
+    * new Decimal Final
+
+
+
+2008-05-08  --  0.18.0
+    * support for gae/django dbmodel
+
+    * change some definitions in yams.interfaces
+
+    * improve documentation and error messages
+
+    * various bugfixes
+
+
+
+2008-03-26  --  0.17.0
+    * support for entities whose fulltext content should be indexed on a related
+      entity, using new fulltext_container attribute on RelationSchema instance
+      and new fulltext_relations and fulltext_containers methods on EntitySchema
+
+    * backported subjrproperty/objrproperty ESchema methods
+
+    * new has_[subject|object]_relation methods on ESchema
+
+
+
+2008-03-05  --  0.16.1
+    * fix a bug in entity validation : should convert value to the correct
+      python type before checking constraints
+
+
+
+2008-02-15  --  0.16.0
+    * nicer schema image view
+
+    * more methods to alter existing schema definition
+
+    * store string instead of schema types in the errors dict to be able to
+      serialize them
+
+    * eschema.check() now take an optional translation function as argument
+
+
+
+2008-02-05  --  0.15.0
+    * heavy refactoring of the schema building process
+
+    * rename rproperty_keys to iter_rdef, new has_rdef method
+
+    * use dbhelper to generate index sql
+
+    * don't use ordered_relation when it's not necessary
+
+    * removed deprecated code
+
+    * fix a bug on deletion of symetric relation definition
+
+
+
+2007-10-29  --  0.14.0
+    * schema building refactoring to read schema from a bunch of directories
+
+    * drop .perms file support
+
+
+
+2007-08-13  --  0.13.0
+    * new RegexpBasedConstraint
+
+    * new schema.rename_entity_type method
+
+    * api on EntityType to modify an existant type (add_relation,
+      remove_relation, extend)
+
+    * some other refactoring to ease schema modification (set_vocabulary)
+
+    * user.matching_groups replace user.in_groups
+
+
+
+2007-06-25  --  0.12.0
+    * IntervalBoundConstraint replaces BoundConstraint
+
+    * new import_erschema method available in schema definition files
+
+
+
+2007-06-04  --  0.11.0
+    * introduced Interval
+
+    * dropped the schema_view module
+
+    * new has_unique_values method on EntitySchema instance checking if a
+      subject relation should be unique
+
+    * improved required attributes' checks
+
+
+
+2007-05-14  --  0.10.0
+    * automatically sets maxsize only for String attributes (fix #3272)
+
+    * #3272: crash when some static vocabulary specified on a non String
+      attribute
+
+    * #3465: BoundConstraint is not usable
+
+
+
+2006-12-06  --  0.9.3
+    * fix _ to unicode so we can have unicode description in schema file
+
+    * automatically sets maxsize when some vocabulary is defined
+
+
+
+2006-11-14  --  0.9.2
+    * new "includefinal" optional argument to ESchema.relation_definitions
+
+
+
+2006-11-14  --  0.9.1
+    * fix (well, hack) pickling problem
+
+
+
+2006-10-27  --  0.9.0
+    * implements __cmp__ and __hash__ on entity and relation schemas to
+      make them comparable to their equivalent type (eg string representation)
+
+    * major api and implementation cleanup thanks to this change
+
+    * deprecate schema_view module
+
+    * test fixes
+
+    * (almost) backward compatible with proper warnings when necessary
+
+    * new .type() method on constraints
+
+    * moved some code of schema2dot into logilab-common
+
+
+
+2006-10-08  --  0.8.0
+    * new RestrictedEntityType base class and new maxsize, vocabulary and unique
+      parameters on relation definition to ease schema construction
+
+    * schema2dot nicely refactored but schema_view'll probably be deprecated soon
+
+    * fix schema reading to correctly handle raw RelationDefinition classes
+
+
+
+2006-09-22  --  0.7.0
+    * fix a major bug in entity validation
+
+    * refactor RelationFileReader to ease customization
+
+
+
+2006-09-11  --  0.6.1
+    * consider meta when a relation type is implicitly created
+
+
+
+2006-09-05  --  0.6.0
+    * improved schema definition
+
+    * support for comments (lines beginning with a #) in Include file
+
+    * new internal dictionary to ease definition of non final relation
+      properties
+
+
+
+2006-07-13  --  0.5.3
+    * enhance schema validation (focus on attributes only)
+
+    * check password value is an encoded string
+
+
+
+2006-06-08  --  0.5.2
+    * fix eschema.default method to deal with boolean default values stored as string
+
+
+
+2006-04-27  --  0.4.3
+    * some fixes related to dynamic schema modification
+
+
+
+2006-04-10  --  0.4.2
+    * fixed a bug when wildcard are used as subject and object of a
+      relation definition
+
+    * fixed default permissions for user entities
+
+
+
+2006-03-31  --  0.4.1
+    * finish api changes, ("final") refactoring
+
+    * cleanup
+
+
+
+2006-03-29  --  0.4.0
+    * major api changes
+
+
+
+2006-03-14  --  0.3.3
+    * // in schema definition files may be used to indicate a deprecated
+      attribute
+
+    * control which entities are considered by wildcarded relations refinition
+      using a variable on the relations file reader
+
+
+
+2006-02-24  --  0.3.2
+    * let subject_types and object_types rschema methods raise a KeyError if a
+      type is specified but not found for the relation (as it was documented)
+
+
+
+2006-01-25  --  0.3.1
+    * new function in schema2sql to give grants to a user
+
+
+
+2005-07-29  --  0.3.0
+    * support for a new 'inline' property on relation
+
+    * don't check for type differences for same relation names
+
+
+
+2005-07-25  --  0.2.0
+    * conditional drop into sql schema
+
+    * support for schema displaying using dot (graphviz)
+
+
+
+2005-07-07  --  0.1.2
+    * fixed bug with association types of symetric relation
+
+
+
+2005-06-24  --  0.1.1
+    * mini-modification for external use
+
+
+
+2004-11-01  --  0.1.0
+    * creation of changelog
+
+
+
