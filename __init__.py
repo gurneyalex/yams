@@ -49,6 +49,10 @@ DEFAULT_RELPERMS = {'read': ('managers', 'users', 'guests',),
 DEFAULT_ATTRPERMS = {'read': ('managers', 'users', 'guests',),
                      'add': ('managers', 'users'),
                      'update': ('managers', 'owners')}
+DEFAULT_COMPUTED_RELPERMS = {'read': ('managers', 'users', 'guests',),
+                             'delete': (),
+                             'add': ()}
+
 
 # This provides a way to specify callable objects as default values
 # First level is the final type, second is the keyword to callable map

@@ -31,7 +31,8 @@ from logilab.common.interface import implements
 
 import yams
 from yams import (BASE_TYPES, MARKER, ValidationError, BadSchemaDefinition,
-                  KNOWN_METAATTRIBUTES, convert_default_value, DEFAULT_ATTRPERMS)
+                  KNOWN_METAATTRIBUTES, convert_default_value, DEFAULT_ATTRPERMS,
+                  DEFAULT_COMPUTED_RELPERMS)
 from yams.interfaces import (ISchema, IRelationSchema, IEntitySchema,
                              IVocabularyConstraint)
 from yams.constraints import BASE_CHECKERS, BASE_CONVERTERS, UniqueConstraint
@@ -593,6 +594,8 @@ class RelationSchema(ERSchema):
     rule = None
     # if this relation is an attribute relation
     final = False
+    permissions = None # only when rule is not None, for later propagation to
+                       # computed relation definitions
 
     def __init__(self, schema=None, rdef=None, **kwargs):
         if rdef is not None:
@@ -626,7 +629,12 @@ class RelationSchema(ERSchema):
         for attr in ('inlined', 'symmetric', 'fulltext_container'):
             if getattr(rdef, attr, MARKER) is not MARKER:
                 raise BadSchemaDefinition("Computed relation has no %s attribute" % attr)
+        if rdef.__permissions__ is MARKER:
+            permissions = DEFAULT_COMPUTED_RELPERMS
+        else:
+            permissions = rdef.__permissions__
         self.rule = rdef.rule
+        self.permissions = permissions
 
     def __repr__(self):
         return '<%s [%s]>' % (self.type,
@@ -818,7 +826,11 @@ class RelationSchema(ERSchema):
         """check permissions are correctly defined"""
         for rdef in self.rdefs.itervalues():
             rdef.check_permission_definitions()
-
+        if self.rule and (self.permissions.get('add')
+                          or self.permissions.get('delete')):
+            raise BadSchemaDefinition(
+                'Cannot set add/delete permissions on computed relation %s'
+                % self.type)
 
 
 class RelationDefinitionSchema(PermissionMixIn):

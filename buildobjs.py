@@ -613,6 +613,8 @@ class RelationType(Definition):
 
 
 class ComputedRelation(RelationType):
+    __permissions__ = MARKER
+
     def __init__(self, name=None, rule=None, **kwargs):
         if rule is not None:
             self.rule = rule
