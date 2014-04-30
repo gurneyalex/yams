@@ -367,6 +367,7 @@ class StaticVocabularyConstraint(BaseConstraint):
 class FormatConstraint(StaticVocabularyConstraint):
 
     regular_formats = (_('text/rest'),
+                       _('text/markdown'),
                        _('text/html'),
                        _('text/plain'),
                        )
