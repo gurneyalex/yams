@@ -592,10 +592,13 @@ class ComputedSchemaTC(TestCase):
             object  = 'Societe'
 
         class est_paye_par(ComputedRelation):
+            __permissions__ = {'read': ('managers', 'users')}
             rule  = ('S travaille O')
 
         schema = build_schema_from_namespace(vars().items())
         self.assertEqual('S travaille O', schema['est_paye_par'].rule)
+        self.assertEqual({'read': ('managers', 'users')},
+                         schema['est_paye_par'].permissions)
 
     def test_no_rdef_from_computedrelation(self):
         class Personne(EntityType):
@@ -636,6 +639,29 @@ class ComputedSchemaTC(TestCase):
             schema = build_schema_from_namespace(vars().items())
         self.assertEqual("Computed relation has no inlined attribute",
                          str(cm.exception))
+
+    def test_invalid_permissions_in_computedrelation(self):
+        class Societe(EntityType):
+            name = String()
+
+        class Employe(EntityType):
+            name = String()
+
+        class travaille(RelationDefinition):
+            subject = 'Employe'
+            object  = 'Societe'
+
+        class est_paye_par(ComputedRelation):
+            __permissions__ = {'read': ('managers', 'users', 'guests'),
+                               'add': ('hacker inside!', ),
+                               'delete': ()}
+            rule  = ('S travaille O')
+
+        with self.assertRaises(BadSchemaDefinition) as cm:
+            schema = build_schema_from_namespace(vars().items())
+        self.assertEqual(
+            'Cannot set add/delete permissions on computed relation est_paye_par',
+            str(cm.exception))
 
 
 if __name__ == '__main__':
