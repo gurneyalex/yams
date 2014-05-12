@@ -28,7 +28,8 @@ from logilab.common import attrdict
 from logilab.common.decorators import iclassmethod
 
 from yams import (BASE_TYPES, MARKER, BadSchemaDefinition, KNOWN_METAATTRIBUTES,
-                  DEFAULT_RELPERMS, DEFAULT_ATTRPERMS, DEFAULT_COMPUTED_ATTRPERMS)
+                  DEFAULT_ETYPEPERMS, DEFAULT_RELPERMS, DEFAULT_ATTRPERMS,
+                  DEFAULT_COMPUTED_ATTRPERMS)
 from yams.constraints import (SizeConstraint, UniqueConstraint,
                               StaticVocabularyConstraint, FORMAT_CONSTRAINT)
 from yams.schema import RelationDefinitionSchema
@@ -114,7 +115,6 @@ def register_base_types(schema):
     for etype in BASE_TYPES:
         edef = EntityType(name=etype)
         schema.add_entity_type(edef)
-
 
 
 # first class schema definition objects #######################################
@@ -421,12 +421,7 @@ class EntityType(Definition):
     #:  .. automethod:: EntityType.get_relation
     #:  .. automethod:: EntityType.get_relations
 
-    __permissions__ = {
-        'read': ('managers', 'users', 'guests',),
-        'update': ('managers', 'owners',),
-        'delete': ('managers', 'owners'),
-        'add': ('managers', 'users',)
-        }
+    __permissions__ = DEFAULT_ETYPEPERMS
 
     def __init__(self, name=None, **kwargs):
         super(EntityType, self).__init__(name)

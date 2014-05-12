@@ -44,7 +44,11 @@ BASE_TYPES = set(('String', 'Password', 'Bytes',
 # base groups used in permissions
 BASE_GROUPS = set((_('managers'), _('users'), _('guests'), _('owners')))
 
-# default permissions for relations and attributes
+# default permissions for entity types, relations and attributes
+DEFAULT_ETYPEPERMS = {'read': ('managers', 'users', 'guests',),
+                      'update': ('managers', 'owners',),
+                      'delete': ('managers', 'owners'),
+                      'add': ('managers', 'users',)}
 DEFAULT_RELPERMS = {'read': ('managers', 'users', 'guests',),
                     'delete': ('managers', 'users'),
                     'add': ('managers', 'users',)}
