@@ -30,7 +30,7 @@ def check_schema():
     dirnames = config.load_command_line_configuration()
     if not dirnames:
         print >> sys.stderr, config.help()
-        return return_code
+        return 2
     for dir in dirnames:
         assert exists(dir), dir
     try:
