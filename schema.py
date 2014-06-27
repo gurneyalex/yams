@@ -1145,7 +1145,7 @@ class Schema(object):
                 continue
             for (subject, object), rdef in rschema.rdefs.items():
                 if rdef.infered:
-                    self.del_relation_def(subject, rschema, object)
+                    rschema.del_relation_def(subject, object)
 
     def rebuild_infered_relations(self):
         """remove any infered definitions and rebuild them"""
