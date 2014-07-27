@@ -33,9 +33,9 @@ DOT_SOURCE = r'''digraph "toto" {
 rankdir=BT
 ratio=compress
 charset="utf-8"
-splines=true
 overlap=false
 sep=0.2
+splines=true
 "Person" [fontname="Courier", label="{Person|nom\lprenom\lsexe\lpromo\ltitre\ladel\lass\lweb\ltel\lfax\ldatenaiss\ltest\lsalary\l}", shape="record", style="filled"];
 "Salaried" [fontname="Courier", label="{Salaried|nom\lprenom\lsexe\lpromo\ltitre\ladel\lass\lweb\ltel\lfax\ldatenaiss\ltest\lsalary\l}", shape="record", style="filled"];
 "Societe" [fontname="Courier", label="{Societe|nom\lweb\ltel\lfax\lrncs\lad1\lad2\lad3\lcp\lville\l}", shape="record", style="filled"];
