@@ -50,7 +50,7 @@ class SchemaLoaderTC(TestCase):
     # test load_schema read entity and relation types #######################
 
     def test_load_schema(self):
-        self.assert_(isinstance(SCHEMA, Schema))
+        self.assertIsInstance(SCHEMA, Schema)
         self.assertEqual(SCHEMA.name, 'NoName')
         self.assertListEqual(sorted(SCHEMA.entities()),
                               ['Affaire', 'BigInt', 'Boolean', 'Bytes', 'Company',
@@ -107,21 +107,21 @@ class SchemaLoaderTC(TestCase):
 
     def test_indexed(self):
         eschema = SCHEMA.eschema('Person')
-        self.assert_(not eschema.rdef('nom').indexed)
+        self.assertFalse(eschema.rdef('nom').indexed)
         eschema = SCHEMA.eschema('State')
-        self.assert_(eschema.rdef('name').indexed)
+        self.assertTrue(eschema.rdef('name').indexed)
 
     def test_uid(self):
         eschema = SCHEMA.eschema('State')
-        self.assert_(eschema.rdef('eid').uid)
-        self.assert_(not eschema.rdef('name').uid)
+        self.assertTrue(eschema.rdef('eid').uid)
+        self.assertFalse(eschema.rdef('name').uid)
 
     def test_fulltextindexed(self):
         eschema = SCHEMA.eschema('Person')
         self.assertRaises(AttributeError, getattr, eschema.rdef('tel'), 'fulltextindexed') # tel is an INT
-        self.assert_(eschema.rdef('nom').fulltextindexed)
-        self.assert_(eschema.rdef('prenom').fulltextindexed)
-        self.assert_(not eschema.rdef('sexe').fulltextindexed)
+        self.assertTrue(eschema.rdef('nom').fulltextindexed)
+        self.assertTrue(eschema.rdef('prenom').fulltextindexed)
+        self.assertFalse(eschema.rdef('sexe').fulltextindexed)
         indexable = sorted(eschema.indexable_attributes())
         self.assertEqual(['nom', 'prenom', 'titre'], indexable)
         self.assertEqual(SCHEMA.rschema('works_for').fulltext_container, None)
@@ -144,11 +144,11 @@ class SchemaLoaderTC(TestCase):
 
     def test_internationalizable(self):
         eschema = SCHEMA.eschema('Eetype')
-        self.assert_(eschema.rdef('name').internationalizable)
+        self.assertTrue(eschema.rdef('name').internationalizable)
         eschema = SCHEMA.eschema('State')
-        self.assert_(eschema.rdef('name').internationalizable)
+        self.assertTrue(eschema.rdef('name').internationalizable)
         eschema = SCHEMA.eschema('Societe')
-        self.assert_(not eschema.rdef('ad1').internationalizable)
+        self.assertFalse(eschema.rdef('ad1').internationalizable)
 
     # test advanced entity type's subject relation properties #################
 
@@ -574,9 +574,9 @@ class BuildSchemaTC(TestCase):
 
         schema = build_schema_from_namespace(vars().items())
         entities = [x for x in schema.entities() if not x.final]
-        self.assertItemsEqual(['Form', 'Question'], entities)
+        self.assertCountEqual(['Form', 'Question'], entities)
         relations = [x for x in schema.relations() if not x.final]
-        self.assertItemsEqual(['in_form'], relations)
+        self.assertCountEqual(['in_form'], relations)
 
 if __name__ == '__main__':
     unittest_main()

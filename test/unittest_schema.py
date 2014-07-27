@@ -170,7 +170,7 @@ RELATIONS_GOOD_VALUES = {
 class EntitySchemaTC(BaseSchemaTC):
 
     def test_base(self):
-        self.assert_(repr(eperson))
+        self.assertTrue(repr(eperson))
 
     def test_cmp(self):
         self.assertTrue(eperson == 'Person')
@@ -343,7 +343,7 @@ class RelationSchemaTC(BaseSchemaTC):
 
 
     def test_base(self):
-        self.assert_(repr(rnom))
+        self.assertTrue(repr(rnom))
 
     def test_star_types(self):
         types = sorted(rconcerne.subjects())
@@ -506,15 +506,15 @@ class SchemaTC(BaseSchemaTC):
         affaire = schema.eschema('Affaire')
         orig_rprops = affaire.rdef('concerne')
         schema.rename_entity_type('Affaire', 'Workcase')
-        self.assertItemsEqual(schema._entities.keys(),
+        self.assertCountEqual(schema._entities.keys(),
                              ['BigInt', 'Boolean', 'Bytes', 'Date', 'Datetime', 'Float',
                               'Decimal',
                               'Int', 'Interval', 'Note', 'Password', 'Person',
                               'Societe', 'String', 'Time', 'TZDatetime', 'TZTime',
                               'Workcase'])
         rconcerne = schema.rschema('concerne')
-        self.assertItemsEqual(rconcerne.subjects(), ['Workcase', 'Person'])
-        self.assertItemsEqual(rconcerne.objects(), ['Workcase', 'Societe'])
+        self.assertCountEqual(rconcerne.subjects(), ['Workcase', 'Person'])
+        self.assertCountEqual(rconcerne.objects(), ['Workcase', 'Societe'])
         self.assertRaises(KeyError, schema.eschema, 'Affaire')
         workcase = schema.eschema('Workcase')
         schema.__test__ = True
