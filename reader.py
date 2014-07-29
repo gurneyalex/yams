@@ -123,7 +123,7 @@ class SchemaLoader(object):
                 fill_schema(schema, self.defined, register_base_types,
                             remove_unused_rtypes=remove_unused_rtypes,
                             post_build_callbacks=self.post_build_callbacks)
-            except Exception, ex:
+            except Exception as ex:
                 if not hasattr(ex, 'schema_files'):
                     ex.schema_files = self.loaded_files
                 raise ex, None, sys.exc_info()[-1]

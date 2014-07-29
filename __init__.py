@@ -81,7 +81,7 @@ def convert_default_value(rdef, default):
                           DeprecationWarning)
             try:
                 return DATE_FACTORY_MAP[rdef.object](default)
-            except ValueError, verr:
+            except ValueError as verr:
                 raise ValueError('creating a default value for attribute %s of type %s '
                                  'from the string %r is not supported (cause %s)'
                                  % (rtype, rdef.object, default, verr))
