@@ -255,7 +255,7 @@ class EntitySchemaTC(BaseSchemaTC):
 
     def test_defaults(self):
         self.assertEqual(list(eperson.defaults()), [])
-        self.assertRaises(StopIteration, estring.defaults().next)
+        self.assertRaises(StopIteration, next, estring.defaults())
 
     def test_vocabulary(self):
         #self.assertEqual(eperson.vocabulary('promo')

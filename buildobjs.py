@@ -728,7 +728,7 @@ class RelationDefinition(Definition):
             self.constraints = ()
         rschema = schema.rschema(name)
         if self.__permissions__ is MARKER:
-            final = iter(_actual_types(schema, self.object)).next() in BASE_TYPES
+            final = next(iter(_actual_types(schema, self.object))) in BASE_TYPES
             permissions = rtype.get_permissions(final)
         else:
             permissions = self.__permissions__
