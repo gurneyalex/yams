@@ -140,7 +140,7 @@ class FullSchemaVisitor(SchemaVisitor):
         for rschema in sorted(self.schema.relations(), key=lambda x: x.type):
             if not self.should_display_schema(rschema):
                 continue
-            for setype, tetype in sorted(rschema.rdefs, key=lambda (s, o): (s.type, o.type)):
+            for setype, tetype in sorted(rschema.rdefs, key=lambda x: (x[0].type, x[1].type)):
                 if not (setype in self._eindex and tetype in self._eindex):
                     continue
                 if not self.display_rel(rschema, setype, tetype):
