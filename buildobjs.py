@@ -207,7 +207,7 @@ class ObjectRelation(object):
                  DeprecationWarning, stacklevel=3)
         try:
             _check_kwargs(kwargs, _REL_PROPERTIES())
-        except BadSchemaDefinition, bad:
+        except BadSchemaDefinition as bad:
             # XXX (auc) bad field name + required attribute can lead there instead of schema.py ~ 920
             bsd_ex = BadSchemaDefinition(('%s in relation to entity %r (also is %r defined ? (check two '
                                           'lines above in the backtrace))') % (bad.args, etype, etype))

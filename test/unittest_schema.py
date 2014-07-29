@@ -109,7 +109,7 @@ class BaseSchemaTC(TestCase):
         self.assertRaises(ex_class, func, *args, **kwargs)
         try:
             func(*args, **kwargs)
-        except Exception, ex:
+        except Exception as ex:
             self.assertEqual(str(ex), msg)
 
 # test data ###################################################################
