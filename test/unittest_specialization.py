@@ -127,7 +127,7 @@ class SpecializationTC(TestCase):
         for subjobj in krschema.rdefs:
             subject, object = subjobj
             done.add(subjobj)
-            self.assertTrue(subjobj in expected)
+            self.assertIn(subjobj, expected)
             self.assertEqual(krschema.rdef(subject, object).infered,
                               expected[subjobj])
         self.assertEqual(len(set(expected) - done), 0, 'missing %s' % (set(expected) - done))
@@ -144,7 +144,7 @@ class SpecializationTC(TestCase):
         for subjobj in wrschema.rdefs:
             subject, object = subjobj
             done.add(subjobj)
-            self.assertTrue(subjobj in expected)
+            self.assertIn(subjobj, expected)
             self.assertEqual(wrschema.rdef(subject, object).infered,
                               expected[subjobj])
         self.assertEqual(len(set(expected) - done), 0, 'missing %s' % (set(expected) - done))
@@ -169,7 +169,7 @@ class SpecializationTC(TestCase):
         for subjobj in krschema.rdefs:
             subject, object = subjobj
             done.add(subjobj)
-            self.assertTrue(subjobj in expected)
+            self.assertIn(subjobj, expected)
             self.assertEqual(krschema.rdef(subject, object).infered,
                               expected[subjobj])
         self.assertEqual(len(set(expected) - done), 0, 'missing %s' % (set(expected) - done))
