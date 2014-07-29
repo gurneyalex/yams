@@ -228,7 +228,7 @@ def schema2descr(schema, permissionshandler, ignore=()):
 def schema2file(schema, output, permissionshandler, ignore=()):
     """Save schema description of schema find
     in directory schema_dir into output file"""
-    with open(output, 'wb') as description_file:
+    with open(output, 'w') as description_file:
         description_file.write(schema2descr(schema, permissionshandler, ignore))
 
 def schema_diff(schema1, schema2, permissionshandler=nullhandler, diff_tool=None, ignore=()):
