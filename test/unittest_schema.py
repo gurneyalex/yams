@@ -491,10 +491,10 @@ class SchemaTC(BaseSchemaTC):
         """schema should be pickeable"""
         import pickle
         picklefile = mktemp()
-        picklestream = open(picklefile, 'w')
+        picklestream = open(picklefile, 'wb')
         pickle.dump(schema, picklestream)
         picklestream.close()
-        pschema = pickle.load(open(picklefile))
+        pschema = pickle.load(open(picklefile, 'rb'))
         self.assertFalse(eperson is pschema['Person'])
         self.assertEqual(eperson, pschema['Person'])
         self.assertEqual('Person', pschema['Person'])
