@@ -35,8 +35,9 @@ class SchemaDotPropsHandler(object):
     def __init__(self, visitor):
         self.visitor = visitor
         # FIXME: colors are arbitrary
-        self.nextcolor = cycle( ('#aa0000', '#00aa00', '#0000aa',
-                                 '#000000', '#888888') ).next
+        self._colors = cycle( ('#aa0000', '#00aa00', '#0000aa',
+                                 '#000000', '#888888') )
+        self.nextcolor = lambda: next(self._colors)
 
     def node_properties(self, eschema):
         """return default DOT drawing options for an entity schema"""

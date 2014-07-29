@@ -347,7 +347,7 @@ class StaticVocabularyConstraint(BaseConstraint):
     def serialize(self):
         """serialize possible values as a csv list of evaluable strings"""
         try:
-            sample = iter(self.vocabulary()).next()
+            sample = next(iter(self.vocabulary()))
         except:
             sample = unicode()
         if not isinstance(sample, basestring):
