@@ -18,6 +18,7 @@
 """Write a schema as a dot file.
 
 """
+from __future__ import print_function
 __docformat__ = "restructuredtext en"
 
 import sys, os
@@ -226,7 +227,7 @@ def run():
     try:
         schema_dir = sys.argv[1]
     except IndexError:
-        print "USAGE: schema2dot SCHEMA_DIR [OUTPUT FILE]"
+        print("USAGE: schema2dot SCHEMA_DIR [OUTPUT FILE]")
         sys.exit(1)
     if len(sys.argv) > 2:
         outputfile = sys.argv[2]
