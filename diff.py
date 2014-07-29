@@ -20,6 +20,7 @@
 Textual representation of schema are created and standard diff algorithm are
 applied.
 """
+from __future__ import print_function
 
 import subprocess
 import tempfile
@@ -101,7 +102,7 @@ def format_constraint(cstr):
     elif 'Boundary' in cclass:
         return '%s(%s %s)' % (cclass, quoted(cstr.operator), str(cstr.boundary))
     else:
-        print 'formatter: unhandled constraint type', cstr.__class__
+        print('formatter: unhandled constraint type', cstr.__class__)
         return str(cstr)
     return ''.join(out)
 
@@ -244,8 +245,8 @@ def schema_diff(schema1, schema2, permissionshandler=nullhandler, diff_tool=None
                            output1, output2)
         process = subprocess.Popen(cmd, shell=True)
     else:
-        print "description files save in %s and %s" % (output1, output2)
-    print output1, output2
+        print("description files save in %s and %s" % (output1, output2))
+    print(output1, output2)
     return output1, output2
 
 if __name__ == "__main__":
@@ -268,6 +269,6 @@ if __name__ == "__main__":
                                output1, output2)
             process = subprocess.Popen(cmd, shell=True)
         else:
-            print "description files save in %s and %s" % (output1, output2)
+            print("description files save in %s and %s" % (output1, output2))
     else:
         parser.error("An input file name must be specified")
