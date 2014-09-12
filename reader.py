@@ -285,14 +285,17 @@ class SchemaLoader(object):
 PyFileReader = SchemaLoader
 PyFileReader.__init__ = lambda *x: None
 
-def build_schema_from_namespace(items):
+def fill_schema_from_namespace(schema, items, **kwargs):
     erdefs = {}
     for name, obj in items:
         if (isinstance(obj, type) and issubclass(obj, buildobjs.Definition)
             and obj not in (buildobjs.Definition, buildobjs.RelationDefinition, buildobjs.EntityType)):
             obj.expand_type_definitions(erdefs)
+    fill_schema(schema, erdefs, **kwargs)
+
+def build_schema_from_namespace(items):
     schema = schemamod.Schema('noname')
-    fill_schema(schema, erdefs)
+    fill_schema_from_namespace(schema, items)
     return schema
 
 class _Context(object):
