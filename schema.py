@@ -31,7 +31,7 @@ from logilab.common.interface import implements
 
 import yams
 from yams import (BASE_TYPES, MARKER, ValidationError, BadSchemaDefinition,
-                  KNOWN_METAATTRIBUTES, convert_default_value)
+                  KNOWN_METAATTRIBUTES, convert_default_value, DEFAULT_ATTRPERMS)
 from yams.interfaces import (ISchema, IRelationSchema, IEntitySchema,
                              IVocabularyConstraint)
 from yams.constraints import BASE_CHECKERS, BASE_CONVERTERS, UniqueConstraint
@@ -890,7 +890,6 @@ class RelationDefinitionSchema(PermissionMixIn):
         * else copy the `update` rule for `add`
         """
         if not 'add' in self.permissions:
-            from yams.buildobjs import DEFAULT_ATTRPERMS
             if self.permissions['update'] == ():
                 defaultaddperms = DEFAULT_ATTRPERMS['add']
             else:
