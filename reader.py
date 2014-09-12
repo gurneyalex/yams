@@ -81,19 +81,19 @@ def fill_schema(schema, erdefs, register_base_types=True,
     # call 'post_build_callback' functions found in schema modules
     for cb in post_build_callbacks:
         cb(schema)
+    # Finalize schema
+    schema.finalize()
+    # set permissions on entities and relations
+    for erschema in schema.entities() + schema.relations():
+        erschema.check_permission_definitions()
+    # check unique together consistency
+    for eschema in schema.entities():
+        eschema.check_unique_together()
     # optionaly remove relation types without definitions
     if remove_unused_rtypes:
         for rschema in schema.relations():
             if not rschema.rdefs:
                 schema.del_relation_type(rschema)
-    # set permissions on entities and relations
-    for erschema in schema.entities() + schema.relations():
-        erschema.check_permission_definitions()
-    # Finalize schema
-    schema.finalize()
-    # check unique together consistency
-    for eschema in schema.entities():
-        eschema.check_unique_together()
     return schema
 
 
