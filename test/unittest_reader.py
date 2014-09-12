@@ -25,14 +25,13 @@ from datetime import datetime, date, time
 
 from logilab.common.testlib import TestCase, unittest_main
 
-from yams import BadSchemaDefinition
+from yams import BadSchemaDefinition, DEFAULT_RELPERMS, DEFAULT_ATTRPERMS
 from yams.schema import Schema
 from yams.reader import SchemaLoader, build_schema_from_namespace
 from yams.constraints import StaticVocabularyConstraint, SizeConstraint
 from yams.buildobjs import (EntityType, RelationType, RelationDefinition,
                             SubjectRelation, ComputedRelation,
-                            Int, String, Float, Datetime, Date, Boolean,
-                            DEFAULT_RELPERMS, DEFAULT_ATTRPERMS)
+                            Int, String, Float, Datetime, Date, Boolean)
 
 sys.path.insert(0, osp.dirname(__file__))
 

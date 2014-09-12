@@ -25,7 +25,8 @@ from copy import copy
 from logilab.common import attrdict
 from logilab.common.decorators import iclassmethod
 
-from yams import BASE_TYPES, MARKER, BadSchemaDefinition, KNOWN_METAATTRIBUTES
+from yams import (BASE_TYPES, MARKER, BadSchemaDefinition, KNOWN_METAATTRIBUTES,
+                  DEFAULT_RELPERMS, DEFAULT_ATTRPERMS)
 from yams.constraints import (SizeConstraint, UniqueConstraint,
                               StaticVocabularyConstraint, FORMAT_CONSTRAINT)
 from yams.schema import RelationDefinitionSchema
@@ -112,14 +113,6 @@ def register_base_types(schema):
         edef = EntityType(name=etype)
         schema.add_entity_type(edef)
 
-
-DEFAULT_RELPERMS = {'read': ('managers', 'users', 'guests',),
-                    'delete': ('managers', 'users'),
-                    'add': ('managers', 'users',)}
-
-DEFAULT_ATTRPERMS = {'read': ('managers', 'users', 'guests',),
-                     'add': ('managers', 'users'),
-                     'update': ('managers', 'owners')}
 
 
 # first class schema definition objects #######################################
