@@ -574,6 +574,7 @@ class RelationType(Definition):
     symmetric = MARKER
     inlined = MARKER
     fulltext_container = MARKER
+    rule = MARKER
 
     def __init__(self, name=None, **kwargs):
         """kwargs must have values in RTYPE_PROPERTIES"""
@@ -616,6 +617,13 @@ class RelationType(Definition):
                                       object=cls.object)
             _copy_attributes(cls, rdef, _RDEF_PROPERTIES())
             rdef._add_relations(defined, schema)
+
+
+class ComputedRelation(RelationType):
+    def __init__(self, name=None, rule=None, **kwargs):
+        if rule is not None:
+            self.rule = rule
+        super(ComputedRelation, self).__init__(name, **kwargs)
 
 
 class RelationDefinition(Definition):
@@ -727,6 +735,9 @@ class RelationDefinition(Definition):
         if not self.constraints:
             self.constraints = ()
         rschema = schema.rschema(name)
+        if rschema.rule:
+            raise BadSchemaDefinition(
+                'Cannot add relation definition on a computed relation')
         if self.__permissions__ is MARKER:
             final = next(iter(_actual_types(schema, self.object))) in BASE_TYPES
             permissions = rtype.get_permissions(final)

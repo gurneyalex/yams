@@ -41,7 +41,7 @@ def schema2sql(dbhelper, schema, skip_entities=(), skip_relations=(), prefix='')
         w(eschema2sql(dbhelper, eschema, skip_relations, prefix=prefix))
     for rtype in sorted(schema.relations()):
         rschema = schema.rschema(rtype)
-        if rschema.final or rschema.inlined:
+        if rschema.final or rschema.inlined or rschema.rule:
             continue
         w(rschema2sql(rschema))
     return '\n'.join(output)
@@ -196,8 +196,9 @@ CREATE INDEX %(table)s_to_idx ON %(table)s(eid_to);"""
 
 
 def rschema2sql(rschema):
+    assert not rschema.rule
     return _SQL_SCHEMA % {'table': '%s_relation' % rschema.type}
-
+    
 
 def droprschema2sql(rschema):
     """return sql to drop a relation type's table"""

@@ -30,7 +30,7 @@ from yams.schema import Schema
 from yams.reader import SchemaLoader, build_schema_from_namespace
 from yams.constraints import StaticVocabularyConstraint, SizeConstraint
 from yams.buildobjs import (EntityType, RelationType, RelationDefinition,
-                            SubjectRelation,
+                            SubjectRelation, ComputedRelation,
                             Int, String, Float, Datetime, Date, Boolean,
                             DEFAULT_RELPERMS, DEFAULT_ATTRPERMS)
 
@@ -578,7 +578,66 @@ class BuildSchemaTC(TestCase):
         relations = [x for x in schema.relations() if not x.final]
         self.assertCountEqual(['in_form'], relations)
 
+
+class ComputedSchemaTC(TestCase):
+
+    def test_computed_schema(self):
+        class Societe(EntityType):
+            name = String()
+
+        class Employe(EntityType):
+            name = String()
+
+        class travaille(RelationDefinition):
+            subject = 'Employe'
+            object  = 'Societe'
+
+        class est_paye_par(ComputedRelation):
+            rule  = ('S travaille O')
+
+        schema = build_schema_from_namespace(vars().items())
+        self.assertEqual('S travaille O', schema['est_paye_par'].rule)
+
+    def test_no_rdef_from_computedrelation(self):
+        class Personne(EntityType):
+            name = String()
+
+        class Mafieu(EntityType):
+            nickname = String()
+
+        class est_paye_par(ComputedRelation):
+            rule  = ('S travaille O')
+
+        class est_soudoye_par(RelationDefinition):
+            name = 'est_paye_par'
+            subject = 'Personne'
+            object  = 'Mafieu'
+
+        with self.assertRaises(BadSchemaDefinition) as cm:
+            schema = build_schema_from_namespace(vars().items())
+        self.assertEqual("Cannot add relation definition on a computed relation",
+                         str(cm.exception))
+
+    def test_invalid_attributes_in_computedrelation(self):
+        class Societe(EntityType):
+            name = String()
+
+        class Employe(EntityType):
+            name = String()
+
+        class travaille(RelationDefinition):
+            subject = 'Employe'
+            object  = 'Societe'
+
+        class est_paye_par(ComputedRelation):
+            rule  = ('S travaille O')
+            inlined = True
+
+        with self.assertRaises(BadSchemaDefinition) as cm:
+            schema = build_schema_from_namespace(vars().items())
+        self.assertEqual("Computed relation has no inlined attribute",
+                         str(cm.exception))
+
+
 if __name__ == '__main__':
     unittest_main()
-
-
