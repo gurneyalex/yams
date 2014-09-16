@@ -587,23 +587,46 @@ class RelationSchema(ERSchema):
     """
 
     __implements__ = IRelationSchema
+    symmetric = False
+    inlined = False
+    fulltext_container = None
+    rule = None
+    # if this relation is an attribute relation
+    final = False
 
     def __init__(self, schema=None, rdef=None, **kwargs):
         if rdef is not None:
-            # if this relation is symmetric/inlined
-            self.symmetric = bool(rdef.symmetric)
-            self.inlined = bool(rdef.inlined)
-            # if full text content of subject/object entity should be added
-            # to other side entity (the container)
-            self.fulltext_container = rdef.fulltext_container or None
-            # if this relation is an attribute relation
-            self.final = False
+            if rdef.rule:
+                self.init_computed_relation(rdef)
+            else:
+                self.init_relation(rdef)
             # mapping to subject/object with schema as key
             self._subj_schemas = {}
             self._obj_schemas = {}
             # relation properties
             self.rdefs = {}
         super(RelationSchema, self).__init__(schema, rdef, **kwargs)
+
+    def init_relation(self, rdef):
+        if rdef.rule is not MARKER:
+            raise BadSchemaDefinition("Relation has no rule attribute")
+        # if this relation is symmetric/inlined
+        self.symmetric = bool(rdef.symmetric)
+        self.inlined = bool(rdef.inlined)
+        # if full text content of subject/object entity should be added
+        # to other side entity (the container)
+        self.fulltext_container = rdef.fulltext_container or None
+
+    def init_computed_relation(self, rdef):
+        """computed relation are specific relation with only a rule attribute.
+
+        Reponsibility to infer associated relation definitions is left to client
+        code defining what's in rule (eg rql snippet in cubicweb).
+        """
+        for attr in ('inlined', 'symmetric', 'fulltext_container'):
+            if getattr(rdef, attr, MARKER) is not MARKER:
+                raise BadSchemaDefinition("Computed relation has no %s attribute" % attr)
+        self.rule = rdef.rule
 
     def __repr__(self):
         return '<%s [%s]>' % (self.type,
@@ -1016,7 +1039,6 @@ class Schema(object):
         self._entities[newname] = eschema
         # rebuild internal structures since eschema's hash value has changed
         self._rehash()
-
 
     def add_relation_type(self, rtypedef):
         rtype = rtypedef.name
