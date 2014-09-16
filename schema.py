@@ -591,8 +591,8 @@ class RelationSchema(ERSchema):
     def __init__(self, schema=None, rdef=None, **kwargs):
         if rdef is not None:
             # if this relation is symmetric/inlined
-            self.symmetric = rdef.symmetric or False
-            self.inlined = rdef.inlined or False
+            self.symmetric = bool(rdef.symmetric)
+            self.inlined = bool(rdef.inlined)
             # if full text content of subject/object entity should be added
             # to other side entity (the container)
             self.fulltext_container = rdef.fulltext_container or None
