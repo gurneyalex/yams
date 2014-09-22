@@ -12,7 +12,11 @@ XS-Python-Version: >= 2.6
 
 Package: python-yams
 Architecture: all
-Depends: ${python:Depends}, python-logilab-common (>= 0.55.2), python-logilab-database (>= 1.11)
+Depends:
+ ${python:Depends},
+ python-logilab-common (>= 0.55.2),
+ python-logilab-database (>= 1.11),
+ python-six (>= 1.4.0),
 Breaks: cubicweb-common (<< 3.20)
 Conflicts: python-yams (<= 0.5.2)
 XB-Python-Version: ${python:Versions}
