@@ -21,6 +21,8 @@ __docformat__ = "restructuredtext en"
 
 from hashlib import md5
 
+from six.moves import range
+
 from yams.constraints import SizeConstraint, UniqueConstraint
 
 # default are usually not handled at the sql level. If you want them, set
@@ -109,7 +111,7 @@ def eschema2sql(dbhelper, eschema, skip_relations=(), prefix=''):
     w('CREATE TABLE %s(' % (table))
     attrs = eschema_attrs(eschema, skip_relations)
     # XXX handle objectinline physical mode
-    for i in xrange(len(attrs)):
+    for i in range(len(attrs)):
         rschema, attrschema = attrs[i]
         if attrschema is not None:
             sqltype = aschema2sql(dbhelper, eschema, rschema, attrschema,
@@ -123,7 +125,7 @@ def eschema2sql(dbhelper, eschema, skip_relations=(), prefix=''):
             w(' %s%s %s,' % (prefix, rschema.type, sqltype))
     w(');')
     # create indexes
-    for i in xrange(len(attrs)):
+    for i in range(len(attrs)):
         rschema, attrschema = attrs[i]
         if attrschema is None or eschema.rdef(rschema).indexed:
             w(dbhelper.sql_create_index(table, prefix + rschema.type))
