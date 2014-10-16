@@ -57,7 +57,7 @@ def identity(x):
 
 def format_props(props, scope, ignore=()):
     out = []
-    for prop, val in sorted(props.iteritems()):
+    for prop, val in sorted(props.items()):
         if prop in ignore:
             continue
         out.append('\t' * scope.indentation +

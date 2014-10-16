@@ -64,7 +64,7 @@ def fill_schema(schema, erdefs, register_base_types=True,
     if register_base_types:
         buildobjs.register_base_types(schema)
     # relation definitions may appear multiple times
-    erdefs_vals = set(erdefs.itervalues())
+    erdefs_vals = set(erdefs.values())
     # register relation types and non final entity types
     for definition in erdefs_vals:
         if isinstance(definition, type):
