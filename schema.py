@@ -18,12 +18,13 @@
 """Classes to define generic Entities/Relations schemas."""
 
 __docformat__ = "restructuredtext en"
-_ = unicode
 
 import warnings
 from copy import deepcopy
 from decimal import Decimal
 from itertools import chain
+
+from six import text_type
 
 from logilab.common import attrdict
 from logilab.common.decorators import cached, clear_cache
@@ -36,6 +37,8 @@ from yams import (BASE_TYPES, MARKER, ValidationError, BadSchemaDefinition,
 from yams.interfaces import (ISchema, IRelationSchema, IEntitySchema,
                              IVocabularyConstraint)
 from yams.constraints import BASE_CHECKERS, BASE_CONVERTERS, UniqueConstraint
+
+_ = text_type
 
 def role_name(rtype, role):
     """function to use for qualifying attribute / relation in ValidationError
@@ -494,7 +497,7 @@ class EntitySchema(PermissionMixIn, ERSchema):
         if _ is not None:
             warnings.warn('[yams 0.36] _ argument is deprecated, remove it',
                           DeprecationWarning, stacklevel=2)
-        _ = unicode
+        _ = text_type
         errors = {}
         msgargs = {}
         i18nvalues = []
