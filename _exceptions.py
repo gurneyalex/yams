@@ -19,11 +19,14 @@
 
 __docformat__ = "restructuredtext en"
 
+import sys
+
 class SchemaError(Exception):
     """base class for schema exceptions"""
 
-    def __str__(self):
-        return unicode(self).encode('utf8')
+    if sys.version_info[0] < 3:
+        def __str__(self):
+            return unicode(self).encode('utf8')
 
 
 class UnknownType(SchemaError):
