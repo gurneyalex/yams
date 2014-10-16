@@ -22,7 +22,7 @@ __docformat__ = "restructuredtext en"
 from warnings import warn
 from copy import copy
 
-from six import add_metaclass
+from six import add_metaclass, string_types
 
 from logilab.common import attrdict
 from logilab.common.decorators import iclassmethod
@@ -760,7 +760,7 @@ def _actual_types(schema, etype):
         return _pow_etypes(schema)
     if isinstance(etype, (list, tuple)):
         return etype
-    if not isinstance(etype, basestring):
+    if not isinstance(etype, string_types):
         raise RuntimeError('Entity types must not be instances but strings '
                            'or list/tuples thereof. Ex. (bad, good) : '
                            'SubjectRelation(Foo), SubjectRelation("Foo"). '
