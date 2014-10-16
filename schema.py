@@ -101,8 +101,11 @@ class ERSchema(object):
         self.description = erdef.description or ''
         self.package = erdef.package
 
-    def __cmp__(self, other):
-        return cmp(self.type, getattr(other, 'type', other))
+    def __eq__(self, other):
+        return self.type == getattr(other, 'type', other)
+
+    def __lt__(self, other):
+        return self.type < getattr(other, 'type', other)
 
     def __hash__(self):
         try:
