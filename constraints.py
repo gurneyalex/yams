@@ -22,7 +22,6 @@ __docformat__ = "restructuredtext en"
 import re
 import decimal
 import operator
-from StringIO import StringIO
 
 from six import string_types, text_type, binary_type
 
@@ -473,7 +472,7 @@ def check_string(eschema, value):
 
 def check_password(eschema, value):
     """check value is an encoded string"""
-    return isinstance(value, (binary_type, StringIO))
+    return isinstance(value, binary_type)
 
 def check_int(eschema, value):
     """check value is an integer"""
