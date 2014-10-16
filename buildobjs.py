@@ -81,7 +81,7 @@ def _add_relation(relations, rdef, name=None, insertidx=None):
         insertidx = len(relations)
     relations.insert(insertidx, rdef)
     if getattr(rdef, 'metadata', {}):
-        for meta_name, value in rdef.metadata.iteritems():
+        for meta_name, value in rdef.metadata.items():
             assert meta_name in KNOWN_METAATTRIBUTES
             insertidx += 1 # insert meta after main
             meta_rel_name = '_'.join(((name or rdef.name), meta_name))
@@ -359,7 +359,7 @@ class metadefinition(autopackage):
         ### Move (any) relation from the class dict to __relations__ attribute
         rels = classdict.setdefault('__relations__', [])
         relations = dict((rdef.name, rdef) for rdef in rels)
-        for rname, rdef in classdict.items():
+        for rname, rdef in list(classdict.items()):
             if isinstance(rdef, ObjectRelation):
                 # relation's name **must** be removed from class namespace
                 # to avoid conflicts with instance's potential attributes
