@@ -26,6 +26,8 @@ import subprocess
 import tempfile
 import os
 
+from six import string_types, text_type
+
 from yams.constraints import (SizeConstraint,
                               UniqueConstraint,
                               StaticVocabularyConstraint)
@@ -33,7 +35,7 @@ from yams.reader import SchemaLoader
 
 
 def quoted(obj):
-    if isinstance(obj, basestring):
+    if isinstance(obj, string_types):
         # NOT repr, because .....
         # strings here turn out as unicode strings (from the repo side)
         # but are (mostly) really str in the schema.py source
@@ -85,7 +87,7 @@ def format_perms(perms, scope, isdefault):
                        ('\t' + '\t' * scope.indentation,
                         quoted(p),
                         format_tuple(format_expression(r)
-                                     if not isinstance(r, basestring) else quoted(r)
+                                     if not isinstance(r, string_types) else quoted(r)
                               for r in rule)))
     return ' {%s\n%s\n%s}' % (' # default perms' if isdefault else '',
                               ',\n'.join(out),
@@ -142,7 +144,7 @@ def properties_from(relation, permissionshandler=nullhandler):
                     ret['unique'] = True
                 elif isinstance(constraint, StaticVocabularyConstraint):
                     if relation.object.type == 'String':
-                        transform = unicode
+                        transform = text_type
                     else:
                         transform = identity
                     ret['vocabulary'] = [transform(x)
