@@ -22,9 +22,11 @@ __docformat__ = "restructuredtext en"
 import warnings
 from datetime import datetime, date, time
 
+from six import string_types, text_type
+from six.moves import builtins
+
 # XXX set _ builtin to unicode by default, should be overriden if necessary
-import __builtin__
-__builtin__._ = unicode
+builtins._ = text_type
 
 from logilab.common.date import strptime, strptime_time
 from logilab.common import nullobject
@@ -79,7 +81,7 @@ DATE_FACTORY_MAP = {
 def convert_default_value(rdef, default):
     # rdef can be either a yams.schema.RelationDefinitionSchema or a yams.buildobjs.RelationDefinition
     rtype = getattr(rdef, 'name', None) or rdef.rtype.type
-    if isinstance(default, basestring) and rdef.object != 'String':
+    if isinstance(default, string_types) and rdef.object != 'String':
         # real Strings can be anything, including things that look like keywords
         # for other base types
         if rdef.object in KEYWORD_MAP:
@@ -101,7 +103,7 @@ def convert_default_value(rdef, default):
                                  'from the string %r is not supported (cause %s)'
                                  % (rtype, rdef.object, default, verr))
     if rdef.object == 'String':
-        default = unicode(default)
+        default = text_type(default)
     return default # general case: untouched default
 
 
