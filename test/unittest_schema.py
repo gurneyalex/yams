@@ -218,8 +218,8 @@ class EntitySchemaTC(BaseSchemaTC):
         self.assertFalse(eperson is schema['Person'])
         self.assertEqual(eperson, schema['Person'])
         self.assertEqual('Person', schema['Person'])
-        self.assertEqual(eperson.subject_relations(), schema['Person'].subject_relations())
-        self.assertEqual(eperson.object_relations(), schema['Person'].object_relations())
+        self.assertCountEqual(eperson.subject_relations(), schema['Person'].subject_relations())
+        self.assertCountEqual(eperson.object_relations(), schema['Person'].object_relations())
         self.assertEqual(schema.eschema('Person').final, False)
         self.assertEqual(schema.eschema('String').final, True)
         self.assertEqual(schema.rschema('ref').final, True)
@@ -251,7 +251,7 @@ class EntitySchemaTC(BaseSchemaTC):
         self.assertEqual(eperson.is_metadata('promo'), None)
         self.assertEqual(eperson.is_metadata('promo_enlarged'), None)
         self.assertEqual(eperson.is_metadata('promo_encoding'), ('promo', 'encoding'))
-        self.assertEqual([(k.type, v)  for k, v in eperson.meta_attributes().items()],
+        self.assertCountEqual([(k.type, v)  for k, v in eperson.meta_attributes().items()],
                           [('promo_encoding', ('encoding', 'promo')),
                            ('promo_format', ('format', 'promo'))])
 
@@ -269,7 +269,7 @@ class EntitySchemaTC(BaseSchemaTC):
     def test_indexable_attributes(self):
         eperson.rdef('nom').fulltextindexed = True
         eperson.rdef('prenom').fulltextindexed = True
-        self.assertEqual(list(eperson.indexable_attributes()), ['nom', 'prenom'])
+        self.assertCountEqual(list(eperson.indexable_attributes()), ['nom', 'prenom'])
 
 
     def test_goodValues_relation_default(self):
