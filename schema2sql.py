@@ -77,9 +77,9 @@ def eschema_attrs(eschema, skip_relations):
     return attrs
 
 def unique_index_name(eschema, columns):
-    return u'unique_%s' % md5(eschema.type +
+    return u'unique_%s' % md5((eschema.type +
                               ',' +
-                              ','.join(sorted(columns))).hexdigest()
+                              ','.join(sorted(columns))).encode('ascii')).hexdigest()
 
 def iter_unique_index_names(eschema):
     for columns in eschema._unique_together or ():
