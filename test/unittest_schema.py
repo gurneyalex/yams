@@ -25,6 +25,8 @@ from logilab.common.testlib import TestCase, unittest_main
 from copy import copy, deepcopy
 from tempfile import mktemp
 
+from six import text_type
+
 from yams import (BASE_TYPES, ValidationError, BadSchemaDefinition,
                   register_base_type, unregister_base_type)
 from yams.buildobjs import (register_base_types, make_type, _add_relation,
@@ -122,7 +124,7 @@ ATTRIBUTE_BAD_VALUES = (
     ('Person', [('nom', 1), ('nom', u'tropcour'),
                 ('nom', u'>10 mais  supérieur à < 20 , c\'est long'),
                 ('sexe', u'F'), ('sexe', u'MorF'), ('sexe', 'F'),
-                ('promo', 'bon'), ('promo', 'uyou'),
+                ('promo', b'bon'), ('promo', 'uyou'),
                 ('promo', u' pas bon du tout'),
                 ('promo_format', u'text/something'),
                 ('tel', 'notastring'),
@@ -452,13 +454,13 @@ class SchemaTC(BaseSchemaTC):
                 with self.assertRaises(ValidationError) as cm:
                     eschema.check(dict([item]))
                 # check automatic call to translation works properly
-                unicode(cm.exception)
+                text_type(cm.exception)
 
     def test_validation_error_translation_1(self):
         eschema = schema.eschema('Person')
         with self.assertRaises(ValidationError) as cm:
             eschema.check({'nom': 1, 'promo': 2})
-        cm.exception.translate(unicode)
+        cm.exception.translate(text_type)
         self.assertEqual(cm.exception.errors,
                          {'nom-subject': u'incorrect value (1) for type "String"',
                           'promo-subject': u'incorrect value (2) for type "String"'})
@@ -467,7 +469,7 @@ class SchemaTC(BaseSchemaTC):
         eschema = schema.eschema('Person')
         with self.assertRaises(ValidationError) as cm:
             eschema.check({'nom': u'x'*21, 'prenom': u'x'*65})
-        cm.exception.translate(unicode)
+        cm.exception.translate(text_type)
         self.assertEqual(cm.exception.errors,
                          {'nom-subject': u'value should have maximum size of 20 but found 21',
                           'prenom-subject': u'value should have maximum size of 64 but found 65'})
@@ -476,14 +478,14 @@ class SchemaTC(BaseSchemaTC):
         eschema = schema.eschema('Person')
         with self.assertRaises(ValidationError) as cm:
             eschema.check({'tel': 1000000, 'fax': 1000001})
-        cm.exception.translate(unicode)
+        cm.exception.translate(text_type)
         self.assertEqual(cm.exception.errors,
                          {'fax-subject': u'value 1000001 must be <= 999999',
                           'tel-subject': u'value 1000000 must be <= 999999'})
 
     def test_validation_error_translation_4(self):
         verr = ValidationError(1, {None: 'global message about eid %(eid)s'}, {'eid': 1})
-        verr.translate(unicode)
+        verr.translate(text_type)
         self.assertEqual(verr.errors,
                          {None: 'global message about eid 1'})
 
