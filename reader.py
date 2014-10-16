@@ -128,7 +128,7 @@ class SchemaLoader(object):
             except Exception as ex:
                 if not hasattr(ex, 'schema_files'):
                     ex.schema_files = self.loaded_files
-                raise ex, None, sys.exc_info()[-1]
+                raise
         finally:
             # cleanup sys.modules from schema modules
             # ensure we're only cleaning schema [sub]modules
