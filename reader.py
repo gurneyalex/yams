@@ -257,7 +257,8 @@ class SchemaLoader(object):
             package = '.'.join(modname.split('.')[:-1])
             if package and not package in sys.modules:
                 __import__(package)
-            execfile(filepath, fglobals)
+            with open(filepath) as f:
+                exec(f.read(), fglobals)
             # check for use of classes that should be imported, without
             # importing them
             for name, obj in fglobals.items():
