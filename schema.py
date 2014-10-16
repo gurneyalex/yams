@@ -270,13 +270,13 @@ class EntitySchema(PermissionMixIn, ERSchema):
         """return a list of relations that may have this type of entity as
         subject
         """
-        return self.subjrels.values()
+        return list(self.subjrels.values())
 
     def object_relations(self):
         """return a list of relations that may have this type of entity as
         object
         """
-        return self.objrels.values()
+        return list(self.objrels.values())
 
     def rdef(self, rtype, role='subject', targettype=None, takefirst=False):
         """return a relation definition schema for a relation of this entity type
@@ -749,7 +749,7 @@ class RelationSchema(ERSchema):
             raise BadSchemaDefinition(msg)
         self.rdefs[key] = rdef = RelationDefinitionSchema(subject, self, object,
                                                           buildrdef.package)
-        for prop, default in rdef.rproperties().iteritems():
+        for prop, default in rdef.rproperties().items():
             rdefval = getattr(buildrdef, prop, MARKER)
             if rdefval is MARKER:
                 if prop == 'permissions':
@@ -768,7 +768,7 @@ class RelationSchema(ERSchema):
         this relation may exists
         """
         # XXX deprecates in favor of iter_rdefs() ?
-        return self._subj_schemas.items()
+        return list(self._subj_schemas.items())
 
     def subjects(self, etype=None):
         """Return a list of entity schemas which can be subject of this relation.
@@ -820,7 +820,7 @@ class RelationSchema(ERSchema):
 
     def check_permission_definitions(self):
         """check permissions are correctly defined"""
-        for rdef in self.rdefs.itervalues():
+        for rdef in self.rdefs.values():
             rdef.check_permission_definitions()
         if self.rule and (self.permissions.get('add')
                           or self.permissions.get('delete')):
@@ -857,7 +857,7 @@ class RelationDefinitionSchema(PermissionMixIn):
         return set(chain(cls._RPROPERTIES,
                          cls._NONFINAL_RPROPERTIES,
                          cls._FINAL_RPROPERTIES,
-                         *cls.BASE_TYPE_PROPERTIES.itervalues()))
+                         *cls.BASE_TYPE_PROPERTIES.values()))
 
     def __init__(self, subject, rtype, object, package, values=None):
         if values is not None:
@@ -1113,10 +1113,10 @@ class Schema(object):
 
     def del_entity_type(self, etype):
         eschema = self._entities[etype]
-        for rschema in eschema.subjrels.values():
+        for rschema in list(eschema.subjrels.values()):
             for objtype in rschema.objects(etype):
                 self.del_relation_def(eschema, rschema, objtype)
-        for rschema in eschema.objrels.values():
+        for rschema in list(eschema.objrels.values()):
             for subjtype in rschema.subjects(etype):
                 self.del_relation_def(subjtype, rschema, eschema)
         if eschema.specializes():
@@ -1130,7 +1130,7 @@ class Schema(object):
         for rschema in self.relations():
             if rschema in self.no_specialization_inference:
                 continue
-            for (subject, object), rdef in rschema.rdefs.items():
+            for (subject, object), rdef in list(rschema.rdefs.items()):
                 subjeschemas = [subject] + subject.specialized_by(recursive=True)
                 objeschemas = [object] + object.specialized_by(recursive=True)
                 for subjschema in subjeschemas:
@@ -1149,7 +1149,7 @@ class Schema(object):
         for rschema in self.relations():
             if rschema.final:
                 continue
-            for (subject, object), rdef in rschema.rdefs.items():
+            for (subject, object), rdef in list(rschema.rdefs.items()):
                 if rdef.infered:
                     rschema.del_relation_def(subject, object)
 
@@ -1166,7 +1166,7 @@ class Schema(object):
         :rtype: list
         :return: defined entity's types (str) or schemas (`EntitySchema`)
         """
-        return self._entities.values()
+        return list(self._entities.values())
 
     def has_entity(self, etype):
         """return true the type is defined in the schema
@@ -1199,7 +1199,7 @@ class Schema(object):
         :rtype: list
         :return: defined relation's types (str) or schemas (`RelationSchema`)
         """
-        return self._relations.values()
+        return list(self._relations.values())
 
     def has_relation(self, rtype):
         """return true the relation is defined in the schema
