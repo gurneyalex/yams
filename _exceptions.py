@@ -122,7 +122,7 @@ class ValidationError(SchemaError):
             if self.i18nvalues:
                 for key in self.i18nvalues:
                     self.msgargs[key] = _(self.msgargs[key])
-            for key, msg in self.errors.iteritems():
+            for key, msg in self.errors.items():
                 msg = _(msg)
                 if key is not None:
                     msg = msg.replace('%(KEY-', '%('+key+'-')
