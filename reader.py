@@ -243,15 +243,15 @@ class SchemaLoader(object):
         else:
             # XXX until bw compat is gone, put context into builtins to allow proper
             # control of deprecation warning
-            import __builtin__
+            from six.moves import builtins
             fglobals = {} # self.context.copy()
             # wrap callable that should be imported
             for key, val in self.context.items():
                 if key in BASE_TYPES or key == 'RichString' or key in CONSTRAINTS or \
                        key in ('SubjectRelation', 'ObjectRelation'):
                     val = obsolete(val)
-                setattr(__builtin__, key, val)
-            __builtin__.import_erschema = self.import_erschema
+                setattr(builtins, key, val)
+            builtins.import_erschema = self.import_erschema
             fglobals['__file__'] = filepath
             fglobals['__name__'] = modname
             package = '.'.join(modname.split('.')[:-1])
