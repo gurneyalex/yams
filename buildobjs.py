@@ -22,6 +22,8 @@ __docformat__ = "restructuredtext en"
 from warnings import warn
 from copy import copy
 
+from six import add_metaclass
+
 from logilab.common import attrdict
 from logilab.common.decorators import iclassmethod
 
@@ -122,10 +124,9 @@ class autopackage(type):
         classdict['package'] = PACKAGE
         return super(autopackage, mcs).__new__(mcs, name, bases, classdict)
 
+@add_metaclass(autopackage)
 class Definition(object):
     """Abstract class for entity / relation definition classes."""
-    __metaclass__ = autopackage
-
     meta = MARKER
     description = MARKER
     __permissions__ = MARKER
@@ -394,6 +395,7 @@ class metadefinition(autopackage):
         return defclass
 
 
+@add_metaclass(metadefinition)
 class EntityType(Definition):
     #::FIXME reader magic forbids to define a docstring...
     #: an entity has attributes and can be linked to other entities by
@@ -419,7 +421,6 @@ class EntityType(Definition):
     #:  .. automethod:: EntityType.get_relation
     #:  .. automethod:: EntityType.get_relations
 
-    __metaclass__ = metadefinition
     __permissions__ = {
         'read': ('managers', 'users', 'guests',),
         'update': ('managers', 'owners',),
