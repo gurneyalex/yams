@@ -21,7 +21,6 @@ Depends:
  python-logilab-database (>= 1.11),
  python-six (>= 1.4.0),
 Breaks: cubicweb-common (<< 3.20)
-Conflicts: python-yams (<= 0.5.2)
 Description: entity / relation schema
  Yet Another Magic Schema !
  A simple/generic but powerful entities / relations schema, suitable
