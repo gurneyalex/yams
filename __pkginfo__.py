@@ -43,16 +43,13 @@ author = "Logilab"
 author_email = "devel@logilab.fr"
 
 # home page
-web = "http://www.logilab.org/project/%s" % modname
+web = "https://www.logilab.org/project/%s" % modname
 
 # mailing list
 mailinglist = 'mailto://python-projects@lists.logilab.org'
 
 # download place
-ftp = "ftp://ftp.logilab.org/pub/%s" % modname
-
-# is there some directories to include with the source installation
-include_dirs = []
+ftp = "http://download.logilab.org/pub/%s" % modname
 
 # executable
 
