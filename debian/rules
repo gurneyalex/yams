@@ -8,5 +8,23 @@
 # Copyright (c) 2003-2005 LOGILAB S.A. (Paris, FRANCE).
 # http://www.logilab.fr/ -- mailto:contact@logilab.fr
 
+include /usr/share/python/python.mk
+
+# don't build the python3 package if python3 is < 3.3
+py3k = $(subst python3.,,$(shell py3versions -d))
+build_py3k = $(shell test "$(py3k)" -gt 2 && echo 1)
+
+ifeq (,$(build_py3k))
+    DH_OPTIONS += -Npython3-yams
+    export DH_OPTIONS
+    addons = python2
+else
+    addons = python2,python3
+endif
+
 %:
-	dh $@ --with python2
+	dh $@ --with $(addons)
+
+override_dh_auto_clean:
+	dh_auto_clean
+	rm -r yams.egg-info
