@@ -22,9 +22,19 @@ else
     addons = python2,python3
 endif
 
-%:
-	dh $@ --with $(addons)
+export NO_SETUPTOOLS=1
 
 override_dh_auto_clean:
 	dh_auto_clean
 	rm -rf yams.egg-info
+
+install-python%:
+	python$* setup.py -q install --no-compile --root=$(CURDIR)/debian/tmp \
+	    $(py_setup_install_args)
+
+override_dh_auto_install: $(patsubst %,install-%,$(shell py3versions -r))
+	dh_auto_install
+
+%:
+	dh $@ --with $(addons)
+
