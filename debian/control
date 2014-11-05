@@ -17,6 +17,7 @@ Package: python-yams
 Architecture: all
 Depends:
  ${python:Depends},
+ ${misc:Depends},
  python-logilab-common (>= 0.55.2),
  python-logilab-database (>= 1.11),
  python-six (>= 1.4.0),
@@ -31,6 +32,7 @@ Package: python3-yams
 Architecture: all
 Depends:
  ${python3:Depends},
+ ${misc:Depends},
  python3-logilab-common (>= 0.55.2),
  python3-logilab-database (>= 1.11),
  python3-six (>= 1.4.0),
