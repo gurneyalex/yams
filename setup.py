@@ -25,7 +25,7 @@ __docformat__ = "restructuredtext en"
 import os
 import sys
 import shutil
-from os.path import isdir, exists, join, walk
+from os.path import isdir, exists, join
 
 try:
     if os.environ.get('NO_SETUPTOOLS'):
@@ -48,7 +48,6 @@ import __pkginfo__
 distname = getattr(__pkginfo__, 'distname', modname)
 scripts = getattr(__pkginfo__, 'scripts', [])
 data_files = getattr(__pkginfo__, 'data_files', None)
-subpackage_of = getattr(__pkginfo__, 'subpackage_of', None)
 include_dirs = getattr(__pkginfo__, 'include_dirs', [])
 ext_modules = getattr(__pkginfo__, 'ext_modules', None)
 install_requires = getattr(__pkginfo__, 'install_requires', None)
@@ -89,79 +88,6 @@ def get_packages(directory, prefix):
                 result += get_packages(absfile, result[-1])
     return result
 
-def export(from_dir, to_dir,
-           blacklist=STD_BLACKLIST,
-           ignore_ext=IGNORED_EXTENSIONS,
-           verbose=True):
-    """make a mirror of from_dir in to_dir, omitting directories and files
-    listed in the black list
-    """
-    def make_mirror(arg, directory, fnames):
-        """walk handler"""
-        for norecurs in blacklist:
-            try:
-                fnames.remove(norecurs)
-            except ValueError:
-                pass
-        for filename in fnames:
-            # don't include binary files
-            if filename[-4:] in ignore_ext:
-                continue
-            if filename[-1] == '~':
-                continue
-            src = join(directory, filename)
-            dest = to_dir + src[len(from_dir):]
-            if verbose:
-                print >> sys.stderr, src, '->', dest
-            if os.path.isdir(src):
-                if not exists(dest):
-                    os.mkdir(dest)
-            else:
-                if exists(dest):
-                    os.remove(dest)
-                shutil.copy2(src, dest)
-    try:
-        os.mkdir(to_dir)
-    except OSError, ex:
-        # file exists ?
-        import errno
-        if ex.errno != errno.EEXIST:
-            raise
-    walk(from_dir, make_mirror, None)
-
-
-EMPTY_FILE = '''"""generated file, don\'t modify or your data will be lost"""
-try:
-    __import__('pkg_resources').declare_namespace(__name__)
-except ImportError:
-    pass
-'''
-
-class MyInstallLib(install_lib.install_lib):
-    """extend install_lib command to handle  package __init__.py and
-    include_dirs variable if necessary
-    """
-    def run(self):
-        """overridden from install_lib class"""
-        install_lib.install_lib.run(self)
-        # create Products.__init__.py if needed
-        if subpackage_of:
-            product_init = join(self.install_dir, subpackage_of, '__init__.py')
-            if not exists(product_init):
-                self.announce('creating %s' % product_init)
-                stream = open(product_init, 'w')
-                stream.write(EMPTY_FILE)
-                stream.close()
-        # manually install included directories if any
-        if include_dirs:
-            if subpackage_of:
-                base = join(subpackage_of, modname)
-            else:
-                base = modname
-            for directory in include_dirs:
-                dest = join(self.install_dir, base, directory)
-                export(directory, dest, verbose=False)
-
 def install(**kwargs):
     """setup entry point"""
     if USE_SETUPTOOLS:
@@ -170,15 +96,8 @@ def install(**kwargs):
     # install-layout option was introduced in 2.5.3-1~exp1
     elif sys.version_info < (2, 5, 4) and '--install-layout=deb' in sys.argv:
         sys.argv.remove('--install-layout=deb')
-    if subpackage_of:
-        package = subpackage_of + '.' + modname
-        kwargs['package_dir'] = {package : '.'}
-        packages = [package] + get_packages(os.getcwd(), package)
-        if USE_SETUPTOOLS:
-            kwargs['namespace_packages'] = [subpackage_of]
-    else:
-        kwargs['package_dir'] = {modname : '.'}
-        packages = [modname] + get_packages(os.getcwd(), modname)
+    kwargs['package_dir'] = {modname : '.'}
+    packages = [modname] + get_packages(os.getcwd(), modname)
     if USE_SETUPTOOLS and install_requires:
         kwargs['install_requires'] = install_requires
         kwargs['dependency_links'] = dependency_links
@@ -194,7 +113,6 @@ def install(**kwargs):
                  scripts = ensure_scripts(scripts),
                  data_files = data_files,
                  ext_modules = ext_modules,
-                 cmdclass = {'install_lib': MyInstallLib},
                  **kwargs
                  )
 
