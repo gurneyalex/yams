@@ -27,6 +27,7 @@ export NO_SETUPTOOLS=1
 override_dh_auto_clean:
 	dh_auto_clean
 	rm -rf yams.egg-info
+	rm -rf testdir
 
 install-python%:
 	python$* setup.py -q install --no-compile --root=$(CURDIR)/debian/tmp \
@@ -34,6 +35,16 @@ install-python%:
 
 override_dh_auto_install: $(patsubst %,install-%,$(shell py3versions -r))
 	dh_auto_install
+
+test-python%:
+	mkdir -p testdir
+	ln -sf .. testdir/yams
+	PYTHONPATH=$(CURDIR)/testdir python$* /usr/bin/pytest
+
+ifeq (,$(filter nocheck,$(DEB_BUILD_OPTIONS)))
+override_dh_auto_test: $(patsubst %,test-%,$(shell pyversions -r))
+override_dh_auto_test: $(patsubst %,test-%,$(shell py3versions -r))
+endif
 
 %:
 	dh $@ --with $(addons)
