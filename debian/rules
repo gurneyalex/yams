@@ -27,4 +27,4 @@ endif
 
 override_dh_auto_clean:
 	dh_auto_clean
-	rm -r yams.egg-info
+	rm -rf yams.egg-info
