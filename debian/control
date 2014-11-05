@@ -4,11 +4,11 @@ Priority: optional
 Maintainer: Logilab Packaging Team <contact@logilab.fr>
 Uploaders: Sylvain Thenault <sylvain.thenault@logilab.fr>, Alexandre Fayolle <afayolle@debian.org>,
     Nicolas Chauvat <nicolas.chauvat@logilab.fr>
-Build-Depends: debhelper (>= 7), python (>=2.6)
+Build-Depends: debhelper (>= 7), python (>= 2.6.5)
 Build-Depends-Indep: python-support
 Homepage: http://www.logilab.org/project/yams
 Standards-Version: 3.8.0
-XS-Python-Version: >= 2.6
+X-Python-Version: >= 2.6
 
 Package: python-yams
 Architecture: all
