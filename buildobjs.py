@@ -632,6 +632,7 @@ class RelationDefinition(Definition):
     constraints = MARKER
     symmetric = MARKER
     inlined = MARKER
+    formula = MARKER
 
     def __init__(self, subject=None, name=None, object=None, package=None,
                  **kwargs):
