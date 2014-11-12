@@ -723,6 +723,7 @@ class ComputedSchemaTC(TestCase):
     def test_override_read_perms_on_computed_attribute(self):
         class Entity(EntityType):
             oattr = String()
+            subjrel = SubjectRelation('String')
 
         class attr(RelationDefinition):
             __permissions__ = {'read': ('clows', ),
@@ -732,11 +733,23 @@ class ComputedSchemaTC(TestCase):
             object = 'Int'
             formula = 'Any Z WHERE X oattr Z'
 
+        class foo(RelationDefinition):
+            subject = 'Entity'
+            object = 'Boolean'
+
         schema = build_schema_from_namespace(vars().items())
         self.assertEqual({'read':   ('clows', ),
                           'update': (),
                           'add': ()},
                          schema['attr'].rdef('Entity', 'Int').permissions)
+
+    def test_computed_attribute_subjrel(self):
+        class Entity(EntityType):
+            oattr = String()
+            attr = SubjectRelation('Int', formula='Any Z WHERE X oattr Z')
+
+        schema = build_schema_from_namespace(vars().items())
+        self.assertEqual('Any Z WHERE X oattr Z', schema['attr'].rdef('Entity', 'Int').formula)
 
 
 if __name__ == '__main__':
