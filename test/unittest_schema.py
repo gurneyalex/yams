@@ -1,5 +1,5 @@
 # -*- coding: iso-8859-1 -*-
-# copyright 2004-2013 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
+# copyright 2004-2014 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
 # contact http://www.logilab.fr/ -- mailto:contact@logilab.fr
 #
 # This file is part of yams.
@@ -176,6 +176,7 @@ class EntitySchemaTC(BaseSchemaTC):
 
     def test_cmp(self):
         self.assertTrue(eperson == 'Person')
+        self.assertFalse(eperson != 'Person')
         self.assertTrue('Person' == eperson)
         self.assertTrue(eperson != 'Note')
         self.assertTrue('Note' != eperson)
@@ -326,6 +327,7 @@ class RelationSchemaTC(BaseSchemaTC):
 
     def test_cmp(self):
         self.assertTrue(rconcerne == 'concerne')
+        self.assertFalse(rconcerne != 'concerne')
         self.assertTrue('concerne' == rconcerne)
         self.assertTrue(rconcerne != 'nom')
         self.assertTrue('nom' != rconcerne)

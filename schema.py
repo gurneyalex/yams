@@ -104,6 +104,9 @@ class ERSchema(object):
     def __eq__(self, other):
         return self.type == getattr(other, 'type', other)
 
+    def __ne__(self, other):
+        return not (self == other)
+
     def __lt__(self, other):
         return self.type < getattr(other, 'type', other)
 
