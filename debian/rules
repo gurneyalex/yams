@@ -36,10 +36,12 @@ install-python%:
 override_dh_auto_install: $(patsubst %,install-%,$(shell py3versions -r))
 	dh_auto_install
 
-test-python%:
+test-python%: test-setup
+	PYTHONPATH=$(CURDIR)/testdir python$* /usr/bin/pytest
+
+test-setup:
 	mkdir -p testdir
 	ln -sf .. testdir/yams
-	PYTHONPATH=$(CURDIR)/testdir python$* /usr/bin/pytest
 
 ifeq (,$(filter nocheck,$(DEB_BUILD_OPTIONS)))
 override_dh_auto_test: $(patsubst %,test-%,$(shell pyversions -r))
