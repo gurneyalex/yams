@@ -667,11 +667,16 @@ class RelationSchema(ERSchema):
                 continue
             if final != eschema.final:
                 if final:
+                    feschema, nfeschema = subjschema, self.subjects()[0]
                     frschema, nfrschema = objschema, eschema
                 else:
+                    feschema, nfeschema = self.subjects()[0], subjschema
                     frschema, nfrschema = eschema, objschema
-                msg = "ambiguous relation %s: %s is final but not %s" % (
-                    self.type, frschema, nfrschema)
+                msg = ("ambiguous relation: '{feschema}.{rtype}' is final ({frschema}) "
+                       "but not '{nfeschema}.{rtype}' ({nfrschema})")
+                msg = msg.format(rtype=self.type,
+                                 feschema=feschema, frschema=frschema,
+                                 nfeschema=subjschema, nfrschema=nfrschema)
                 raise BadSchemaDefinition(msg)
         constraints = getattr(rdef, 'constraints', None)
         if constraints:

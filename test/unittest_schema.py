@@ -362,7 +362,9 @@ class RelationSchemaTC(BaseSchemaTC):
 ##         self.assertRaisesMsg(BadSchemaDefinition,
 ##                              "can't have a final relation pointing to multiple entity types (nom: ['String', 'Int'])" ,
 ##                              rnom.update, enote, eint)
-        self.assertRaisesMsg(BadSchemaDefinition, 'ambiguous relation nom: String is final but not Affaire',
+        msgref = ("ambiguous relation: 'Person.nom' is final (String) "
+                  "but not 'Note.nom' (Affaire)")
+        self.assertRaisesMsg(BadSchemaDefinition, msgref,
                              rnom.update, enote, eaffaire, {})
         self.assertRaises(BadSchemaDefinition,
                           rconcerne.update, enote, estring, {})
