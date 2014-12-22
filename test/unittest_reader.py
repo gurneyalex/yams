@@ -742,6 +742,9 @@ class ComputedSchemaTC(TestCase):
                           'update': (),
                           'add': ()},
                          schema['attr'].rdef('Entity', 'Int').permissions)
+        self.assertEqual(
+                DEFAULT_ATTRPERMS,
+                schema['foo'].rdef('Entity', 'Boolean').permissions)
 
     def test_computed_attribute_subjrel(self):
         class Entity(EntityType):

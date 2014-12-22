@@ -246,7 +246,7 @@ class AbstractTypedAttribute(SubjectRelation):
         if maxsize is not None:
             _add_constraint(kwargs, SizeConstraint(max=maxsize))
         # formula
-        self.formula = kwargs.pop('formula', None)
+        self.formula = kwargs.pop('formula', MARKER)
         # transform vocabulary into StaticVocabularyConstraint
         vocabulary = kwargs.pop('vocabulary', None)
         if vocabulary is not None:
@@ -735,7 +735,7 @@ class RelationDefinition(Definition):
         if self.__permissions__ is MARKER:
             final = next(iter(_actual_types(schema, self.object))) in BASE_TYPES
             if final:
-                if self.formula is not None:
+                if self.formula is not MARKER:
                     permissions = DEFAULT_COMPUTED_ATTRPERMS
                 else:
                     permissions = DEFAULT_ATTRPERMS
