@@ -20,6 +20,7 @@
 Use either a sql derivated language for entities and relation definitions
 files or a direct python definition file.
 """
+from __future__ import print_function
 
 __docformat__ = "restructuredtext en"
 
@@ -258,7 +259,11 @@ class SchemaLoader(object):
             if package and not package in sys.modules:
                 __import__(package)
             with open(filepath) as f:
-                exec(f.read(), fglobals)
+                try:
+                    exec(f.read(), fglobals)
+                except:
+                    print('exception while reading %s' % filepath, file=sys.stderr)
+                    raise
             # check for use of classes that should be imported, without
             # importing them
             for name, obj in fglobals.items():
