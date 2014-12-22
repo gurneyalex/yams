@@ -1,3 +1,9 @@
+yams (0.40.2-1) unstable; urgency=medium
+
+  * new upstream release
+
+ -- Julien Cristau <julien.cristau@logilab.fr>  Mon, 22 Dec 2014 14:13:10 +0100
+
 yams (0.40.1-1) unstable; urgency=low
 
   * new upstream release
