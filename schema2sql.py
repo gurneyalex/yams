@@ -43,7 +43,7 @@ def schema2sql(dbhelper, schema, skip_entities=(), skip_relations=(), prefix='')
         w(eschema2sql(dbhelper, eschema, skip_relations, prefix=prefix))
     for rtype in sorted(schema.relations()):
         rschema = schema.rschema(rtype)
-        if rschema.final or rschema.inlined or rschema.rule:
+        if rschema.final or rschema.inlined or rschema.rule or rschema.type in skip_relations:
             continue
         w(rschema2sql(rschema))
     return '\n'.join(output)
