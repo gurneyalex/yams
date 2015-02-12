@@ -18,12 +18,12 @@
 """Some common constraint classes."""
 
 __docformat__ = "restructuredtext en"
-_ = unicode
 
 import re
 import decimal
 import operator
-from StringIO import StringIO
+
+from six import string_types, text_type, binary_type
 
 from logilab.common.deprecation import class_renamed
 
@@ -31,6 +31,7 @@ import yams
 from yams import BadSchemaDefinition
 from yams.interfaces import IConstraint, IVocabularyConstraint
 
+_ = text_type
 
 class BaseConstraint(object):
     """base class for constraints"""
@@ -331,11 +332,11 @@ class StaticVocabularyConstraint(BaseConstraint):
         return value in self.vocabulary(entity=entity)
 
     def failed_message(self, key, value):
-        if isinstance(value, basestring):
-            value = '"%s"' % unicode(value)
+        if isinstance(value, string_types):
+            value = '"%s"' % text_type(value)
             choices = ', '.join('"%s"' % val for val in self.values)
         else:
-            choices = ', '.join(unicode(val) for val in self.values)
+            choices = ', '.join(text_type(val) for val in self.values)
         return _('invalid value %(KEY-value)s, it must be one of %(KEY-choices)s'), {
             key+'-value': value,
             key+'-choices': choices}
@@ -347,19 +348,19 @@ class StaticVocabularyConstraint(BaseConstraint):
     def serialize(self):
         """serialize possible values as a csv list of evaluable strings"""
         try:
-            sample = iter(self.vocabulary()).next()
+            sample = next(iter(self.vocabulary()))
         except:
-            sample = unicode()
-        if not isinstance(sample, basestring):
+            sample = u''
+        if not isinstance(sample, string_types):
             return u', '.join(repr(word) for word in self.vocabulary())
-        return u', '.join(repr(unicode(word).replace(',', ',,'))
+        return u', '.join(repr(text_type(word).replace(',', ',,'))
                           for word in self.vocabulary())
 
     @classmethod
     def deserialize(cls, value):
         """deserialize possible values from a csv list of evaluable strings"""
         values = [eval(w) for w in re.split('(?<!,), ', value)]
-        if values and isinstance(values[0], basestring):
+        if values and isinstance(values[0], string_types):
             values = [v.replace(',,', ',') for v in values]
         return cls(values)
 
@@ -367,6 +368,7 @@ class StaticVocabularyConstraint(BaseConstraint):
 class FormatConstraint(StaticVocabularyConstraint):
 
     regular_formats = (_('text/rest'),
+                       _('text/markdown'),
                        _('text/html'),
                        _('text/plain'),
                        )
@@ -395,7 +397,7 @@ class FormatConstraint(StaticVocabularyConstraint):
         return self.regular_formats
 
     def __str__(self):
-        return 'value in (%s)' % u', '.join(repr(unicode(word)) for word in self.vocabulary())
+        return 'value in (%s)' % u', '.join(repr(text_type(word)) for word in self.vocabulary())
 
 FORMAT_CONSTRAINT = FormatConstraint()
 
@@ -466,11 +468,11 @@ class TODAY(object):
 
 def check_string(eschema, value):
     """check value is an unicode string"""
-    return isinstance(value, unicode)
+    return isinstance(value, text_type)
 
 def check_password(eschema, value):
     """check value is an encoded string"""
-    return isinstance(value, (str, StringIO))
+    return isinstance(value, binary_type)
 
 def check_int(eschema, value):
     """check value is an integer"""
@@ -527,8 +529,8 @@ BASE_CHECKERS = {
     }
 
 BASE_CONVERTERS = {
-    'String' :  unicode,
-    'Password':  str,
+    'String' :   text_type,
+    'Password':  binary_type,
     'Int' :      int,
     'BigInt' :   int,
     'Float' :    float,

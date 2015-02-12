@@ -19,11 +19,14 @@
 
 __docformat__ = "restructuredtext en"
 
+import sys
+
 class SchemaError(Exception):
     """base class for schema exceptions"""
 
-    def __str__(self):
-        return unicode(self).encode('utf8')
+    if sys.version_info[0] < 3:
+        def __str__(self):
+            return unicode(self).encode('utf8')
 
 
 class UnknownType(SchemaError):
@@ -122,7 +125,7 @@ class ValidationError(SchemaError):
             if self.i18nvalues:
                 for key in self.i18nvalues:
                     self.msgargs[key] = _(self.msgargs[key])
-            for key, msg in self.errors.iteritems():
+            for key, msg in self.errors.items():
                 msg = _(msg)
                 if key is not None:
                     msg = msg.replace('%(KEY-', '%('+key+'-')

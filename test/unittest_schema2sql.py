@@ -19,7 +19,6 @@
 """
 
 import os.path as osp
-from cStringIO import StringIO
 
 from logilab.common.testlib import TestCase, unittest_main
 from logilab.database import get_db_helper

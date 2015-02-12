@@ -64,7 +64,7 @@ def fill_schema(schema, erdefs, register_base_types=True,
     if register_base_types:
         buildobjs.register_base_types(schema)
     # relation definitions may appear multiple times
-    erdefs_vals = set(erdefs.itervalues())
+    erdefs_vals = set(erdefs.values())
     # register relation types and non final entity types
     for definition in erdefs_vals:
         if isinstance(definition, type):
@@ -81,17 +81,19 @@ def fill_schema(schema, erdefs, register_base_types=True,
     # call 'post_build_callback' functions found in schema modules
     for cb in post_build_callbacks:
         cb(schema)
+    # finalize schema
+    schema.finalize()
+    # check permissions are valid on entities and relations
+    for erschema in schema.entities() + schema.relations():
+        erschema.check_permission_definitions()
+    # check unique together consistency
+    for eschema in schema.entities():
+        eschema.check_unique_together()
     # optionaly remove relation types without definitions
     if remove_unused_rtypes:
         for rschema in schema.relations():
             if not rschema.rdefs:
                 schema.del_relation_type(rschema)
-    # set permissions on entities and relations
-    for erschema in schema.entities() + schema.relations():
-        erschema.check_permission_definitions()
-    schema.infer_specialization_rules()
-    for eschema in schema.entities():
-        eschema.check_unique_together()
     return schema
 
 
@@ -123,10 +125,10 @@ class SchemaLoader(object):
                 fill_schema(schema, self.defined, register_base_types,
                             remove_unused_rtypes=remove_unused_rtypes,
                             post_build_callbacks=self.post_build_callbacks)
-            except Exception, ex:
+            except Exception as ex:
                 if not hasattr(ex, 'schema_files'):
                     ex.schema_files = self.loaded_files
-                raise ex, None, sys.exc_info()[-1]
+                raise
         finally:
             # cleanup sys.modules from schema modules
             # ensure we're only cleaning schema [sub]modules
@@ -241,21 +243,22 @@ class SchemaLoader(object):
         else:
             # XXX until bw compat is gone, put context into builtins to allow proper
             # control of deprecation warning
-            import __builtin__
+            from six.moves import builtins
             fglobals = {} # self.context.copy()
             # wrap callable that should be imported
             for key, val in self.context.items():
                 if key in BASE_TYPES or key == 'RichString' or key in CONSTRAINTS or \
                        key in ('SubjectRelation', 'ObjectRelation'):
                     val = obsolete(val)
-                setattr(__builtin__, key, val)
-            __builtin__.import_erschema = self.import_erschema
+                setattr(builtins, key, val)
+            builtins.import_erschema = self.import_erschema
             fglobals['__file__'] = filepath
             fglobals['__name__'] = modname
             package = '.'.join(modname.split('.')[:-1])
             if package and not package in sys.modules:
                 __import__(package)
-            execfile(filepath, fglobals)
+            with open(filepath) as f:
+                exec(f.read(), fglobals)
             # check for use of classes that should be imported, without
             # importing them
             for name, obj in fglobals.items():
@@ -285,14 +288,17 @@ class SchemaLoader(object):
 PyFileReader = SchemaLoader
 PyFileReader.__init__ = lambda *x: None
 
-def build_schema_from_namespace(items):
+def fill_schema_from_namespace(schema, items, **kwargs):
     erdefs = {}
     for name, obj in items:
         if (isinstance(obj, type) and issubclass(obj, buildobjs.Definition)
             and obj not in (buildobjs.Definition, buildobjs.RelationDefinition, buildobjs.EntityType)):
             obj.expand_type_definitions(erdefs)
+    fill_schema(schema, erdefs, **kwargs)
+
+def build_schema_from_namespace(items):
     schema = schemamod.Schema('noname')
-    fill_schema(schema, erdefs)
+    fill_schema_from_namespace(schema, items)
     return schema
 
 class _Context(object):
