@@ -22,10 +22,14 @@ __docformat__ = "restructuredtext en"
 from warnings import warn
 from copy import copy
 
+from six import add_metaclass, string_types
+
 from logilab.common import attrdict
 from logilab.common.decorators import iclassmethod
 
-from yams import BASE_TYPES, MARKER, BadSchemaDefinition, KNOWN_METAATTRIBUTES
+from yams import (BASE_TYPES, MARKER, BadSchemaDefinition, KNOWN_METAATTRIBUTES,
+                  DEFAULT_ETYPEPERMS, DEFAULT_RELPERMS, DEFAULT_ATTRPERMS,
+                  DEFAULT_COMPUTED_ATTRPERMS)
 from yams.constraints import (SizeConstraint, UniqueConstraint,
                               StaticVocabularyConstraint, FORMAT_CONSTRAINT)
 from yams.schema import RelationDefinitionSchema
@@ -80,7 +84,7 @@ def _add_relation(relations, rdef, name=None, insertidx=None):
         insertidx = len(relations)
     relations.insert(insertidx, rdef)
     if getattr(rdef, 'metadata', {}):
-        for meta_name, value in rdef.metadata.iteritems():
+        for meta_name, value in rdef.metadata.items():
             assert meta_name in KNOWN_METAATTRIBUTES
             insertidx += 1 # insert meta after main
             meta_rel_name = '_'.join(((name or rdef.name), meta_name))
@@ -113,15 +117,6 @@ def register_base_types(schema):
         schema.add_entity_type(edef)
 
 
-DEFAULT_RELPERMS = {'read': ('managers', 'users', 'guests',),
-                    'delete': ('managers', 'users'),
-                    'add': ('managers', 'users',)}
-
-DEFAULT_ATTRPERMS = {'read': ('managers', 'users', 'guests',),
-                     'add': ('managers', 'users'),
-                     'update': ('managers', 'owners')}
-
-
 # first class schema definition objects #######################################
 
 class autopackage(type):
@@ -129,10 +124,9 @@ class autopackage(type):
         classdict['package'] = PACKAGE
         return super(autopackage, mcs).__new__(mcs, name, bases, classdict)
 
+@add_metaclass(autopackage)
 class Definition(object):
     """Abstract class for entity / relation definition classes."""
-    __metaclass__ = autopackage
-
     meta = MARKER
     description = MARKER
     __permissions__ = MARKER
@@ -207,7 +201,7 @@ class ObjectRelation(object):
                  DeprecationWarning, stacklevel=3)
         try:
             _check_kwargs(kwargs, _REL_PROPERTIES())
-        except BadSchemaDefinition, bad:
+        except BadSchemaDefinition as bad:
             # XXX (auc) bad field name + required attribute can lead there instead of schema.py ~ 920
             bsd_ex = BadSchemaDefinition(('%s in relation to entity %r (also is %r defined ? (check two '
                                           'lines above in the backtrace))') % (bad.args, etype, etype))
@@ -251,6 +245,8 @@ class AbstractTypedAttribute(SubjectRelation):
         maxsize = kwargs.pop('maxsize', None)
         if maxsize is not None:
             _add_constraint(kwargs, SizeConstraint(max=maxsize))
+        # formula
+        self.formula = kwargs.pop('formula', MARKER)
         # transform vocabulary into StaticVocabularyConstraint
         vocabulary = kwargs.pop('vocabulary', None)
         if vocabulary is not None:
@@ -364,7 +360,7 @@ class metadefinition(autopackage):
         ### Move (any) relation from the class dict to __relations__ attribute
         rels = classdict.setdefault('__relations__', [])
         relations = dict((rdef.name, rdef) for rdef in rels)
-        for rname, rdef in classdict.items():
+        for rname, rdef in list(classdict.items()):
             if isinstance(rdef, ObjectRelation):
                 # relation's name **must** be removed from class namespace
                 # to avoid conflicts with instance's potential attributes
@@ -399,6 +395,7 @@ class metadefinition(autopackage):
         return defclass
 
 
+@add_metaclass(metadefinition)
 class EntityType(Definition):
     #::FIXME reader magic forbids to define a docstring...
     #: an entity has attributes and can be linked to other entities by
@@ -424,13 +421,7 @@ class EntityType(Definition):
     #:  .. automethod:: EntityType.get_relation
     #:  .. automethod:: EntityType.get_relations
 
-    __metaclass__ = metadefinition
-    __permissions__ = {
-        'read': ('managers', 'users', 'guests',),
-        'update': ('managers', 'owners',),
-        'delete': ('managers', 'owners'),
-        'add': ('managers', 'users',)
-        }
+    __permissions__ = DEFAULT_ETYPEPERMS
 
     def __init__(self, name=None, **kwargs):
         super(EntityType, self).__init__(name)
@@ -574,6 +565,7 @@ class RelationType(Definition):
     symmetric = MARKER
     inlined = MARKER
     fulltext_container = MARKER
+    rule = MARKER
 
     def __init__(self, name=None, **kwargs):
         """kwargs must have values in RTYPE_PROPERTIES"""
@@ -618,6 +610,15 @@ class RelationType(Definition):
             rdef._add_relations(defined, schema)
 
 
+class ComputedRelation(RelationType):
+    __permissions__ = MARKER
+
+    def __init__(self, name=None, rule=None, **kwargs):
+        if rule is not None:
+            self.rule = rule
+        super(ComputedRelation, self).__init__(name, **kwargs)
+
+
 class RelationDefinition(Definition):
     # FIXME reader magic forbids to define a docstring...
     #"""a relation is defined by a name, the entity types that can be
@@ -631,6 +632,7 @@ class RelationDefinition(Definition):
     constraints = MARKER
     symmetric = MARKER
     inlined = MARKER
+    formula = MARKER
 
     def __init__(self, subject=None, name=None, object=None, package=None,
                  **kwargs):
@@ -727,9 +729,18 @@ class RelationDefinition(Definition):
         if not self.constraints:
             self.constraints = ()
         rschema = schema.rschema(name)
+        if rschema.rule:
+            raise BadSchemaDefinition(
+                'Cannot add relation definition on a computed relation')
         if self.__permissions__ is MARKER:
-            final = iter(_actual_types(schema, self.object)).next() in BASE_TYPES
-            permissions = rtype.get_permissions(final)
+            final = next(iter(_actual_types(schema, self.object))) in BASE_TYPES
+            if final:
+                if self.formula is not MARKER:
+                    permissions = DEFAULT_COMPUTED_ATTRPERMS
+                else:
+                    permissions = DEFAULT_ATTRPERMS
+            else:
+                permissions = DEFAULT_RELPERMS
         else:
             permissions = self.__permissions__
         for subj in _actual_types(schema, self.subject):
@@ -745,7 +756,7 @@ def _actual_types(schema, etype):
         return _pow_etypes(schema)
     if isinstance(etype, (list, tuple)):
         return etype
-    if not isinstance(etype, basestring):
+    if not isinstance(etype, string_types):
         raise RuntimeError('Entity types must not be instances but strings '
                            'or list/tuples thereof. Ex. (bad, good) : '
                            'SubjectRelation(Foo), SubjectRelation("Foo"). '

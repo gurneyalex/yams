@@ -21,6 +21,8 @@ __docformat__ = "restructuredtext en"
 
 from hashlib import md5
 
+from six.moves import range
+
 from yams.constraints import SizeConstraint, UniqueConstraint
 
 # default are usually not handled at the sql level. If you want them, set
@@ -41,7 +43,7 @@ def schema2sql(dbhelper, schema, skip_entities=(), skip_relations=(), prefix='')
         w(eschema2sql(dbhelper, eschema, skip_relations, prefix=prefix))
     for rtype in sorted(schema.relations()):
         rschema = schema.rschema(rtype)
-        if rschema.final or rschema.inlined:
+        if rschema.final or rschema.inlined or rschema.rule:
             continue
         w(rschema2sql(rschema))
     return '\n'.join(output)
@@ -77,9 +79,9 @@ def eschema_attrs(eschema, skip_relations):
     return attrs
 
 def unique_index_name(eschema, columns):
-    return u'unique_%s' % md5(eschema.type +
+    return u'unique_%s' % md5((eschema.type +
                               ',' +
-                              ','.join(sorted(columns))).hexdigest()
+                              ','.join(sorted(columns))).encode('ascii')).hexdigest()
 
 def iter_unique_index_names(eschema):
     for columns in eschema._unique_together or ():
@@ -109,7 +111,7 @@ def eschema2sql(dbhelper, eschema, skip_relations=(), prefix=''):
     w('CREATE TABLE %s(' % (table))
     attrs = eschema_attrs(eschema, skip_relations)
     # XXX handle objectinline physical mode
-    for i in xrange(len(attrs)):
+    for i in range(len(attrs)):
         rschema, attrschema = attrs[i]
         if attrschema is not None:
             sqltype = aschema2sql(dbhelper, eschema, rschema, attrschema,
@@ -123,7 +125,7 @@ def eschema2sql(dbhelper, eschema, skip_relations=(), prefix=''):
             w(' %s%s %s,' % (prefix, rschema.type, sqltype))
     w(');')
     # create indexes
-    for i in xrange(len(attrs)):
+    for i in range(len(attrs)):
         rschema, attrschema = attrs[i]
         if attrschema is None or eschema.rdef(rschema).indexed:
             w(dbhelper.sql_create_index(table, prefix + rschema.type))
@@ -196,8 +198,9 @@ CREATE INDEX %(table)s_to_idx ON %(table)s(eid_to);"""
 
 
 def rschema2sql(rschema):
+    assert not rschema.rule
     return _SQL_SCHEMA % {'table': '%s_relation' % rschema.type}
-
+    
 
 def droprschema2sql(rschema):
     """return sql to drop a relation type's table"""

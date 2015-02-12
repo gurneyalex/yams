@@ -25,14 +25,13 @@ from datetime import datetime, date, time
 
 from logilab.common.testlib import TestCase, unittest_main
 
-from yams import BadSchemaDefinition
+from yams import BadSchemaDefinition, DEFAULT_RELPERMS, DEFAULT_ATTRPERMS
 from yams.schema import Schema
 from yams.reader import SchemaLoader, build_schema_from_namespace
 from yams.constraints import StaticVocabularyConstraint, SizeConstraint
 from yams.buildobjs import (EntityType, RelationType, RelationDefinition,
-                            SubjectRelation,
-                            Int, String, Float, Datetime, Date, Boolean,
-                            DEFAULT_RELPERMS, DEFAULT_ATTRPERMS)
+                            SubjectRelation, ComputedRelation,
+                            Int, String, Float, Datetime, Date, Boolean)
 
 sys.path.insert(0, osp.dirname(__file__))
 
@@ -50,7 +49,7 @@ class SchemaLoaderTC(TestCase):
     # test load_schema read entity and relation types #######################
 
     def test_load_schema(self):
-        self.assert_(isinstance(SCHEMA, Schema))
+        self.assertIsInstance(SCHEMA, Schema)
         self.assertEqual(SCHEMA.name, 'NoName')
         self.assertListEqual(sorted(SCHEMA.entities()),
                               ['Affaire', 'BigInt', 'Boolean', 'Bytes', 'Company',
@@ -107,21 +106,21 @@ class SchemaLoaderTC(TestCase):
 
     def test_indexed(self):
         eschema = SCHEMA.eschema('Person')
-        self.assert_(not eschema.rdef('nom').indexed)
+        self.assertFalse(eschema.rdef('nom').indexed)
         eschema = SCHEMA.eschema('State')
-        self.assert_(eschema.rdef('name').indexed)
+        self.assertTrue(eschema.rdef('name').indexed)
 
     def test_uid(self):
         eschema = SCHEMA.eschema('State')
-        self.assert_(eschema.rdef('eid').uid)
-        self.assert_(not eschema.rdef('name').uid)
+        self.assertTrue(eschema.rdef('eid').uid)
+        self.assertFalse(eschema.rdef('name').uid)
 
     def test_fulltextindexed(self):
         eschema = SCHEMA.eschema('Person')
         self.assertRaises(AttributeError, getattr, eschema.rdef('tel'), 'fulltextindexed') # tel is an INT
-        self.assert_(eschema.rdef('nom').fulltextindexed)
-        self.assert_(eschema.rdef('prenom').fulltextindexed)
-        self.assert_(not eschema.rdef('sexe').fulltextindexed)
+        self.assertTrue(eschema.rdef('nom').fulltextindexed)
+        self.assertTrue(eschema.rdef('prenom').fulltextindexed)
+        self.assertFalse(eschema.rdef('sexe').fulltextindexed)
         indexable = sorted(eschema.indexable_attributes())
         self.assertEqual(['nom', 'prenom', 'titre'], indexable)
         self.assertEqual(SCHEMA.rschema('works_for').fulltext_container, None)
@@ -144,11 +143,11 @@ class SchemaLoaderTC(TestCase):
 
     def test_internationalizable(self):
         eschema = SCHEMA.eschema('Eetype')
-        self.assert_(eschema.rdef('name').internationalizable)
+        self.assertTrue(eschema.rdef('name').internationalizable)
         eschema = SCHEMA.eschema('State')
-        self.assert_(eschema.rdef('name').internationalizable)
+        self.assertTrue(eschema.rdef('name').internationalizable)
         eschema = SCHEMA.eschema('Societe')
-        self.assert_(not eschema.rdef('ad1').internationalizable)
+        self.assertFalse(eschema.rdef('ad1').internationalizable)
 
     # test advanced entity type's subject relation properties #################
 
@@ -574,11 +573,187 @@ class BuildSchemaTC(TestCase):
 
         schema = build_schema_from_namespace(vars().items())
         entities = [x for x in schema.entities() if not x.final]
-        self.assertItemsEqual(['Form', 'Question'], entities)
+        self.assertCountEqual(['Form', 'Question'], entities)
         relations = [x for x in schema.relations() if not x.final]
-        self.assertItemsEqual(['in_form'], relations)
+        self.assertCountEqual(['in_form'], relations)
+
+
+class ComputedSchemaTC(TestCase):
+
+    def test_computed_schema(self):
+        class Societe(EntityType):
+            name = String()
+
+        class Employe(EntityType):
+            name = String()
+
+        class travaille(RelationDefinition):
+            subject = 'Employe'
+            object  = 'Societe'
+
+        class est_paye_par(ComputedRelation):
+            __permissions__ = {'read': ('managers', 'users')}
+            rule  = ('S travaille O')
+
+        schema = build_schema_from_namespace(vars().items())
+        self.assertEqual('S travaille O', schema['est_paye_par'].rule)
+        self.assertEqual({'read': ('managers', 'users')},
+                         schema['est_paye_par'].permissions)
+
+    def test_no_rdef_from_computedrelation(self):
+        class Personne(EntityType):
+            name = String()
+
+        class Mafieu(EntityType):
+            nickname = String()
+
+        class est_paye_par(ComputedRelation):
+            rule  = ('S travaille O')
+
+        class est_soudoye_par(RelationDefinition):
+            name = 'est_paye_par'
+            subject = 'Personne'
+            object  = 'Mafieu'
+
+        with self.assertRaises(BadSchemaDefinition) as cm:
+            schema = build_schema_from_namespace(vars().items())
+        self.assertEqual("Cannot add relation definition on a computed relation",
+                         str(cm.exception))
+
+    def test_invalid_attributes_in_computedrelation(self):
+        class Societe(EntityType):
+            name = String()
+
+        class Employe(EntityType):
+            name = String()
+
+        class travaille(RelationDefinition):
+            subject = 'Employe'
+            object  = 'Societe'
+
+        class est_paye_par(ComputedRelation):
+            rule  = ('S travaille O')
+            inlined = True
+
+        with self.assertRaises(BadSchemaDefinition) as cm:
+            schema = build_schema_from_namespace(vars().items())
+        self.assertEqual("Computed relation has no inlined attribute",
+                         str(cm.exception))
+
+    def test_invalid_permissions_in_computedrelation(self):
+        class Societe(EntityType):
+            name = String()
+
+        class Employe(EntityType):
+            name = String()
+
+        class travaille(RelationDefinition):
+            subject = 'Employe'
+            object  = 'Societe'
+
+        class est_paye_par(ComputedRelation):
+            __permissions__ = {'read': ('managers', 'users', 'guests'),
+                               'add': ('hacker inside!', ),
+                               'delete': ()}
+            rule  = ('S travaille O')
+
+        with self.assertRaises(BadSchemaDefinition) as cm:
+            schema = build_schema_from_namespace(vars().items())
+        self.assertEqual(
+            'Cannot set add/delete permissions on computed relation est_paye_par',
+            str(cm.exception))
+
+    def test_computed_attribute_type(self):
+        class Entity(EntityType):
+            attr = Int(formula='Any Z WHERE X oattr Z')
+            oattr = String()
+
+        schema = build_schema_from_namespace(vars().items())
+        self.assertEqual('Any Z WHERE X oattr Z',
+                         schema['Entity'].rdef('attr').formula)
+        self.assertIsNone(schema['Entity'].rdef('oattr').formula)
+
+    def test_computed_attribute_rdef(self):
+        class Entity(EntityType):
+            oattr = String()
+
+        class attr(RelationDefinition):
+            subject = 'Entity'
+            object = 'Int'
+            formula='Any Z WHERE X oattr Z'
+
+        schema = build_schema_from_namespace(vars().items())
+        self.assertEqual('Any Z WHERE X oattr Z',
+                         schema['Entity'].rdef('attr').formula)
+        self.assertIsNone(schema['Entity'].rdef('oattr').formula)
+
+    def test_computed_attribute_perms(self):
+        class Entity(EntityType):
+            oattr = String()
+
+        class attr(RelationDefinition):
+            subject = 'Entity'
+            object = 'Int'
+            formula = 'Any Z WHERE X oattr Z'
+
+        schema = build_schema_from_namespace(vars().items())
+        self.assertEqual({'read':   ('managers', 'users', 'guests'),
+                          'update': (),
+                          'add': ()},
+                         schema['attr'].rdef('Entity', 'Int').permissions)
+
+    def test_cannot_set_addupdate_perms_on_computed_attribute(self):
+        class Entity(EntityType):
+            oattr = String()
+
+        class attr(RelationDefinition):
+            __permissions__ = {'read': ('managers', 'users', 'guests'),
+                               'add': ('hacker inside!', ),
+                               'update': ()}
+            subject = 'Entity'
+            object = 'Int'
+            formula = 'Any Z WHERE X oattr Z'
+
+        with self.assertRaises(BadSchemaDefinition) as cm:
+            schema = build_schema_from_namespace(vars().items())
+        self.assertEqual(
+            'Cannot set add/update permissions on computed attribute Entity.attr[Int]',
+            str(cm.exception))
+
+    def test_override_read_perms_on_computed_attribute(self):
+        class Entity(EntityType):
+            oattr = String()
+            subjrel = SubjectRelation('String')
+
+        class attr(RelationDefinition):
+            __permissions__ = {'read': ('clows', ),
+                               'add': (),
+                               'update': ()}
+            subject = 'Entity'
+            object = 'Int'
+            formula = 'Any Z WHERE X oattr Z'
+
+        class foo(RelationDefinition):
+            subject = 'Entity'
+            object = 'Boolean'
+
+        schema = build_schema_from_namespace(vars().items())
+        self.assertEqual({'read':   ('clows', ),
+                          'update': (),
+                          'add': ()},
+                         schema['attr'].rdef('Entity', 'Int').permissions)
+        self.assertEqual(
+                DEFAULT_ATTRPERMS,
+                schema['foo'].rdef('Entity', 'Boolean').permissions)
+
+    def test_computed_attribute_subjrel(self):
+        class Entity(EntityType):
+            oattr = String()
+            attr = SubjectRelation('Int', formula='Any Z WHERE X oattr Z')
+
+        schema = build_schema_from_namespace(vars().items())
+        self.assertEqual('Any Z WHERE X oattr Z', schema['attr'].rdef('Entity', 'Int').formula)
+
 
 if __name__ == '__main__':
     unittest_main()
-
-

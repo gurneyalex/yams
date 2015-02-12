@@ -1,5 +1,5 @@
 # -*- coding: iso-8859-1 -*-
-# copyright 2004-2013 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
+# copyright 2004-2014 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
 # contact http://www.logilab.fr/ -- mailto:contact@logilab.fr
 #
 # This file is part of yams.
@@ -24,6 +24,8 @@ from logilab.common.testlib import TestCase, unittest_main
 
 from copy import copy, deepcopy
 from tempfile import mktemp
+
+from six import text_type
 
 from yams import (BASE_TYPES, ValidationError, BadSchemaDefinition,
                   register_base_type, unregister_base_type)
@@ -109,7 +111,7 @@ class BaseSchemaTC(TestCase):
         self.assertRaises(ex_class, func, *args, **kwargs)
         try:
             func(*args, **kwargs)
-        except Exception, ex:
+        except Exception as ex:
             self.assertEqual(str(ex), msg)
 
 # test data ###################################################################
@@ -122,7 +124,7 @@ ATTRIBUTE_BAD_VALUES = (
     ('Person', [('nom', 1), ('nom', u'tropcour'),
                 ('nom', u'>10 mais  supérieur à < 20 , c\'est long'),
                 ('sexe', u'F'), ('sexe', u'MorF'), ('sexe', 'F'),
-                ('promo', 'bon'), ('promo', 'uyou'),
+                ('promo', b'bon'), ('promo', 'uyou'),
                 ('promo', u' pas bon du tout'),
                 ('promo_format', u'text/something'),
                 ('tel', 'notastring'),
@@ -170,10 +172,11 @@ RELATIONS_GOOD_VALUES = {
 class EntitySchemaTC(BaseSchemaTC):
 
     def test_base(self):
-        self.assert_(repr(eperson))
+        self.assertTrue(repr(eperson))
 
     def test_cmp(self):
         self.assertTrue(eperson == 'Person')
+        self.assertFalse(eperson != 'Person')
         self.assertTrue('Person' == eperson)
         self.assertTrue(eperson != 'Note')
         self.assertTrue('Note' != eperson)
@@ -216,8 +219,8 @@ class EntitySchemaTC(BaseSchemaTC):
         self.assertFalse(eperson is schema['Person'])
         self.assertEqual(eperson, schema['Person'])
         self.assertEqual('Person', schema['Person'])
-        self.assertEqual(eperson.subject_relations(), schema['Person'].subject_relations())
-        self.assertEqual(eperson.object_relations(), schema['Person'].object_relations())
+        self.assertCountEqual(eperson.subject_relations(), schema['Person'].subject_relations())
+        self.assertCountEqual(eperson.object_relations(), schema['Person'].object_relations())
         self.assertEqual(schema.eschema('Person').final, False)
         self.assertEqual(schema.eschema('String').final, True)
         self.assertEqual(schema.rschema('ref').final, True)
@@ -249,13 +252,13 @@ class EntitySchemaTC(BaseSchemaTC):
         self.assertEqual(eperson.is_metadata('promo'), None)
         self.assertEqual(eperson.is_metadata('promo_enlarged'), None)
         self.assertEqual(eperson.is_metadata('promo_encoding'), ('promo', 'encoding'))
-        self.assertEqual([(k.type, v)  for k, v in eperson.meta_attributes().items()],
+        self.assertCountEqual([(k.type, v)  for k, v in eperson.meta_attributes().items()],
                           [('promo_encoding', ('encoding', 'promo')),
                            ('promo_format', ('format', 'promo'))])
 
     def test_defaults(self):
         self.assertEqual(list(eperson.defaults()), [])
-        self.assertRaises(StopIteration, estring.defaults().next)
+        self.assertRaises(StopIteration, next, estring.defaults())
 
     def test_vocabulary(self):
         #self.assertEqual(eperson.vocabulary('promo')
@@ -267,7 +270,7 @@ class EntitySchemaTC(BaseSchemaTC):
     def test_indexable_attributes(self):
         eperson.rdef('nom').fulltextindexed = True
         eperson.rdef('prenom').fulltextindexed = True
-        self.assertEqual(list(eperson.indexable_attributes()), ['nom', 'prenom'])
+        self.assertCountEqual(list(eperson.indexable_attributes()), ['nom', 'prenom'])
 
 
     def test_goodValues_relation_default(self):
@@ -324,6 +327,7 @@ class RelationSchemaTC(BaseSchemaTC):
 
     def test_cmp(self):
         self.assertTrue(rconcerne == 'concerne')
+        self.assertFalse(rconcerne != 'concerne')
         self.assertTrue('concerne' == rconcerne)
         self.assertTrue(rconcerne != 'nom')
         self.assertTrue('nom' != rconcerne)
@@ -343,7 +347,7 @@ class RelationSchemaTC(BaseSchemaTC):
 
 
     def test_base(self):
-        self.assert_(repr(rnom))
+        self.assertTrue(repr(rnom))
 
     def test_star_types(self):
         types = sorted(rconcerne.subjects())
@@ -452,13 +456,13 @@ class SchemaTC(BaseSchemaTC):
                 with self.assertRaises(ValidationError) as cm:
                     eschema.check(dict([item]))
                 # check automatic call to translation works properly
-                unicode(cm.exception)
+                text_type(cm.exception)
 
     def test_validation_error_translation_1(self):
         eschema = schema.eschema('Person')
         with self.assertRaises(ValidationError) as cm:
             eschema.check({'nom': 1, 'promo': 2})
-        cm.exception.translate(unicode)
+        cm.exception.translate(text_type)
         self.assertEqual(cm.exception.errors,
                          {'nom-subject': u'incorrect value (1) for type "String"',
                           'promo-subject': u'incorrect value (2) for type "String"'})
@@ -467,7 +471,7 @@ class SchemaTC(BaseSchemaTC):
         eschema = schema.eschema('Person')
         with self.assertRaises(ValidationError) as cm:
             eschema.check({'nom': u'x'*21, 'prenom': u'x'*65})
-        cm.exception.translate(unicode)
+        cm.exception.translate(text_type)
         self.assertEqual(cm.exception.errors,
                          {'nom-subject': u'value should have maximum size of 20 but found 21',
                           'prenom-subject': u'value should have maximum size of 64 but found 65'})
@@ -476,14 +480,14 @@ class SchemaTC(BaseSchemaTC):
         eschema = schema.eschema('Person')
         with self.assertRaises(ValidationError) as cm:
             eschema.check({'tel': 1000000, 'fax': 1000001})
-        cm.exception.translate(unicode)
+        cm.exception.translate(text_type)
         self.assertEqual(cm.exception.errors,
                          {'fax-subject': u'value 1000001 must be <= 999999',
                           'tel-subject': u'value 1000000 must be <= 999999'})
 
     def test_validation_error_translation_4(self):
         verr = ValidationError(1, {None: 'global message about eid %(eid)s'}, {'eid': 1})
-        verr.translate(unicode)
+        verr.translate(text_type)
         self.assertEqual(verr.errors,
                          {None: 'global message about eid 1'})
 
@@ -491,10 +495,10 @@ class SchemaTC(BaseSchemaTC):
         """schema should be pickeable"""
         import pickle
         picklefile = mktemp()
-        picklestream = open(picklefile, 'w')
+        picklestream = open(picklefile, 'wb')
         pickle.dump(schema, picklestream)
         picklestream.close()
-        pschema = pickle.load(open(picklefile))
+        pschema = pickle.load(open(picklefile, 'rb'))
         self.assertFalse(eperson is pschema['Person'])
         self.assertEqual(eperson, pschema['Person'])
         self.assertEqual('Person', pschema['Person'])
@@ -506,15 +510,15 @@ class SchemaTC(BaseSchemaTC):
         affaire = schema.eschema('Affaire')
         orig_rprops = affaire.rdef('concerne')
         schema.rename_entity_type('Affaire', 'Workcase')
-        self.assertItemsEqual(schema._entities.keys(),
+        self.assertCountEqual(schema._entities.keys(),
                              ['BigInt', 'Boolean', 'Bytes', 'Date', 'Datetime', 'Float',
                               'Decimal',
                               'Int', 'Interval', 'Note', 'Password', 'Person',
                               'Societe', 'String', 'Time', 'TZDatetime', 'TZTime',
                               'Workcase'])
         rconcerne = schema.rschema('concerne')
-        self.assertItemsEqual(rconcerne.subjects(), ['Workcase', 'Person'])
-        self.assertItemsEqual(rconcerne.objects(), ['Workcase', 'Societe'])
+        self.assertCountEqual(rconcerne.subjects(), ['Workcase', 'Person'])
+        self.assertCountEqual(rconcerne.objects(), ['Workcase', 'Societe'])
         self.assertRaises(KeyError, schema.eschema, 'Affaire')
         workcase = schema.eschema('Workcase')
         schema.__test__ = True
