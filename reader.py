@@ -52,14 +52,6 @@ for objname in dir(constraints):
         continue
 
 
-def obsolete(cls):
-    def wrapped(*args, **kwargs):
-        reason = '%s should be explictly imported from %s' % (
-            cls.__name__, cls.__module__)
-        warn(reason, DeprecationWarning, stacklevel=2)
-        return cls(*args, **kwargs)
-    return wrapped
-
 def fill_schema(schema, erdefs, register_base_types=True,
                 remove_unused_rtypes=False, post_build_callbacks=[]):
     if register_base_types:
@@ -207,20 +199,6 @@ class SchemaLoader(object):
             raise BadSchemaDefinition(filepath, 'invalid definition object')
         defobject.expand_type_definitions(self.defined)
 
-    def import_erschema(self, ertype, schemamod=None, instantiate=True):
-        warn('import_erschema is deprecated, use explicit import once schema '
-             'is turned into a proper python module (eg not expecting '
-             'predefined context in globals)', DeprecationWarning, stacklevel=3)
-        try:
-            erdef = self.defined[ertype]
-            name = getattr(erdef, 'name', erdef.__name__)
-            if name == ertype:
-                assert instantiate, 'can\'t get class of an already registered type'
-                return erdef
-        except KeyError:
-            pass
-        assert False, 'ooups'
-
     def exec_file(self, filepath):
         try:
             modname = '.'.join(modpath_from_file(filepath, self.extrapath))
@@ -242,17 +220,7 @@ class SchemaLoader(object):
             assert abspath(module.__file__).startswith(abspath(filepath)), (
                 modname, filepath, module.__file__)
         else:
-            # XXX until bw compat is gone, put context into builtins to allow proper
-            # control of deprecation warning
-            from six.moves import builtins
             fglobals = {} # self.context.copy()
-            # wrap callable that should be imported
-            for key, val in self.context.items():
-                if key in BASE_TYPES or key == 'RichString' or key in CONSTRAINTS or \
-                       key in ('SubjectRelation', 'ObjectRelation'):
-                    val = obsolete(val)
-                setattr(builtins, key, val)
-            builtins.import_erschema = self.import_erschema
             fglobals['__file__'] = filepath
             fglobals['__name__'] = modname
             package = '.'.join(modname.split('.')[:-1])
@@ -263,22 +231,7 @@ class SchemaLoader(object):
                     exec(f.read(), fglobals)
                 except:
                     print('exception while reading %s' % filepath, file=sys.stderr)
-                    raise
-            # check for use of classes that should be imported, without
-            # importing them
-            for name, obj in fglobals.items():
-                if isinstance(obj, type) and \
-                       issubclass(obj, buildobjs.Definition) and \
-                       obj.__module__ == modname:
-                    for parent in obj.__bases__:
-                        pname = parent.__name__
-                        if pname in fglobals or not pname in self.context:
-                            # imported
-                            continue
-                        warn('%s: please explicitly import %s (%s)'
-                             % (filepath, pname, name), DeprecationWarning)
-            #for key in self.context:
-            #    fglobals.pop(key, None)
+                   raise
             fglobals['__file__'] = filepath
             module = types.ModuleType(str(modname))
             module.__dict__.update(fglobals)
