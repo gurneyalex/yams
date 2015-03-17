@@ -239,6 +239,8 @@ class BoundaryConstraint(BaseConstraint):
     def check(self, entity, rtype, value):
         """return true if the value satisfies the constraint, else false"""
         boundary = actual_value(self.boundary, entity)
+        if boundary is None:
+            return True
         return OPERATORS[self.operator](value, boundary)
 
     def failed_message(self, key, value):
