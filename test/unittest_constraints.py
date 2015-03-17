@@ -90,6 +90,12 @@ class ConstraintTC(TestCase):
         # fail, value > maxvalue
         self.assertFalse(cstr2.check(None, 'hip', date.today() + timedelta(4)))
 
+    def test_bound_constant(self):
+        cstr = BoundaryConstraint('<=', 0)
+        cstr2 = BoundaryConstraint.deserialize(cstr.serialize())
+        self.assertFalse(cstr2.check(None, 'hip', 25))
+        self.assertTrue(cstr2.check(None, 'hip', -1))
+
     def test_bound_with_attribute(self):
         cstr = BoundaryConstraint('<=', Attribute('hop'))
         cstr2 = BoundaryConstraint.deserialize(cstr.serialize())
