@@ -106,7 +106,6 @@ class ConstraintTC(TestCase):
         self.assertFalse(cstr2.check(mock_object(hop=date.today()),
                                 'hip', date.today() + timedelta(days=1)))
 
-
     def test_bound_with_date(self):
         cstr = BoundaryConstraint('<=', TODAY())
         cstr2 = BoundaryConstraint.deserialize(cstr.serialize())
@@ -115,6 +114,12 @@ class ConstraintTC(TestCase):
         self.assertTrue(cstr2.check(None, 'hip', date.today()))
         # fail, value > maxvalue
         self.assertFalse(cstr2.check(None, 'hip', date.today() + timedelta(days=1)))
+
+    def test_bound_with_unset_attribute(self):
+        cstr = BoundaryConstraint('<=', None)
+        self.assertTrue(cstr.check(None, 'hip', date.today()))
+        cstr = BoundaryConstraint('<=', Attribute('unset_attr'))
+        self.assertTrue(cstr.check(mock_object(unset_attr=None), 'hip', date.today()))
 
     def test_vocab_constraint_serialization(self):
         cstr = StaticVocabularyConstraint(['a, b', 'c'])
