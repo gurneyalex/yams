@@ -78,6 +78,9 @@ class BaseConstraint(object):
     """base class for constraints"""
     __implements__ = IConstraint
 
+    def __init__(self, msg=None):
+        self.msg = msg
+
     def check_consistency(self, subjschema, objschema, rdef):
         pass
 
@@ -86,16 +89,21 @@ class BaseConstraint(object):
 
     def serialize(self):
         """called to make persistent valuable data of a constraint"""
-        return None
+        return cstr_json_dumps({u'msg': self.msg})
 
     @classmethod
     def deserialize(cls, value):
         """called to restore serialized data of a constraint. Should return
         a `cls` instance
         """
-        return cls()
+        return cls(**cstr_json_loads(value))
 
     def failed_message(self, key, value):
+        if self.msg:
+            return self.msg, {}
+        return self._failed_message(key, value)
+
+    def _failed_message(self, key, value):
         return _('%(KEY-cstr)s constraint failed for value %(KEY-value)r'), {
             key+'-cstr': self,
             key+'-value': value}
@@ -138,7 +146,8 @@ class SizeConstraint(BaseConstraint):
     if min is not None the string length must not be shorter than min
     """
 
-    def __init__(self, max=None, min=None):
+    def __init__(self, max=None, min=None, msg=None):
+        super(SizeConstraint, self).__init__(msg)
         assert (max is not None or min is not None), "No max or min"
         if min is not None:
             assert isinstance(min, int), 'min must be an int, not %r' % min
@@ -183,7 +192,7 @@ class SizeConstraint(BaseConstraint):
                 return False
         return True
 
-    def failed_message(self, key, value):
+    def _failed_message(self, key, value):
         if self.max is not None and len(value) > self.max:
             return _('value should have maximum size of %(KEY-max)s but found %(KEY-size)s'), {
                 key+'-max': self.max,
@@ -196,7 +205,8 @@ class SizeConstraint(BaseConstraint):
 
     def serialize(self):
         """simple text serialization"""
-        return cstr_json_dumps({u'min': self.min, u'max': self.max})
+        return cstr_json_dumps({u'min': self.min, u'max': self.max,
+                                u'msg': self.msg})
 
     @classmethod
     def deserialize(cls, value):
@@ -217,7 +227,7 @@ class RegexpConstraint(BaseConstraint):
     """specifies a set of allowed patterns for a string value"""
     __implements__ = IConstraint
 
-    def __init__(self, regexp, flags=0):
+    def __init__(self, regexp, flags=0, msg=None):
         """
         Construct a new RegexpConstraint.
 
@@ -225,6 +235,7 @@ class RegexpConstraint(BaseConstraint):
          - `regexp`: (str) regular expression that strings must match
          - `flags`: (int) flags that are passed to re.compile()
         """
+        super(RegexpConstraint, self).__init__(msg)
         self.regexp = regexp
         self.flags = flags
         self._rgx = re.compile(regexp, flags)
@@ -244,14 +255,15 @@ class RegexpConstraint(BaseConstraint):
         """return true if the value maches the regular expression"""
         return self._rgx.match(value, self.flags)
 
-    def failed_message(self, key, value):
+    def _failed_message(self, key, value):
         return _("%(KEY-value)r doesn't match the %(KEY-regexp)r regular expression"), {
             key+'-value': value,
             key+'-regexp': self.regexp}
 
     def serialize(self):
         """simple text serialization"""
-        return cstr_json_dumps({u'regexp': self.regexp, u'flags': self.flags})
+        return cstr_json_dumps({u'regexp': self.regexp, u'flags': self.flags,
+                                u'msg': self.msg})
 
     @classmethod
     def deserialize(cls, value):
@@ -281,7 +293,8 @@ class BoundaryConstraint(BaseConstraint):
     """
     __implements__ = IConstraint
 
-    def __init__(self, op, boundary=None):
+    def __init__(self, op, boundary=None, msg=None):
+        super(BoundaryConstraint, self).__init__(msg)
         assert op in OPERATORS, op
         self.operator = op
         self.boundary = boundary
@@ -301,21 +314,22 @@ class BoundaryConstraint(BaseConstraint):
             return True
         return OPERATORS[self.operator](value, boundary)
 
-    def failed_message(self, key, value):
+    def _failed_message(self, key, value):
         return "value %%(KEY-value)s must be %s %%(KEY-boundary)s" % self.operator, {
             key+'-value': value,
             key+'-boundary': self.boundary}
 
     def serialize(self):
         """simple text serialization"""
-        return cstr_json_dumps({u'operator': self.operator, u'boundary': self.boundary})
+        return cstr_json_dumps({u'op': self.operator, u'boundary': self.boundary,
+                                u'msg': self.msg})
 
     @classmethod
     def deserialize(cls, value):
         """simple text deserialization"""
         try:
             d = cstr_json_loads(value)
-            return cls(d['operator'], d['boundary'])
+            return cls(**d)
         except ValueError:
             op, boundary = value.split(' ', 1)
             return cls(op, eval(boundary))
@@ -336,12 +350,13 @@ class IntervalBoundConstraint(BaseConstraint):
     """
     __implements__ = IConstraint
 
-    def __init__(self, minvalue=None, maxvalue=None):
+    def __init__(self, minvalue=None, maxvalue=None, msg=None):
         """
         :param minvalue: the minimal value that can be used
         :param maxvalue: the maxvalue value that can be used
         """
         assert not (minvalue is None and maxvalue is None)
+        super(IntervalBoundConstraint, self).__init__(msg)
         self.minvalue = minvalue
         self.maxvalue = maxvalue
 
@@ -362,7 +377,7 @@ class IntervalBoundConstraint(BaseConstraint):
             return False
         return True
 
-    def failed_message(self, key, value):
+    def _failed_message(self, key, value):
         if self.minvalue is not None and value < self.minvalue:
             return _("value %(KEY-value)s must be >= %(KEY-boundary)s"), {
                 key+'-value': value,
@@ -375,8 +390,8 @@ class IntervalBoundConstraint(BaseConstraint):
 
     def serialize(self):
         """simple text serialization"""
-        return cstr_json_dumps({u'minvalue': self.minvalue,
-                                u'maxvalue': self.maxvalue})
+        return cstr_json_dumps({u'minvalue': self.minvalue, u'maxvalue': self.maxvalue,
+                                u'msg': self.msg})
 
     @classmethod
     def deserialize(cls, value):
@@ -393,17 +408,18 @@ class StaticVocabularyConstraint(BaseConstraint):
     """Enforces a predefined vocabulary set for the value."""
     __implements__ = IVocabularyConstraint
 
-    def __init__(self, values):
+    def __init__(self, values, msg=None):
+        super(StaticVocabularyConstraint, self).__init__(msg)
         self.values = tuple(values)
 
     def __str__(self):
-        return 'value in (%s)' % self.serialize()
+        return 'value in (%s)' % u', '.join(repr(text_type(word)) for word in self.vocabulary())
 
     def check(self, entity, rtype, value):
         """return true if the value is in the specific vocabulary"""
         return value in self.vocabulary(entity=entity)
 
-    def failed_message(self, key, value):
+    def _failed_message(self, key, value):
         if isinstance(value, string_types):
             value = u'"%s"' % text_type(value)
             choices = u', '.join('"%s"' % val for val in self.values)
@@ -419,14 +435,14 @@ class StaticVocabularyConstraint(BaseConstraint):
 
     def serialize(self):
         """serialize possible values as a json object"""
-        return cstr_json_dumps(self.values)
+        return cstr_json_dumps({u'values': self.values, u'msg': self.msg})
 
     @classmethod
     def deserialize(cls, value):
         """deserialize possible values from a csv list of evaluable strings"""
         try:
             values = cstr_json_loads(value)
-            return cls(values)
+            return cls(**values)
         except ValueError:
             values = [eval(w) for w in re.split('(?<!,), ', value)]
             if values and isinstance(values[0], string_types):
@@ -441,8 +457,10 @@ class FormatConstraint(StaticVocabularyConstraint):
                        _('text/html'),
                        _('text/plain'),
                        )
-    def __init__(self):
-        self.values = self.vocabulary()
+
+    def __init__(self, msg=None, **kwargs):
+        values = self.regular_formats
+        super(FormatConstraint, self).__init__(values, msg=msg)
 
     def check_consistency(self, subjschema, objschema, rdef):
         if not objschema.final:
@@ -450,23 +468,6 @@ class FormatConstraint(StaticVocabularyConstraint):
                                       "final entity type")
         if not objschema == 'String':
             raise BadSchemaDefinition("format constraint only apply to String")
-
-    def serialize(self):
-        """called to make persistent valuable data of a constraint"""
-        return None
-
-    @classmethod
-    def deserialize(cls, value):
-        """called to restore serialized data of a constraint. Should return
-        a `cls` instance
-        """
-        return cls()
-
-    def vocabulary(self, **kwargs):
-        return self.regular_formats
-
-    def __str__(self):
-        return 'value in (%s)' % u', '.join(repr(text_type(word)) for word in self.vocabulary())
 
 FORMAT_CONSTRAINT = FormatConstraint()
 
