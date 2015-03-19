@@ -24,7 +24,7 @@ from copy import deepcopy
 from decimal import Decimal
 from itertools import chain
 
-from six import text_type
+from six import text_type, binary_type
 
 from logilab.common import attrdict
 from logilab.common.decorators import cached, clear_cache
@@ -539,7 +539,7 @@ class EntitySchema(PermissionMixIn, ERSchema):
                 msgargs[qname+'-value'] = value
                 msgargs[qname+'-type'] = aschema.type
                 i18nvalues.append(qname+'-type')
-                if isinstance(value, str) and aschema == 'String':
+                if isinstance(value, binary_type) and aschema == 'String':
                     errors[qname] += '; you might want to try unicode'
                 continue
             # ensure value has the correct python type
