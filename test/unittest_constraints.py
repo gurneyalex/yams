@@ -1,4 +1,4 @@
-# copyright 2004-2010 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
+# copyright 2004-2016 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
 # contact http://www.logilab.fr/ -- mailto:contact@logilab.fr
 #
 # This file is part of yams.
@@ -21,6 +21,7 @@ from yams.constraints import *
 # after import *
 from datetime import datetime, date, timedelta
 
+
 class ConstraintTC(TestCase):
 
     def test_membership(self):
@@ -40,22 +41,22 @@ class ConstraintTC(TestCase):
     def test_interval_serialization_integers(self):
         cstr = IntervalBoundConstraint(12, 13)
         self.assertEqual(IntervalBoundConstraint.deserialize('12;13'), cstr)
-        self.assertEqual(cstr.serialize(), u'{"maxvalue": 13, "minvalue": 12}')
+        self.assertEqual(cstr.serialize(), u'{"maxvalue": 13, "minvalue": 12, "msg": null}')
         self.assertEqual(cstr.__class__.deserialize(cstr.serialize()), cstr)
         cstr = IntervalBoundConstraint(maxvalue=13)
         self.assertEqual(IntervalBoundConstraint.deserialize('None;13'), cstr)
-        self.assertEqual(cstr.serialize(), u'{"maxvalue": 13, "minvalue": null}')
+        self.assertEqual(cstr.serialize(), u'{"maxvalue": 13, "minvalue": null, "msg": null}')
         self.assertEqual(cstr.__class__.deserialize(cstr.serialize()), cstr)
         cstr = IntervalBoundConstraint(minvalue=13)
         self.assertEqual(IntervalBoundConstraint.deserialize('13;None'), cstr)
-        self.assertEqual(cstr.serialize(), u'{"maxvalue": null, "minvalue": 13}')
+        self.assertEqual(cstr.serialize(), u'{"maxvalue": null, "minvalue": 13, "msg": null}')
         self.assertEqual(cstr.__class__.deserialize(cstr.serialize()), cstr)
         self.assertRaises(AssertionError, IntervalBoundConstraint)
 
     def test_interval_serialization_floats(self):
         cstr = IntervalBoundConstraint(12.13, 13.14)
         self.assertEqual(IntervalBoundConstraint.deserialize('12.13;13.14'), cstr)
-        self.assertEqual(cstr.serialize(), u'{"maxvalue": 13.14, "minvalue": 12.13}')
+        self.assertEqual(cstr.serialize(), u'{"maxvalue": 13.14, "minvalue": 12.13, "msg": null}')
         self.assertEqual(cstr.__class__.deserialize(cstr.serialize()), cstr)
 
     def test_interval_deserialization_integers(self):
@@ -76,7 +77,7 @@ class ConstraintTC(TestCase):
 
     def test_regexp_serialization(self):
         cstr = RegexpConstraint('[a-z]+,[A-Z]+', 12)
-        self.assertEqual(cstr.serialize(), '{"flags": 12, "regexp": "[a-z]+,[A-Z]+"}')
+        self.assertEqual(cstr.serialize(), '{"flags": 12, "msg": null, "regexp": "[a-z]+,[A-Z]+"}')
         self.assertEqual(cstr.__class__.deserialize(cstr.serialize()), cstr)
 
     def test_regexp_deserialization(self):
@@ -154,6 +155,21 @@ class ConstraintTC(TestCase):
         self.assertEqual(StaticVocabularyConstraint.deserialize(cstr.serialize()).values,
                          ('a, b', 'c'))
 
+
+    def test_custom_message(self):
+        cstrs = [UniqueConstraint(msg='constraint failed, you monkey!'),
+                 SizeConstraint(min=0, max=42, msg='constraint failed, you monkey!'),
+                 RegexpConstraint('babar', 0, msg='constraint failed, you monkey!'),
+                 BoundaryConstraint('>', 1, msg='constraint failed, you monkey!'),
+                 IntervalBoundConstraint(minvalue=0, maxvalue=42, msg='constraint failed, you monkey!'),
+                 StaticVocabularyConstraint((1, 2, 3), msg='constraint failed, you monkey!'),
+                 FormatConstraint(msg='constraint failed, you monkey!')]
+        for cstr in cstrs:
+            self.set_description('%s custom message' % cstr.__class__.__name__)
+            yield self.assertEqual, cstr.failed_message('key', 'value'), ('constraint failed, you monkey!', {})
+            self.set_description('%s custom message post serialization' % cstr.__class__.__name__)
+            cstr = type(cstr).deserialize(cstr.serialize())
+            yield self.assertEqual, cstr.failed_message('key', 'value'), ('constraint failed, you monkey!', {})
 
 if __name__ == '__main__':
     unittest_main()
