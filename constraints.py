@@ -377,7 +377,7 @@ class FormatConstraint(StaticVocabularyConstraint):
 
     def check_consistency(self, subjschema, objschema, rdef):
         if not objschema.final:
-            raise BadSchemaDefinition("unique constraint doesn't apply to non "
+            raise BadSchemaDefinition("format constraint doesn't apply to non "
                                       "final entity type")
         if not objschema == 'String':
             raise BadSchemaDefinition("format constraint only apply to String")
