@@ -237,7 +237,7 @@ class BoundaryConstraint(BaseConstraint):
                                       "final entity type")
 
     def check(self, entity, rtype, value):
-        """return true if the value satisfy the constraint, else false"""
+        """return true if the value satisfies the constraint, else false"""
         boundary = actual_value(self.boundary, entity)
         return OPERATORS[self.operator](value, boundary)
 
