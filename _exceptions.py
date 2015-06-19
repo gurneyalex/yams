@@ -99,12 +99,14 @@ class ValidationError(SchemaError):
         self._translated = False
 
     def __unicode__(self):
-        if not self._translated:
-            self.translate(unicode)
-        if len(self.errors) == 1:
-            attr, error = self.errors.items()[0]
+        if self._translated:
+            errors = self.errors
+        else:
+            errors = dict(self._translated_errors(unicode))
+        if len(errors) == 1:
+            attr, error = errors.items()[0]
             return u'%s (%s): %s' % (self.entity, attr, error)
-        errors = '\n'.join('* %s: %s' % (k, v) for k, v in self.errors.items())
+        errors = '\n'.join('* %s: %s' % (k, v) for k, v in errors.items())
         return u'%s:\n%s' % (self.entity, errors)
 
     def translate(self, _):
@@ -122,10 +124,12 @@ class ValidationError(SchemaError):
             if self.i18nvalues:
                 for key in self.i18nvalues:
                     self.msgargs[key] = _(self.msgargs[key])
-            for key, msg in self.errors.iteritems():
-                msg = _(msg)
-                if key is not None:
-                    msg = msg.replace('%(KEY-', '%('+key+'-')
-                self.errors[key] = msg % self.msgargs
+            self.errors = dict(self._translated_errors(_))
 
+    def _translated_errors(self, _):
+        for key, msg in self.errors.items():
+            msg = _(msg)
+            if key is not None:
+                msg = msg.replace('%(KEY-', '%('+key+'-')
+            yield key, msg % self.msgargs
 
