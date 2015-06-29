@@ -23,6 +23,20 @@ from datetime import datetime, date, timedelta
 
 class ConstraintTC(TestCase):
 
+    def test_membership(self):
+        s = set()
+        cstrs = [UniqueConstraint(),
+                 SizeConstraint(min=0, max=42),
+                 RegexpConstraint('babar', 0),
+                 BoundaryConstraint('>', 1),
+                 IntervalBoundConstraint(minvalue=0, maxvalue=42),
+                 StaticVocabularyConstraint((1, 2, 3)),
+                 FormatConstraint()]
+        for cstr in cstrs:
+            s.add(cstr)
+            s.add(type(cstr).deserialize(cstr.serialize()))
+        self.assertEqual(7, len(s))
+
     def test_interval_serialization_integers(self):
         cstr = IntervalBoundConstraint(12, 13)
         self.assertEqual(cstr.serialize(), '12;13')
