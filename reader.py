@@ -231,7 +231,7 @@ class SchemaLoader(object):
                     exec(f.read(), fglobals)
                 except:
                     print('exception while reading %s' % filepath, file=sys.stderr)
-                   raise
+                    raise
             fglobals['__file__'] = filepath
             module = types.ModuleType(str(modname))
             module.__dict__.update(fglobals)
