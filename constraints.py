@@ -1,4 +1,4 @@
-# copyright 2004-2012 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
+# copyright 2004-2015 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
 # contact http://www.logilab.fr/ -- mailto:contact@logilab.fr
 #
 # This file is part of yams.
@@ -254,9 +254,8 @@ class BoundaryConstraint(BaseConstraint):
         return OPERATORS[self.operator](value, boundary)
 
     def failed_message(self, key, value):
-        return _("value %(KEY-value)s must be %(KEY-op)s %(KEY-boundary)s"), {
+        return "value %%(KEY-value)s must be %s %%(KEY-boundary)s" % self.operator, {
             key+'-value': value,
-            key+'-op': self.operator,
             key+'-boundary': self.boundary}
 
     def serialize(self):
@@ -272,6 +271,10 @@ class BoundaryConstraint(BaseConstraint):
 BoundConstraint = class_renamed('BoundConstraint', BoundaryConstraint)
 BoundConstraint.type = lambda x: 'BoundaryConstraint'
 
+_("value %(KEY-value)s must be < %(KEY-boundary)s")
+_("value %(KEY-value)s must be > %(KEY-boundary)s")
+_("value %(KEY-value)s must be <= %(KEY-boundary)s")
+_("value %(KEY-value)s must be >= %(KEY-boundary)s")
 
 class IntervalBoundConstraint(BaseConstraint):
     """an int/float bound constraint :
