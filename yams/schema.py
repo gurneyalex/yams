@@ -551,7 +551,7 @@ class EntitySchema(PermissionMixIn, ERSchema):
             # check arbitrary constraints
             for constraint in rdef.constraints:
                 if not constraint.check(entity, rschema, value):
-                    msg, args = constraint.failed_message(qname, value)
+                    msg, args = constraint.failed_message(qname, value, entity)
                     errors[qname] = msg
                     msgargs.update(args)
                     break

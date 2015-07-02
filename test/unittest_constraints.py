@@ -75,6 +75,16 @@ class ConstraintTC(TestCase):
         self.assertEqual(cstr.minvalue, 12.13)
         self.assertEqual(cstr.maxvalue, 13.14)
 
+    def test_interval_attribute_error(self):
+        cstr = IntervalBoundConstraint(minvalue=Attribute('hip'), maxvalue=Attribute('hop'))
+        class entity: hip, hop = 34, 42
+        self.assertEqual(cstr.failed_message('key', 20, entity),
+                         (u'value %(KEY-value)s must be >= %(KEY-boundary)s',
+                          {'key-boundary': 'hip', 'key-value': 20}))
+        self.assertEqual(cstr.failed_message('key', 43, entity),
+                         (u'value %(KEY-value)s must be <= %(KEY-boundary)s',
+                          {'key-boundary': 'hop', 'key-value': 43}))
+
     def test_regexp_serialization(self):
         cstr = RegexpConstraint('[a-z]+,[A-Z]+', 12)
         self.assertEqual(cstr.serialize(), '{"flags": 12, "msg": null, "regexp": "[a-z]+,[A-Z]+"}')
@@ -146,7 +156,7 @@ class ConstraintTC(TestCase):
 
     def test_boundary_constraint_message(self):
         cstr = BoundaryConstraint('<=', 0)
-        self.assertEqual(cstr.failed_message('attr', 1),
+        self.assertEqual(cstr.failed_message('attr', 1, object()),
                          ('value %(KEY-value)s must be <= %(KEY-boundary)s',
                           {'attr-value': 1, 'attr-boundary': 0}))
 
@@ -154,7 +164,6 @@ class ConstraintTC(TestCase):
         cstr = StaticVocabularyConstraint(['a, b', 'c'])
         self.assertEqual(StaticVocabularyConstraint.deserialize(cstr.serialize()).values,
                          ('a, b', 'c'))
-
 
     def test_custom_message(self):
         cstrs = [UniqueConstraint(msg='constraint failed, you monkey!'),
@@ -166,10 +175,12 @@ class ConstraintTC(TestCase):
                  FormatConstraint(msg='constraint failed, you monkey!')]
         for cstr in cstrs:
             self.set_description('%s custom message' % cstr.__class__.__name__)
-            yield self.assertEqual, cstr.failed_message('key', 'value'), ('constraint failed, you monkey!', {})
+            yield self.assertEqual, cstr.failed_message('key', 'value', object()), \
+                ('constraint failed, you monkey!', {})
             self.set_description('%s custom message post serialization' % cstr.__class__.__name__)
             cstr = type(cstr).deserialize(cstr.serialize())
-            yield self.assertEqual, cstr.failed_message('key', 'value'), ('constraint failed, you monkey!', {})
+            yield self.assertEqual, cstr.failed_message('key', 'value', object()), \
+                ('constraint failed, you monkey!', {})
 
 if __name__ == '__main__':
     unittest_main()

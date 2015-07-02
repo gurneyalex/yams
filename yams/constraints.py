@@ -24,7 +24,7 @@ import decimal
 import operator
 import json
 import datetime
-
+import warnings
 
 from six import string_types, text_type, binary_type
 
@@ -78,6 +78,12 @@ def cstr_json_dumps(obj):
 cstr_json_loads = json.JSONDecoder(object_hook=_json_object_hook).decode
 
 
+def _message_value(boundary):
+    if isinstance(boundary, Attribute):
+        return boundary.attr
+    return boundary
+
+
 class BaseConstraint(object):
     """base class for constraints"""
     __implements__ = IConstraint
@@ -102,12 +108,15 @@ class BaseConstraint(object):
         """
         return cls(**cstr_json_loads(value))
 
-    def failed_message(self, key, value):
+    def failed_message(self, key, value, entity=None):
+        if entity is None:
+            warnings.warn('[yams 0.44] failed message should now be given entity has argument.',
+                          DeprecationWarning, stacklevel=2)
         if self.msg:
             return self.msg, {}
-        return self._failed_message(key, value)
+        return self._failed_message(entity, key, value)
 
-    def _failed_message(self, key, value):
+    def _failed_message(self, entity, key, value):
         return _('%(KEY-cstr)s constraint failed for value %(KEY-value)r'), {
             key + '-cstr': self,
             key + '-value': value}
@@ -196,7 +205,7 @@ class SizeConstraint(BaseConstraint):
                 return False
         return True
 
-    def _failed_message(self, key, value):
+    def _failed_message(self, entity, key, value):
         if self.max is not None and len(value) > self.max:
             return _('value should have maximum size of %(KEY-max)s but found %(KEY-size)s'), {
                 key + '-max': self.max,
@@ -259,7 +268,7 @@ class RegexpConstraint(BaseConstraint):
         """return true if the value maches the regular expression"""
         return self._rgx.match(value, self.flags)
 
-    def _failed_message(self, key, value):
+    def _failed_message(self, entity, key, value):
         return _("%(KEY-value)r doesn't match the %(KEY-regexp)r regular expression"), {
             key + '-value': value,
             key + '-regexp': self.regexp}
@@ -319,10 +328,10 @@ class BoundaryConstraint(BaseConstraint):
             return True
         return OPERATORS[self.operator](value, boundary)
 
-    def _failed_message(self, key, value):
+    def _failed_message(self, entity, key, value):
         return "value %%(KEY-value)s must be %s %%(KEY-boundary)s" % self.operator, {
             key + '-value': value,
-            key + '-boundary': self.boundary}
+            key + '-boundary': _message_value(actual_value(self.boundary, entity))}
 
     def serialize(self):
         """simple text serialization"""
@@ -384,15 +393,15 @@ class IntervalBoundConstraint(BaseConstraint):
             return False
         return True
 
-    def _failed_message(self, key, value):
-        if self.minvalue is not None and value < self.minvalue:
+    def _failed_message(self, entity, key, value):
+        if self.minvalue is not None and value < actual_value(self.minvalue, entity):
             return _("value %(KEY-value)s must be >= %(KEY-boundary)s"), {
                 key + '-value': value,
-                key + '-boundary': self.minvalue}
-        if self.maxvalue is not None and value > self.maxvalue:
+                key + '-boundary': _message_value(self.minvalue)}
+        if self.maxvalue is not None and value > actual_value(self.maxvalue, entity):
             return _("value %(KEY-value)s must be <= %(KEY-boundary)s"), {
                 key + '-value': value,
-                key + '-boundary': self.maxvalue}
+                key + '-boundary': _message_value(self.maxvalue)}
         assert False, 'shouldnt be there'
 
     def serialize(self):
@@ -426,7 +435,7 @@ class StaticVocabularyConstraint(BaseConstraint):
         """return true if the value is in the specific vocabulary"""
         return value in self.vocabulary(entity=entity)
 
-    def _failed_message(self, key, value):
+    def _failed_message(self, entity, key, value):
         if isinstance(value, string_types):
             value = u'"%s"' % text_type(value)
             choices = u', '.join('"%s"' % val for val in self.values)
