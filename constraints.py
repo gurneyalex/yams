@@ -58,6 +58,16 @@ class BaseConstraint(object):
             key+'-cstr': self,
             key+'-value': value}
 
+    def __eq__(self, other):
+        return (self.type(), self.serialize()) == (other.type(), other.serialize())
+
+    def __ne__(self, other):
+        return not self == other
+
+    def __hash__(self):
+        return hash((self.type(), self.serialize()))
+
+
 # possible constraints ########################################################
 
 class UniqueConstraint(BaseConstraint):
