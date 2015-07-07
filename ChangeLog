@@ -1,6 +1,9 @@
 ChangeLog for yams
 ------------------
 
+2015-07-07  --  0.39.2
+    * provide proper comparison and hashability between constraints (#294378)
+
 2014-03-28  --  0.39.1
     * [schema] don't raise an error when some infered relation is overwritten
      (#231956)
