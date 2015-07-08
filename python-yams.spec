@@ -9,7 +9,7 @@
 
 Summary:        entity / relation schema
 Name:           %{python}-yams
-Version:        0.40.2
+Version:        0.41.0
 Release:        logilab.1%{?dist}
 Source0:        http://download.logilab.org/pub/yams/yams-%{version}.tar.gz
 License:        LGPLv2+
