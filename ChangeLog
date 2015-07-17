@@ -1,6 +1,10 @@
 ChangeLog for yams
 ------------------
 
+2015-07-17  --  0.39.3
+    * allow calling unicode/str on a validation error before its translation
+     (#286709)
+
 2015-07-07  --  0.39.2
     * provide proper comparison and hashability between constraints (#294378)
 
