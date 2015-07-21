@@ -124,12 +124,14 @@ class ValidationError(SchemaError):
             if self.i18nvalues:
                 for key in self.i18nvalues:
                     self.msgargs[key] = _(self.msgargs[key])
-            self.errors = dict(self._translated_errors(_))
+        self.errors = dict(self._translated_errors(_))
 
     def _translated_errors(self, _):
         for key, msg in self.errors.items():
             msg = _(msg)
             if key is not None:
                 msg = msg.replace('%(KEY-', '%('+key+'-')
-            yield key, msg % self.msgargs
+            if self.msgargs:
+                msg = msg %  self.msgargs
+            yield key, msg
 
