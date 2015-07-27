@@ -649,7 +649,7 @@ class RelationDefinitionSchema(PermissionMixIn):
 
         * else copy the `update` rule for `add`
         """
-        if not 'add' in self.permissions:
+        if 'add' not in self.permissions:
             if self.permissions['update'] == ():
                 defaultaddperms = DEFAULT_ATTRPERMS['add']
             else:
