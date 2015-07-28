@@ -579,6 +579,149 @@ class EntitySchema(PermissionMixIn, ERSchema):
         return cstr.vocabulary()
 
 
+class RelationDefinitionSchema(PermissionMixIn):
+    """a relation definition is fully caracterized relation, eg
+
+         <subject type> <relation type> <object type>
+    """
+
+    _RPROPERTIES = {'cardinality': None,
+                    'constraints': (),
+                    'order': 9999,
+                    'description': '',
+                    'infered': False,
+                    'permissions': None}
+    _NONFINAL_RPROPERTIES = {'composite': None}
+    _FINAL_RPROPERTIES = {'default': None,
+                          'uid': False,
+                          'indexed': False,
+                          'formula': None,
+                          }
+    # Use a TYPE_PROPERTIES dictionnary to store type-dependant parameters.
+    BASE_TYPE_PROPERTIES = {'String': {'fulltextindexed': False,
+                                       'internationalizable': False},
+                            'Bytes': {'fulltextindexed': False}}
+
+    @classmethod
+    def ALL_PROPERTIES(cls):
+        return set(chain(cls._RPROPERTIES,
+                         cls._NONFINAL_RPROPERTIES,
+                         cls._FINAL_RPROPERTIES,
+                         *cls.BASE_TYPE_PROPERTIES.values()))
+
+    def __init__(self, subject, rtype, object, package, values=None):
+        if values is not None:
+            self.update(values)
+        self.subject = subject
+        self.rtype = rtype
+        self.object = object
+        self.package = package
+
+    @property
+    def ACTIONS(self):
+        if self.rtype.final:
+            return ('read', 'add', 'update')
+        else:
+            return ('read', 'add', 'delete')
+
+    def update(self, values):
+        # XXX check we're copying existent properties
+        self.__dict__.update(values)
+
+    def __str__(self):
+        if self.object.final:
+            return 'attribute %s.%s[%s]' % (
+            self.subject, self.rtype, self.object)
+        return 'relation %s %s %s' % (
+            self.subject, self.rtype, self.object)
+
+    def __repr__(self):
+        return '<%s at @%#x>' % (self, id(self))
+
+    def as_triple(self):
+        return (self.subject, self.rtype, self.object)
+
+    def advertise_new_add_permission(self):
+        """handle backward compatibility with pre-add permissions
+
+        * if the update permission was () [empty tuple], use the
+          default attribute permissions for `add`
+
+        * else copy the `update` rule for `add`
+        """
+        if not 'add' in self.permissions:
+            if self.permissions['update'] == ():
+                defaultaddperms = DEFAULT_ATTRPERMS['add']
+            else:
+                defaultaddperms = self.permissions['update']
+            self.permissions['add'] = defaultaddperms
+            warnings.warn('[yams 0.39] %s: new "add" permissions on attribute '
+                          'set to %s by default, but you must make it explicit' %
+                          (self, defaultaddperms), DeprecationWarning)
+
+
+    @classmethod
+    def rproperty_defs(cls, desttype):
+        """return a dictionary mapping property name to its definition for each
+        allowable properties when the relation has `desttype` as target entity's
+        type
+        """
+        propdefs = cls._RPROPERTIES.copy()
+        if desttype not in BASE_TYPES:
+            propdefs.update(cls._NONFINAL_RPROPERTIES)
+        else:
+            propdefs.update(cls._FINAL_RPROPERTIES)
+            propdefs.update(cls.BASE_TYPE_PROPERTIES.get(desttype, {}))
+        return propdefs
+
+    def rproperties(self):
+        """same as .rproperty_defs class method, but for instances (hence
+        destination is known to be self.object).
+        """
+        return self.rproperty_defs(self.object)
+
+    def get(self, key, default=None):
+        return getattr(self, key, default)
+
+    @property
+    def final(self):
+        return self.rtype.final
+
+    def dump(self, subject, object):
+        return self.__class__(subject, self.rtype, object,
+                                        self.package,
+                                        self.__dict__)
+
+    def role_cardinality(self, role):
+        return self.cardinality[role == 'object']
+
+    def constraint_by_type(self, cstrtype):
+        for cstr in self.constraints:
+            if cstr.type() == cstrtype:
+                return cstr
+        return None
+
+    def constraint_by_class(self, cls):
+        for cstr in self.constraints:
+            if isinstance(cstr, cls):
+                return cstr
+        return None
+
+    def constraint_by_interface(self, iface):
+        for cstr in self.constraints:
+            if implements(cstr, iface):
+                return cstr
+        return None
+
+    def check_permission_definitions(self):
+        """check permissions are correctly defined"""
+        super(RelationDefinitionSchema, self).check_permission_definitions()
+        if (self.final and self.formula and
+                (self.permissions['add'] or self.permissions['update'])):
+            raise BadSchemaDefinition(
+                'Cannot set add/update permissions on computed %s' % self)
+
+
 
 class RelationSchema(ERSchema):
     """A relation is a named and oriented link between two entities.
@@ -601,6 +744,7 @@ class RelationSchema(ERSchema):
     final = False
     permissions = None # only when rule is not None, for later propagation to
                        # computed relation definitions
+    rdef_class = RelationDefinitionSchema
 
     def __init__(self, schema=None, rdef=None, **kwargs):
         if rdef is not None:
@@ -761,8 +905,8 @@ class RelationSchema(ERSchema):
         if key in self.rdefs and not self.rdefs[key].infered:
             msg = '(%s, %s) already defined for %s' % (subject, object, self)
             raise BadSchemaDefinition(msg)
-        self.rdefs[key] = rdef = RelationDefinitionSchema(subject, self, object,
-                                                          buildrdef.package)
+        self.rdefs[key] = rdef = self.rdef_class(subject, self, object,
+                                                 buildrdef.package)
         for prop, default in rdef.rproperties().items():
             rdefval = getattr(buildrdef, prop, MARKER)
             if rdefval is MARKER:
@@ -841,149 +985,6 @@ class RelationSchema(ERSchema):
             raise BadSchemaDefinition(
                 'Cannot set add/delete permissions on computed relation %s'
                 % self.type)
-
-
-class RelationDefinitionSchema(PermissionMixIn):
-    """a relation definition is fully caracterized relation, eg
-
-         <subject type> <relation type> <object type>
-    """
-
-    _RPROPERTIES = {'cardinality': None,
-                    'constraints': (),
-                    'order': 9999,
-                    'description': '',
-                    'infered': False,
-                    'permissions': None}
-    _NONFINAL_RPROPERTIES = {'composite': None}
-    _FINAL_RPROPERTIES = {'default': None,
-                          'uid': False,
-                          'indexed': False,
-                          'formula': None,
-                          }
-    # Use a TYPE_PROPERTIES dictionnary to store type-dependant parameters.
-    BASE_TYPE_PROPERTIES = {'String': {'fulltextindexed': False,
-                                       'internationalizable': False},
-                            'Bytes': {'fulltextindexed': False}}
-
-    @classmethod
-    def ALL_PROPERTIES(cls):
-        return set(chain(cls._RPROPERTIES,
-                         cls._NONFINAL_RPROPERTIES,
-                         cls._FINAL_RPROPERTIES,
-                         *cls.BASE_TYPE_PROPERTIES.values()))
-
-    def __init__(self, subject, rtype, object, package, values=None):
-        if values is not None:
-            self.update(values)
-        self.subject = subject
-        self.rtype = rtype
-        self.object = object
-        self.package = package
-
-    @property
-    def ACTIONS(self):
-        if self.rtype.final:
-            return ('read', 'add', 'update')
-        else:
-            return ('read', 'add', 'delete')
-
-    def update(self, values):
-        # XXX check we're copying existent properties
-        self.__dict__.update(values)
-
-    def __str__(self):
-        if self.object.final:
-            return 'attribute %s.%s[%s]' % (
-            self.subject, self.rtype, self.object)
-        return 'relation %s %s %s' % (
-            self.subject, self.rtype, self.object)
-
-    def __repr__(self):
-        return '<%s at @%#x>' % (self, id(self))
-
-    def as_triple(self):
-        return (self.subject, self.rtype, self.object)
-
-    def advertise_new_add_permission(self):
-        """handle backward compatibility with pre-add permissions
-
-        * if the update permission was () [empty tuple], use the
-          default attribute permissions for `add`
-
-        * else copy the `update` rule for `add`
-        """
-        if not 'add' in self.permissions:
-            if self.permissions['update'] == ():
-                defaultaddperms = DEFAULT_ATTRPERMS['add']
-            else:
-                defaultaddperms = self.permissions['update']
-            self.permissions['add'] = defaultaddperms
-            warnings.warn('[yams 0.39] %s: new "add" permissions on attribute '
-                          'set to %s by default, but you must make it explicit' %
-                          (self, defaultaddperms), DeprecationWarning)
-
-
-    @classmethod
-    def rproperty_defs(cls, desttype):
-        """return a dictionary mapping property name to its definition for each
-        allowable properties when the relation has `desttype` as target entity's
-        type
-        """
-        propdefs = cls._RPROPERTIES.copy()
-        if desttype not in BASE_TYPES:
-            propdefs.update(cls._NONFINAL_RPROPERTIES)
-        else:
-            propdefs.update(cls._FINAL_RPROPERTIES)
-            propdefs.update(cls.BASE_TYPE_PROPERTIES.get(desttype, {}))
-        return propdefs
-
-    def rproperties(self):
-        """same as .rproperty_defs class method, but for instances (hence
-        destination is known to be self.object).
-        """
-        return self.rproperty_defs(self.object)
-
-    def get(self, key, default=None):
-        return getattr(self, key, default)
-
-    @property
-    def final(self):
-        return self.rtype.final
-
-    def dump(self, subject, object):
-        return RelationDefinitionSchema(subject, self.rtype, object,
-                                        self.package,
-                                        self.__dict__)
-
-    def role_cardinality(self, role):
-        return self.cardinality[role == 'object']
-
-    def constraint_by_type(self, cstrtype):
-        for cstr in self.constraints:
-            if cstr.type() == cstrtype:
-                return cstr
-        return None
-
-    def constraint_by_class(self, cls):
-        for cstr in self.constraints:
-            if isinstance(cstr, cls):
-                return cstr
-        return None
-
-    def constraint_by_interface(self, iface):
-        for cstr in self.constraints:
-            if implements(cstr, iface):
-                return cstr
-        return None
-
-    def check_permission_definitions(self):
-        """check permissions are correctly defined"""
-        super(RelationDefinitionSchema, self).check_permission_definitions()
-        if (self.final and self.formula and
-                (self.permissions['add'] or self.permissions['update'])):
-            raise BadSchemaDefinition(
-                'Cannot set add/update permissions on computed %s' % self)
 
 
 class Schema(object):
