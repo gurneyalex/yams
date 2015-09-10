@@ -501,6 +501,12 @@ class SchemaTC(BaseSchemaTC):
         self.assertEqual(verr.errors,
                          {None: 'global message about eid 1'})
 
+    def test_validation_error_translate_without_msgargs(self):
+        """Check that ValidationError.errors get translated even without msgargs"""
+        verr = ValidationError(1, {None: 'hello'})
+        verr.translate(list)
+        self.assertEqual(verr.errors, {None: list('hello')})
+
     def test_pickle(self):
         """schema should be pickeable"""
         import pickle
