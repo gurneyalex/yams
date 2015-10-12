@@ -496,8 +496,8 @@ class SchemaTC(BaseSchemaTC):
     def test_validation_error_unicode_then_translation(self):
         verr = ValidationError(1, {None: 'global message about eid %(eid)s'}, {'eid': 1})
         self.assertEqual(str(verr), '1 (None): global message about eid 1')
-        self.assertEqual(unicode(verr), '1 (None): global message about eid 1')
-        verr.translate(unicode)
+        self.assertEqual(text_type(verr), '1 (None): global message about eid 1')
+        verr.translate(text_type)
         self.assertEqual(verr.errors,
                          {None: 'global message about eid 1'})
 
