@@ -1,6 +1,22 @@
 ChangeLog for yams
 ------------------
 
+2015-10-12  --  0.41.1
+    * #286709: support for calling unicode/str on a validation error before its
+      actual translation
+    * #1234481: Ensure ValidationError gets translated even without msgargs
+    * #2085734: misc py3k-related fixes
+
+2015-07-08  --  0.41.0
+    * #284995: [reader] display schema file name when exec fails
+    * [schema] Improve error message when building a schema with mixed up
+      final/non-final relations
+    * #287000: [reader] stop providing base types without import
+    * #286912: [schema2sql] properly consider skip_relations parameters
+    * #288556: handle none or unset attribute in BoundaryConstraint
+    * #294378: provide proper comparison and hashability between constraints
+
+
 2014-12-22  --  0.40.2
 
     * Fix default permissions of attributes defined by a RelationDefinition
