@@ -21,12 +21,18 @@ __docformat__ = "restructuredtext en"
 
 import sys
 
+from six import PY2, text_type
+
+
 class SchemaError(Exception):
     """base class for schema exceptions"""
 
-    if sys.version_info[0] < 3:
+    if PY2:
         def __str__(self):
             return unicode(self).encode('utf8')
+    else:
+        def __str__(self):
+            return self.__unicode__()
 
 
 class UnknownType(SchemaError):
@@ -105,7 +111,7 @@ class ValidationError(SchemaError):
         if self._translated:
             errors = self.errors
         else:
-            errors = dict(self._translated_errors(unicode))
+            errors = dict(self._translated_errors(text_type))
         if len(errors) == 1:
             attr, error = errors.items()[0]
             return u'%s (%s): %s' % (self.entity, attr, error)
