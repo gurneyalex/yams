@@ -113,7 +113,7 @@ class ValidationError(SchemaError):
         else:
             errors = dict(self._translated_errors(text_type))
         if len(errors) == 1:
-            attr, error = errors.items()[0]
+            attr, error = next(iter(errors.items()))
             return u'%s (%s): %s' % (self.entity, attr, error)
         errors = '\n'.join('* %s: %s' % (k, v) for k, v in errors.items())
         return u'%s:\n%s' % (self.entity, errors)
