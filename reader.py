@@ -250,7 +250,8 @@ class SchemaLoader(object):
                 __import__(package)
             with open(filepath) as f:
                 try:
-                    exec(f.read(), fglobals)
+                    code = compile(f.read(), filepath, 'exec')
+                    exec(code, fglobals)
                 except:
                     print('exception while reading %s' % filepath, file=sys.stderr)
                     raise
