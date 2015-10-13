@@ -25,14 +25,14 @@ from datetime import datetime, date, time
 from six import string_types, text_type
 from six.moves import builtins
 
-# XXX set _ builtin to unicode by default, should be overriden if necessary
-builtins._ = text_type
-
 from logilab.common.date import strptime, strptime_time
 from logilab.common import nullobject
 
 from yams.__pkginfo__ import version as __version__
 from yams._exceptions import *
+
+
+_ = text_type
 
 MARKER = nullobject()
 
