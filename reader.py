@@ -37,14 +37,6 @@ from yams import UnknownType, BadSchemaDefinition, BASE_TYPES
 from yams import constraints, schema as schemamod
 from yams import buildobjs
 
-def obsolete(cls):
-    def wrapped(*args, **kwargs):
-        reason = '%s should be explictly imported from %s' % (
-            cls.__name__, cls.__module__)
-        warn(reason, DeprecationWarning, stacklevel=2)
-        return cls(*args, **kwargs)
-    return wrapped
-
 
 CONSTRAINTS = {}
 # add constraint classes to the context
@@ -206,20 +198,6 @@ class SchemaLoader(object):
         if not issubclass(defobject, buildobjs.Definition):
             raise BadSchemaDefinition(filepath, 'invalid definition object')
         defobject.expand_type_definitions(self.defined)
-
-    def import_erschema(self, ertype, schemamod=None, instantiate=True):
-        warn('import_erschema is deprecated, use explicit import once schema '
-             'is turned into a proper python module (eg not expecting '
-             'predefined context in globals)', DeprecationWarning, stacklevel=3)
-        try:
-            erdef = self.defined[ertype]
-            name = getattr(erdef, 'name', erdef.__name__)
-            if name == ertype:
-                assert instantiate, 'can\'t get class of an already registered type'
-                return erdef
-        except KeyError:
-            pass
-        assert False, 'ooups'
 
     def exec_file(self, filepath):
         try:
