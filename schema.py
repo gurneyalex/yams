@@ -1121,7 +1121,7 @@ class Schema(object):
     def del_relation_type(self, rtype):
         # XXX don't iter directly on the dictionary since it may be changed
         # by del_relation_def
-        for subjtype, objtype in self.rschema(rtype).rdefs.keys():
+        for subjtype, objtype in list(self.rschema(rtype).rdefs):
             self.del_relation_def(subjtype, rtype, objtype)
         if not self.rschema(rtype).rdefs:
             del self._relations[rtype]
