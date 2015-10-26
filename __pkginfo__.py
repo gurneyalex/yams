@@ -31,12 +31,7 @@ version = '.'.join(str(num) for num in numversion)
 license = 'LGPL'
 
 # short and long description
-short_desc = "entity / relation schema"
-long_desc = """Yet Another Magic Schema !
-A simple/generic but powerful entities / relations schema, suitable
-to represent RDF like data. The schema is readable/writable from/to
-various formats.
-"""
+description = "entity / relation schema"
 
 # author name and email
 author = "Logilab"
@@ -48,15 +43,17 @@ web = "https://www.logilab.org/project/%s" % modname
 # mailing list
 mailinglist = 'mailto://python-projects@lists.logilab.org'
 
-# download place
-ftp = "http://download.logilab.org/pub/%s" % modname
-
 # executable
-
 scripts = ['bin/yams-check', 'bin/yams-view']
 
 install_requires = [
     'logilab-common >= 0.55.2',
     'logilab-database >= 1.11',
     'six >= 1.4.0',
+    ]
+
+classifiers = [
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 2",
+    "Programming Language :: Python :: 3",
     ]
