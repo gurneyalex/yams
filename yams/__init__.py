@@ -25,12 +25,15 @@ from datetime import datetime, date, time
 from six import string_types, text_type
 from six.moves import builtins
 
+import pkg_resources
+
 from logilab.common.date import strptime, strptime_time
 from logilab.common import nullobject
 
-from yams.__pkginfo__ import version as __version__
 from yams._exceptions import *
 
+
+__version__ = pkg_resources.get_distribution('yams').version
 
 _ = text_type
 
