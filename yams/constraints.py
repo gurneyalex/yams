@@ -69,8 +69,8 @@ def _json_object_hook(dct):
         return TODAY(offset=offset, type=dct['type'])
     return dct
 
-_json_dumps = ConstraintJSONEncoder(sort_keys=True).encode
-_json_loads = json.JSONDecoder(object_hook=_json_object_hook).decode
+cstr_json_dumps = ConstraintJSONEncoder(sort_keys=True).encode
+cstr_json_loads = json.JSONDecoder(object_hook=_json_object_hook).decode
 
 class BaseConstraint(object):
     """base class for constraints"""
@@ -194,13 +194,13 @@ class SizeConstraint(BaseConstraint):
 
     def serialize(self):
         """simple text serialization"""
-        return text_type(_json_dumps({'min': self.min, 'max': self.max}))
+        return text_type(cstr_json_dumps({'min': self.min, 'max': self.max}))
 
     @classmethod
     def deserialize(cls, value):
         """simple text deserialization"""
         try:
-            d = _json_loads(value)
+            d = cstr_json_loads(value)
             return cls(**d)
         except ValueError:
             kwargs = {}
@@ -249,13 +249,13 @@ class RegexpConstraint(BaseConstraint):
 
     def serialize(self):
         """simple text serialization"""
-        return text_type(_json_dumps({'regexp': self.regexp, 'flags': self.flags}))
+        return text_type(cstr_json_dumps({'regexp': self.regexp, 'flags': self.flags}))
 
     @classmethod
     def deserialize(cls, value):
         """simple text deserialization"""
         try:
-            d = _json_loads(value)
+            d = cstr_json_loads(value)
             return cls(**d)
         except ValueError:
             regexp, flags = value.rsplit(',', 1)
@@ -306,13 +306,13 @@ class BoundaryConstraint(BaseConstraint):
 
     def serialize(self):
         """simple text serialization"""
-        return text_type(_json_dumps({'operator': self.operator, 'boundary': self.boundary}))
+        return text_type(cstr_json_dumps({'operator': self.operator, 'boundary': self.boundary}))
 
     @classmethod
     def deserialize(cls, value):
         """simple text deserialization"""
         try:
-            d = _json_loads(value)
+            d = cstr_json_loads(value)
             return cls(d['operator'], d['boundary'])
         except ValueError:
             op, boundary = value.split(' ', 1)
@@ -373,14 +373,14 @@ class IntervalBoundConstraint(BaseConstraint):
 
     def serialize(self):
         """simple text serialization"""
-        return text_type(_json_dumps({'minvalue': self.minvalue,
-                                      'maxvalue': self.maxvalue}))
+        return text_type(cstr_json_dumps({'minvalue': self.minvalue,
+                                          'maxvalue': self.maxvalue}))
 
     @classmethod
     def deserialize(cls, value):
         """simple text deserialization"""
         try:
-            d = _json_loads(value)
+            d = cstr_json_loads(value)
             return cls(**d)
         except ValueError:
             minvalue, maxvalue = value.split(';')
@@ -417,13 +417,13 @@ class StaticVocabularyConstraint(BaseConstraint):
 
     def serialize(self):
         """serialize possible values as a json object"""
-        return text_type(_json_dumps(self.values))
+        return text_type(cstr_json_dumps(self.values))
 
     @classmethod
     def deserialize(cls, value):
         """deserialize possible values from a csv list of evaluable strings"""
         try:
-            values = _json_loads(value)
+            values = cstr_json_loads(value)
             return cls(values)
         except ValueError:
             values = [eval(w) for w in re.split('(?<!,), ', value)]
