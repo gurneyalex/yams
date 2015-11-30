@@ -816,11 +816,11 @@ class RelationSchema(ERSchema):
                 else:
                     feschema, nfeschema = self.subjects()[0], subjschema
                     frschema, nfrschema = eschema, objschema
-                msg = ("ambiguous relation: '{feschema}.{rtype}' is final ({frschema}) "
-                       "but not '{nfeschema}.{rtype}' ({nfrschema})")
-                msg = msg.format(rtype=self.type,
-                                 feschema=feschema, frschema=frschema,
-                                 nfeschema=subjschema, nfrschema=nfrschema)
+                msg = ("ambiguous relation: '%(feschema)s.%(rtype)s' is final (%(frschema)s) "
+                       "but not '%(nfeschema)s.%(rtype)s' (%(nfrschema)s)")
+                msg %= {'rtype': self.type,
+                        'feschema': feschema, 'frschema': frschema,
+                        'nfeschema': subjschema, 'nfrschema': nfrschema}
                 raise BadSchemaDefinition(msg)
         constraints = getattr(rdef, 'constraints', None)
         if constraints:
