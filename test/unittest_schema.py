@@ -30,7 +30,8 @@ from six import text_type
 from yams import (BASE_TYPES, ValidationError, BadSchemaDefinition,
                   register_base_type, unregister_base_type)
 from yams.buildobjs import (register_base_types, make_type, _add_relation,
-                            EntityType, RelationType, RelationDefinition)
+                            EntityType, RelationType, RelationDefinition,
+                            RichString)
 from yams.schema import Schema, RelationDefinitionSchema
 from yams.interfaces import IVocabularyConstraint
 from yams.constraints import (BASE_CHECKERS, SizeConstraint, RegexpConstraint,
@@ -549,6 +550,12 @@ class SchemaTC(BaseSchemaTC):
             pass
         self.assertListEqual(['custom_workflow'],
                              [rel.name for rel in TE.__relations__])
+
+    def test_add_rdef_after_registration(self):
+        class Label(EntityType):
+            pass
+        Label.expand_type_definitions({})
+        Label.add_relation(RichString(), name='label')
 
 
 class SymetricTC(TestCase):
