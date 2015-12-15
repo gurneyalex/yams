@@ -508,7 +508,7 @@ class EntityType(Definition):
             if getattr(rdef, 'metadata', {}) and not rdef in cls._defined:
                 for meta_name in rdef.metadata:
                     meta_rel_name = '_'.join(((name or rdef.name), name_name))
-                    rdef = cls.get_relations(format_attr_name).next()
+                    rdef = next(cls.get_relations(format_attr_name))
                     cls._ensure_relation_type(rdef)
         else:
            _add_relation(cls.__relations__, rdef, name=name)
