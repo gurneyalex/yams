@@ -1,6 +1,13 @@
 ChangeLog for yams
 ------------------
 
+2015-12-16  --  0.42.0
+    * #2098714: Stop injecting '_' into python's builtins
+    * #287000: [reader] Finally remove long deprecated bits
+    * #2322745: [pkg] Use setuptools and standard package layout
+    * #3217241: [buildobjs] Fix undefined variable name
+
+
 2015-10-12  --  0.41.1
     * #286709: support for calling unicode/str on a validation error before its
       actual translation
