@@ -8,7 +8,7 @@ from traceback import extract_tb
 
 from logilab.common.configuration import Configuration
 
-from yams.__pkginfo__ import version
+from yams import __version__ as version
 from yams import schema2dot
 from yams.reader import SchemaLoader
 from yams._exceptions import *
