@@ -1,3 +1,9 @@
+yams (0.42.0-1) unstable; urgency=medium
+
+  * New upstream release.
+
+ -- Rémi Cardona <remi.cardona@logilab.fr>  Wed, 16 Dec 2015 17:21:45 +0100
+
 yams (0.41.1-1) unstable; urgency=medium
 
   * New upstream release.
