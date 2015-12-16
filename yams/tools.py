@@ -20,7 +20,7 @@ def _error(file=None, line=None, msg=''):
         line=''
     else:
         line = str(line)
-    print >> sys.stderr, ':'.join(('E', file, line, msg))
+    print(':'.join(('E', file, line, msg)), file=sys.stderr)
 
 def check_schema():
     config = Configuration(
@@ -29,14 +29,14 @@ def check_schema():
         version=version)
     dirnames = config.load_command_line_configuration()
     if not dirnames:
-        print >> sys.stderr, config.help()
+        print(config.help(), file=sys.stderr)
         return 2
     for dir in dirnames:
         assert exists(dir), dir
     try:
         SchemaLoader().load(dirnames)
         return 0
-    except Exception, ex:
+    except Exception as ex:
         tb_offset = getattr(ex, 'tb_offset', 0)
         filename, lineno, func, text = extract_tb(sys.exc_traceback)[-1-tb_offset]
         if hasattr(ex, "schema_files"):
@@ -94,7 +94,7 @@ def schema_image():
         def appid(self):
             "bob"
 
-    print MockConfig().packages()
+    print(MockConfig().packages())
 
     schema = schm_ldr.load(MockConfig())
 
