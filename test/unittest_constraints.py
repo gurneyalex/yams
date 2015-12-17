@@ -40,16 +40,23 @@ class ConstraintTC(TestCase):
     def test_interval_serialization_integers(self):
         cstr = IntervalBoundConstraint(12, 13)
         self.assertEqual(IntervalBoundConstraint.deserialize('12;13'), cstr)
+        self.assertEqual(cstr.serialize(), u'{"maxvalue": 13, "minvalue": 12}')
+        self.assertEqual(cstr.__class__.deserialize(cstr.serialize()), cstr)
         cstr = IntervalBoundConstraint(maxvalue=13)
         self.assertEqual(IntervalBoundConstraint.deserialize('None;13'), cstr)
+        self.assertEqual(cstr.serialize(), u'{"maxvalue": 13, "minvalue": null}')
+        self.assertEqual(cstr.__class__.deserialize(cstr.serialize()), cstr)
         cstr = IntervalBoundConstraint(minvalue=13)
         self.assertEqual(IntervalBoundConstraint.deserialize('13;None'), cstr)
+        self.assertEqual(cstr.serialize(), u'{"maxvalue": null, "minvalue": 13}')
+        self.assertEqual(cstr.__class__.deserialize(cstr.serialize()), cstr)
         self.assertRaises(AssertionError, IntervalBoundConstraint)
 
     def test_interval_serialization_floats(self):
         cstr = IntervalBoundConstraint(12.13, 13.14)
         self.assertEqual(IntervalBoundConstraint.deserialize('12.13;13.14'), cstr)
-
+        self.assertEqual(cstr.serialize(), u'{"maxvalue": 13.14, "minvalue": 12.13}')
+        self.assertEqual(cstr.__class__.deserialize(cstr.serialize()), cstr)
 
     def test_interval_deserialization_integers(self):
         cstr = IntervalBoundConstraint.deserialize('12;13')
@@ -67,10 +74,10 @@ class ConstraintTC(TestCase):
         self.assertEqual(cstr.minvalue, 12.13)
         self.assertEqual(cstr.maxvalue, 13.14)
 
-
     def test_regexp_serialization(self):
         cstr = RegexpConstraint('[a-z]+,[A-Z]+', 12)
         self.assertEqual(cstr.serialize(), '{"flags": 12, "regexp": "[a-z]+,[A-Z]+"}')
+        self.assertEqual(cstr.__class__.deserialize(cstr.serialize()), cstr)
 
     def test_regexp_deserialization(self):
         cstr = RegexpConstraint.deserialize('[a-z]+,[A-Z]+,12')
@@ -90,7 +97,6 @@ class ConstraintTC(TestCase):
         # fail, value > maxvalue
         self.assertFalse(cstr2.check(mock_object(hop=datetime.now()+timedelta(hours=1)),
                                 'hip', datetime.now() + timedelta(hours=2)))
-
 
     def test_interval_with_date(self):
         cstr = IntervalBoundConstraint(TODAY(timedelta(1)),
@@ -113,6 +119,7 @@ class ConstraintTC(TestCase):
     def test_bound_with_attribute(self):
         cstr = BoundaryConstraint('<=', Attribute('hop'))
         cstr2 = BoundaryConstraint.deserialize(cstr.serialize())
+        self.assertEqual(cstr, cstr2)
         self.assertEqual(cstr2.boundary.attr, 'hop')
         self.assertEqual(cstr2.operator, '<=')
         self.assertTrue(cstr2.check(mock_object(hop=date.today()), 'hip', date.today()))
@@ -123,6 +130,7 @@ class ConstraintTC(TestCase):
     def test_bound_with_date(self):
         cstr = BoundaryConstraint('<=', TODAY())
         cstr2 = BoundaryConstraint.deserialize(cstr.serialize())
+        self.assertEqual(cstr, cstr2)
         self.assertEqual(cstr2.boundary.offset, None)
         self.assertEqual(cstr2.operator, '<=')
         self.assertTrue(cstr2.check(None, 'hip', date.today()))
@@ -146,7 +154,6 @@ class ConstraintTC(TestCase):
         self.assertEqual(StaticVocabularyConstraint.deserialize(cstr.serialize()).values,
                          ('a, b', 'c'))
 
+
 if __name__ == '__main__':
     unittest_main()
-
-
