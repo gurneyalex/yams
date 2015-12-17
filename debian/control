@@ -32,7 +32,7 @@ Depends:
  python-logilab-database (>= 1.11),
  python-six (>= 1.4.0),
 Breaks:
- cubicweb-common (<< 3.21),
+ cubicweb-common (<< 3.23),
 Description: entity / relation schema
  Yet Another Magic Schema !
  A simple/generic but powerful entities / relations schema, suitable
