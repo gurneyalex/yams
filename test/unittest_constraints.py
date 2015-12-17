@@ -39,16 +39,16 @@ class ConstraintTC(TestCase):
 
     def test_interval_serialization_integers(self):
         cstr = IntervalBoundConstraint(12, 13)
-        self.assertEqual(cstr.serialize(), '12;13')
+        self.assertEqual(IntervalBoundConstraint.deserialize('12;13'), cstr)
         cstr = IntervalBoundConstraint(maxvalue=13)
-        self.assertEqual(cstr.serialize(), 'None;13')
+        self.assertEqual(IntervalBoundConstraint.deserialize('None;13'), cstr)
         cstr = IntervalBoundConstraint(minvalue=13)
-        self.assertEqual(cstr.serialize(), '13;None')
+        self.assertEqual(IntervalBoundConstraint.deserialize('13;None'), cstr)
         self.assertRaises(AssertionError, IntervalBoundConstraint)
 
     def test_interval_serialization_floats(self):
         cstr = IntervalBoundConstraint(12.13, 13.14)
-        self.assertEqual(cstr.serialize(), '12.13;13.14')
+        self.assertEqual(IntervalBoundConstraint.deserialize('12.13;13.14'), cstr)
 
 
     def test_interval_deserialization_integers(self):
@@ -70,7 +70,7 @@ class ConstraintTC(TestCase):
 
     def test_regexp_serialization(self):
         cstr = RegexpConstraint('[a-z]+,[A-Z]+', 12)
-        self.assertEqual(cstr.serialize(), '[a-z]+,[A-Z]+,12')
+        self.assertEqual(cstr.serialize(), '{"flags": 12, "regexp": "[a-z]+,[A-Z]+"}')
 
     def test_regexp_deserialization(self):
         cstr = RegexpConstraint.deserialize('[a-z]+,[A-Z]+,12')
