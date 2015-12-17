@@ -22,6 +22,7 @@ __docformat__ = "restructuredtext en"
 import re
 import decimal
 import operator
+import json
 
 from six import string_types, text_type, binary_type
 
@@ -32,6 +33,44 @@ from yams import BadSchemaDefinition
 from yams.interfaces import IConstraint, IVocabularyConstraint
 
 _ = text_type
+
+
+class ConstraintJSONEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, Attribute):
+            return {'__attribute__': obj.attr}
+        if isinstance(obj, NOW):
+            d = obj.offset
+            if d is not None:
+                d = {'days': d.days, 'seconds': d.seconds, 'microseconds': d.microseconds}
+            return {'__now__': True, 'offset': d}
+        if isinstance(obj, TODAY):
+            d = obj.offset
+            if d is not None:
+                d = {'days': d.days, 'seconds': d.seconds, 'microseconds': d.microseconds}
+            return {'__today__': True, 'offset': d, 'type': obj.type}
+        return super(ConstraintJSONEncoder, self).default(obj)
+
+
+def _json_object_hook(dct):
+    if '__attribute__' in dct:
+        return Attribute(dct['__attribute__'])
+    if '__now__' in dct:
+        if dct['offset'] is not None:
+            offset = datetime.timedelta(**dct['offset'])
+        else:
+            offset = None
+        return NOW(offset)
+    if '__today__' in dct:
+        if dct['offset'] is not None:
+            offset = datetime.timedelta(**dct['offset'])
+        else:
+            offset = None
+        return TODAY(offset=offset, type=dct['type'])
+    return dct
+
+_json_dumps = ConstraintJSONEncoder(sort_keys=True).encode
+_json_loads = json.JSONDecoder(object_hook=_json_object_hook).decode
 
 class BaseConstraint(object):
     """base class for constraints"""
@@ -155,21 +194,21 @@ class SizeConstraint(BaseConstraint):
 
     def serialize(self):
         """simple text serialization"""
-        if self.max and self.min:
-            return u'min=%s,max=%s' % (self.min, self.max)
-        if self.max:
-            return u'max=%s' % (self.max)
-        return u'min=%s' % (self.min)
+        return text_type(_json_dumps({'min': self.min, 'max': self.max}))
 
     @classmethod
     def deserialize(cls, value):
         """simple text deserialization"""
-        kwargs = {}
-        for adef in value.split(','):
-            key, val = [w.strip() for w in adef.split('=')]
-            assert key in ('min', 'max')
-            kwargs[str(key)] = int(val)
-        return cls(**kwargs)
+        try:
+            d = _json_loads(value)
+            return cls(**d)
+        except ValueError:
+            kwargs = {}
+            for adef in value.split(','):
+                key, val = [w.strip() for w in adef.split('=')]
+                assert key in ('min', 'max')
+                kwargs[str(key)] = int(val)
+            return cls(**kwargs)
 
 
 class RegexpConstraint(BaseConstraint):
@@ -210,13 +249,17 @@ class RegexpConstraint(BaseConstraint):
 
     def serialize(self):
         """simple text serialization"""
-        return u'%s,%s' % (self.regexp, self.flags)
+        return text_type(_json_dumps({'regexp': self.regexp, 'flags': self.flags}))
 
     @classmethod
     def deserialize(cls, value):
         """simple text deserialization"""
-        regexp, flags = value.rsplit(',', 1)
-        return cls(regexp, int(flags))
+        try:
+            d = _json_loads(value)
+            return cls(**d)
+        except ValueError:
+            regexp, flags = value.rsplit(',', 1)
+            return cls(regexp, int(flags))
 
     def __deepcopy__(self, memo):
         return RegexpConstraint(self.regexp, self.flags)
@@ -263,13 +306,17 @@ class BoundaryConstraint(BaseConstraint):
 
     def serialize(self):
         """simple text serialization"""
-        return u'%s %s' % (self.operator, self.boundary)
+        return text_type(_json_dumps({'operator': self.operator, 'boundary': self.boundary}))
 
     @classmethod
     def deserialize(cls, value):
         """simple text deserialization"""
-        op, boundary = value.split(' ', 1)
-        return cls(op, eval(boundary))
+        try:
+            d = _json_loads(value)
+            return cls(d['operator'], d['boundary'])
+        except ValueError:
+            op, boundary = value.split(' ', 1)
+            return cls(op, eval(boundary))
 
 BoundConstraint = class_renamed('BoundConstraint', BoundaryConstraint)
 BoundConstraint.type = lambda x: 'BoundaryConstraint'
@@ -326,13 +373,18 @@ class IntervalBoundConstraint(BaseConstraint):
 
     def serialize(self):
         """simple text serialization"""
-        return u'%s;%s' % (self.minvalue, self.maxvalue)
+        return text_type(_json_dumps({'minvalue': self.minvalue,
+                                      'maxvalue': self.maxvalue}))
 
     @classmethod
     def deserialize(cls, value):
         """simple text deserialization"""
-        minvalue, maxvalue = value.split(';')
-        return cls(eval(minvalue), eval(maxvalue))
+        try:
+            d = _json_loads(value)
+            return cls(**d)
+        except ValueError:
+            minvalue, maxvalue = value.split(';')
+            return cls(eval(minvalue), eval(maxvalue))
 
 
 class StaticVocabularyConstraint(BaseConstraint):
@@ -364,23 +416,20 @@ class StaticVocabularyConstraint(BaseConstraint):
         return self.values
 
     def serialize(self):
-        """serialize possible values as a csv list of evaluable strings"""
-        try:
-            sample = next(iter(self.vocabulary()))
-        except:
-            sample = u''
-        if not isinstance(sample, string_types):
-            return u', '.join(repr(word) for word in self.vocabulary())
-        return u', '.join(repr(text_type(word).replace(',', ',,'))
-                          for word in self.vocabulary())
+        """serialize possible values as a json object"""
+        return text_type(_json_dumps(self.values))
 
     @classmethod
     def deserialize(cls, value):
         """deserialize possible values from a csv list of evaluable strings"""
-        values = [eval(w) for w in re.split('(?<!,), ', value)]
-        if values and isinstance(values[0], string_types):
-            values = [v.replace(',,', ',') for v in values]
-        return cls(values)
+        try:
+            values = _json_loads(value)
+            return cls(values)
+        except ValueError:
+            values = [eval(w) for w in re.split('(?<!,), ', value)]
+            if values and isinstance(values[0], string_types):
+                values = [v.replace(',,', ',') for v in values]
+            return cls(values)
 
 
 class FormatConstraint(StaticVocabularyConstraint):
