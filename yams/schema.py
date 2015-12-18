@@ -1140,6 +1140,8 @@ class Schema(object):
             raise Exception("can't remove entity type %s used as parent class by %s" %
                             (eschema, ','.join(str(et) for et in eschema.specialized_by())))
         del self._entities[etype]
+        if eschema.final:
+            yams.unregister_base_type(etype)
 
     def infer_specialization_rules(self):
         for rschema in self.relations():
