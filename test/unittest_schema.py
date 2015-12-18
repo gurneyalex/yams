@@ -38,6 +38,7 @@ from yams.constraints import (BASE_CHECKERS, SizeConstraint, RegexpConstraint,
                               StaticVocabularyConstraint, IntervalBoundConstraint,
                               FormatConstraint)
 from yams.reader import SchemaLoader
+from yams.buildobjs import register_base_types
 
 
 # build a dummy schema ########################################################
@@ -613,7 +614,14 @@ class CustomTypeTC(TestCase):
         self.assertIn('Test', RelationDefinitionSchema.BASE_TYPE_PROPERTIES)
         self.assertEqual(RelationDefinitionSchema.BASE_TYPE_PROPERTIES['Test'],
                          {'test1': None, 'test2': None})
-        self.assertTrue('Test' in BASE_CHECKERS)
+        self.assertIn('Test', BASE_CHECKERS)
+        schema = Schema('test')
+        register_base_types(schema)
+        self.assertIn('Test', schema)
+        schema.del_entity_type('Test')
+        self.assertNotIn('Test', BASE_TYPES)
+        self.assertNotIn('Test', RelationDefinitionSchema.BASE_TYPE_PROPERTIES)
+        self.assertNotIn('Test', BASE_CHECKERS)
 
     def test_make_base_type_class(self):
         register_base_type('Test', ('test1', 'test2'))
