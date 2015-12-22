@@ -47,6 +47,7 @@ mailinglist = 'mailto://python-projects@lists.logilab.org'
 scripts = ['bin/yams-check', 'bin/yams-view']
 
 install_requires = [
+    'setuptools',
     'logilab-common >= 0.55.2',
     'logilab-database >= 1.11',
     'six >= 1.4.0',

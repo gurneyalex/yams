@@ -21,7 +21,9 @@ Url:            http://www.logilab.org/project/yams
 
 Requires:       %{python}, %{python}-logilab-common >= 0.55.2, %{python}-logilab-database >= 1.11
 Requires:       %{python}-six >= 1.4.0
+Requires:       %{python}-setuptools
 BuildRequires:  %{python}
+BuildRequires:  %{python}-setuptools
 Conflicts:      cubicweb < 3.21.0
 
 
