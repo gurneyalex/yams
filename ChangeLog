@@ -1,7 +1,7 @@
 ChangeLog for yams
 ------------------
 
-2015-12-16  --  0.42.0
+2015-12-22  --  0.42.0
     * #2098714: Stop injecting '_' into python's builtins
     * #287000: [reader] Finally remove long deprecated bits
     * #2322745: [pkg] Use setuptools and standard package layout
