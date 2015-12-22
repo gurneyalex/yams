@@ -1,4 +1,5 @@
 """some yams command line tools"""
+from __future__ import print_function
 
 import sys
 from os.path import exists, join, dirname
