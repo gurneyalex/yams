@@ -6,6 +6,8 @@
 %define python python
 %define __python /usr/bin/python
 %endif
+%{!?_python_sitelib: %define _python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
+
 
 Summary:        entity / relation schema
 Name:           %{python}-yams
@@ -51,5 +53,6 @@ rm -rf $RPM_BUILD_ROOT
 
 %files 
 %defattr(-, root, root)
-/*
+%{_bindir}/*
+%{_python_sitelib}/*
 
