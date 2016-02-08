@@ -109,6 +109,7 @@ def _copy_attributes(fromobj, toobj, attributes):
                 % (ovalue, value, attr, rname))
         setattr(toobj, attr, value)
 
+
 def register_base_types(schema):
     """add base (final) entity types to the given schema"""
     for etype in BASE_TYPES:
@@ -122,6 +123,7 @@ class autopackage(type):
     def __new__(mcs, name, bases, classdict):
         classdict['package'] = PACKAGE
         return super(autopackage, mcs).__new__(mcs, name, bases, classdict)
+
 
 @add_metaclass(autopackage)
 class Definition(object):

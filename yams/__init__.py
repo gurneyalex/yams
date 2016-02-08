@@ -20,10 +20,9 @@
 __docformat__ = "restructuredtext en"
 
 import warnings
-from datetime import datetime, date, time
+from datetime import datetime, date
 
 from six import string_types, text_type
-from six.moves import builtins
 
 import pkg_resources
 
@@ -69,9 +68,9 @@ DEFAULT_COMPUTED_ATTRPERMS = {'read': ('managers', 'users', 'guests',),
 # This provides a way to specify callable objects as default values
 # First level is the final type, second is the keyword to callable map
 KEYWORD_MAP = {
-    'Datetime':{'NOW' : datetime.now,
-                'TODAY': datetime.today},
-    'TZDatetime': {'NOW' : datetime.utcnow,
+    'Datetime': {'NOW': datetime.now,
+                 'TODAY': datetime.today},
+    'TZDatetime': {'NOW': datetime.utcnow,
                    'TODAY': datetime.today},
     'Date': {'TODAY': date.today}
 }
@@ -79,14 +78,16 @@ KEYWORD_MAP = {
 
 # bw compat for literal date/time values stored as strings in schemas
 DATE_FACTORY_MAP = {
-    'Datetime' : lambda x: ':' in x and strptime(x, '%Y/%m/%d %H:%M') or strptime(x, '%Y/%m/%d'),
-    'Date' : lambda x : strptime(x, '%Y/%m/%d'),
-    'Time' : strptime_time
-    }
+    'Datetime': lambda x: ':' in x and strptime(x, '%Y/%m/%d %H:%M') or strptime(x, '%Y/%m/%d'),
+    'Date': lambda x: strptime(x, '%Y/%m/%d'),
+    'Time': strptime_time
+}
+
+KNOWN_METAATTRIBUTES = set(('format', 'encoding', 'name'))
 
 
 def convert_default_value(rdef, default):
-    # rdef can be either a yams.schema.RelationDefinitionSchema or a yams.buildobjs.RelationDefinition
+    # rdef can be either a .schema.RelationDefinitionSchema or a .buildobjs.RelationDefinition
     rtype = getattr(rdef, 'name', None) or rdef.rtype.type
     if isinstance(default, string_types) and rdef.object != 'String':
         # real Strings can be anything, including things that look like keywords
@@ -111,11 +112,8 @@ def convert_default_value(rdef, default):
                                  % (rtype, rdef.object, default, verr))
     if rdef.object == 'String':
         default = text_type(default)
-    return default # general case: untouched default
+    return default  # general case: untouched default
 
-
-
-KNOWN_METAATTRIBUTES = set(('format', 'encoding', 'name'))
 
 def register_base_type(name, parameters=(), check_function=None):
     """register a yams base (final) type. You'll have to call
@@ -133,6 +131,7 @@ def register_base_type(name, parameters=(), check_function=None):
     RelationDefinitionSchema.BASE_TYPE_PROPERTIES[name] = parameters
     # Add a yams checker or yes is not specified
     BASE_CHECKERS[name] = check_function or yes
+
 
 def unregister_base_type(name):
     """Unregister a yams base (final) type"""
