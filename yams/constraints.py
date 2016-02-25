@@ -68,6 +68,9 @@ class BaseConstraint(object):
     def __hash__(self):
         return hash((self.type(), self.serialize()))
 
+    def __lt__(self, other):
+        return NotImplemented
+
 
 # possible constraints ########################################################
 
