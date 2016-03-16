@@ -69,7 +69,9 @@ def _json_object_hook(dct):
         return TODAY(offset=offset, type=dct['type'])
     return dct
 
-cstr_json_dumps = ConstraintJSONEncoder(sort_keys=True).encode
+def cstr_json_dumps(obj):
+    return text_type(ConstraintJSONEncoder(sort_keys=True).encode(obj))
+
 cstr_json_loads = json.JSONDecoder(object_hook=_json_object_hook).decode
 
 class BaseConstraint(object):
@@ -194,7 +196,7 @@ class SizeConstraint(BaseConstraint):
 
     def serialize(self):
         """simple text serialization"""
-        return text_type(cstr_json_dumps({'min': self.min, 'max': self.max}))
+        return cstr_json_dumps({u'min': self.min, u'max': self.max})
 
     @classmethod
     def deserialize(cls, value):
@@ -249,7 +251,7 @@ class RegexpConstraint(BaseConstraint):
 
     def serialize(self):
         """simple text serialization"""
-        return text_type(cstr_json_dumps({'regexp': self.regexp, 'flags': self.flags}))
+        return cstr_json_dumps({u'regexp': self.regexp, u'flags': self.flags})
 
     @classmethod
     def deserialize(cls, value):
@@ -306,7 +308,7 @@ class BoundaryConstraint(BaseConstraint):
 
     def serialize(self):
         """simple text serialization"""
-        return text_type(cstr_json_dumps({'operator': self.operator, 'boundary': self.boundary}))
+        return cstr_json_dumps({u'operator': self.operator, u'boundary': self.boundary})
 
     @classmethod
     def deserialize(cls, value):
@@ -373,8 +375,8 @@ class IntervalBoundConstraint(BaseConstraint):
 
     def serialize(self):
         """simple text serialization"""
-        return text_type(cstr_json_dumps({'minvalue': self.minvalue,
-                                          'maxvalue': self.maxvalue}))
+        return cstr_json_dumps({u'minvalue': self.minvalue,
+                                u'maxvalue': self.maxvalue})
 
     @classmethod
     def deserialize(cls, value):
@@ -403,10 +405,10 @@ class StaticVocabularyConstraint(BaseConstraint):
 
     def failed_message(self, key, value):
         if isinstance(value, string_types):
-            value = '"%s"' % text_type(value)
-            choices = ', '.join('"%s"' % val for val in self.values)
+            value = u'"%s"' % text_type(value)
+            choices = u', '.join('"%s"' % val for val in self.values)
         else:
-            choices = ', '.join(text_type(val) for val in self.values)
+            choices = u', '.join(text_type(val) for val in self.values)
         return _('invalid value %(KEY-value)s, it must be one of %(KEY-choices)s'), {
             key+'-value': value,
             key+'-choices': choices}
@@ -417,7 +419,7 @@ class StaticVocabularyConstraint(BaseConstraint):
 
     def serialize(self):
         """serialize possible values as a json object"""
-        return text_type(cstr_json_dumps(self.values))
+        return cstr_json_dumps(self.values)
 
     @classmethod
     def deserialize(cls, value):
