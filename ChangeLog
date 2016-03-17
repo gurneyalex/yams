@@ -1,6 +1,9 @@
 ChangeLog for yams
 ------------------
 
+2016-??-??  --  0.43.0
+    * #296748: use json for constraint serialization
+
 2015-12-22  --  0.42.0
     * #2098714: Stop injecting '_' into python's builtins
     * #287000: [reader] Finally remove long deprecated bits
