@@ -106,7 +106,12 @@ class BaseConstraint(object):
         """called to restore serialized data of a constraint. Should return
         a `cls` instance
         """
-        return cls(**cstr_json_loads(value))
+        value = value.strip()
+        if value and value != 'None':
+            d = cstr_json_loads(value)
+        else:
+            d = {}
+        return cls(**d)
 
     def failed_message(self, key, value, entity=None):
         if entity is None:
