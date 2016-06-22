@@ -1,4 +1,4 @@
-# copyright 2004-2015 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
+# copyright 2004-2016 LOGILAB S.A. (Paris, FRANCE), all rights reserved.
 # contact http://www.logilab.fr/ -- mailto:contact@logilab.fr
 #
 # This file is part of yams.
@@ -23,6 +23,8 @@ import re
 import decimal
 import operator
 import json
+import datetime
+
 
 from six import string_types, text_type, binary_type
 
@@ -69,10 +71,12 @@ def _json_object_hook(dct):
         return TODAY(offset=offset, type=dct['type'])
     return dct
 
+
 def cstr_json_dumps(obj):
     return text_type(ConstraintJSONEncoder(sort_keys=True).encode(obj))
 
 cstr_json_loads = json.JSONDecoder(object_hook=_json_object_hook).decode
+
 
 class BaseConstraint(object):
     """base class for constraints"""
@@ -105,8 +109,8 @@ class BaseConstraint(object):
 
     def _failed_message(self, key, value):
         return _('%(KEY-cstr)s constraint failed for value %(KEY-value)r'), {
-            key+'-cstr': self,
-            key+'-value': value}
+            key + '-cstr': self,
+            key + '-value': value}
 
     def __eq__(self, other):
         return (self.type(), self.serialize()) == (other.type(), other.serialize())
@@ -168,7 +172,7 @@ class SizeConstraint(BaseConstraint):
         if not objschema.final:
             raise BadSchemaDefinition("size constraint doesn't apply to non "
                                       "final entity type")
-        if not objschema in ('String', 'Bytes', 'Password'):
+        if objschema not in ('String', 'Bytes', 'Password'):
             raise BadSchemaDefinition("size constraint doesn't apply to %s "
                                       "entity type" % objschema)
         if self.max:
@@ -195,12 +199,12 @@ class SizeConstraint(BaseConstraint):
     def _failed_message(self, key, value):
         if self.max is not None and len(value) > self.max:
             return _('value should have maximum size of %(KEY-max)s but found %(KEY-size)s'), {
-                key+'-max': self.max,
-                key+'-size': len(value)}
+                key + '-max': self.max,
+                key + '-size': len(value)}
         if self.min is not None and len(value) < self.min:
             return _('value should have minimum size of %(KEY-min)s but found %(KEY-size)s'), {
-                key+'-min': self.min,
-                key+'-size': len(value)}
+                key + '-min': self.min,
+                key + '-size': len(value)}
         assert False, 'shouldnt be there'
 
     def serialize(self):
@@ -247,7 +251,7 @@ class RegexpConstraint(BaseConstraint):
         if not objschema.final:
             raise BadSchemaDefinition("regexp constraint doesn't apply to non "
                                       "final entity type")
-        if not objschema in ('String', 'Password'):
+        if objschema not in ('String', 'Password'):
             raise BadSchemaDefinition("regexp constraint doesn't apply to %s "
                                       "entity type" % objschema)
 
@@ -257,8 +261,8 @@ class RegexpConstraint(BaseConstraint):
 
     def _failed_message(self, key, value):
         return _("%(KEY-value)r doesn't match the %(KEY-regexp)r regular expression"), {
-            key+'-value': value,
-            key+'-regexp': self.regexp}
+            key + '-value': value,
+            key + '-regexp': self.regexp}
 
     def serialize(self):
         """simple text serialization"""
@@ -284,7 +288,8 @@ OPERATORS = {
     '<': operator.lt,
     '>': operator.gt,
     '>=': operator.ge,
-    }
+}
+
 
 class BoundaryConstraint(BaseConstraint):
     """the int/float bound constraint :
@@ -316,8 +321,8 @@ class BoundaryConstraint(BaseConstraint):
 
     def _failed_message(self, key, value):
         return "value %%(KEY-value)s must be %s %%(KEY-boundary)s" % self.operator, {
-            key+'-value': value,
-            key+'-boundary': self.boundary}
+            key + '-value': value,
+            key + '-boundary': self.boundary}
 
     def serialize(self):
         """simple text serialization"""
@@ -334,6 +339,7 @@ class BoundaryConstraint(BaseConstraint):
             op, boundary = value.split(' ', 1)
             return cls(op, eval(boundary))
 
+
 BoundConstraint = class_renamed('BoundConstraint', BoundaryConstraint)
 BoundConstraint.type = lambda x: 'BoundaryConstraint'
 
@@ -341,6 +347,7 @@ _("value %(KEY-value)s must be < %(KEY-boundary)s")
 _("value %(KEY-value)s must be > %(KEY-boundary)s")
 _("value %(KEY-value)s must be <= %(KEY-boundary)s")
 _("value %(KEY-value)s must be >= %(KEY-boundary)s")
+
 
 class IntervalBoundConstraint(BaseConstraint):
     """an int/float bound constraint :
@@ -380,12 +387,12 @@ class IntervalBoundConstraint(BaseConstraint):
     def _failed_message(self, key, value):
         if self.minvalue is not None and value < self.minvalue:
             return _("value %(KEY-value)s must be >= %(KEY-boundary)s"), {
-                key+'-value': value,
-                key+'-boundary': self.minvalue}
+                key + '-value': value,
+                key + '-boundary': self.minvalue}
         if self.maxvalue is not None and value > self.maxvalue:
             return _("value %(KEY-value)s must be <= %(KEY-boundary)s"), {
-                key+'-value': value,
-                key+'-boundary': self.maxvalue}
+                key + '-value': value,
+                key + '-boundary': self.maxvalue}
         assert False, 'shouldnt be there'
 
     def serialize(self):
@@ -426,8 +433,8 @@ class StaticVocabularyConstraint(BaseConstraint):
         else:
             choices = u', '.join(text_type(val) for val in self.values)
         return _('invalid value %(KEY-value)s, it must be one of %(KEY-choices)s'), {
-            key+'-value': value,
-            key+'-choices': choices}
+            key + '-value': value,
+            key + '-choices': choices}
 
     def vocabulary(self, **kwargs):
         """return a list of possible values for the attribute"""
@@ -469,6 +476,7 @@ class FormatConstraint(StaticVocabularyConstraint):
         if not objschema == 'String':
             raise BadSchemaDefinition("format constraint only apply to String")
 
+
 FORMAT_CONSTRAINT = FormatConstraint()
 
 
@@ -479,14 +487,13 @@ class MultipleStaticVocabularyConstraint(StaticVocabularyConstraint):
         """return true if the values satisfy the constraint, else false"""
         vocab = self.vocabulary(entity=entity)
         for value in values:
-            if not value in vocab:
+            if value not in vocab:
                 return False
         return True
 
+
 # special classes to be used w/ constraints accepting values as argument(s):
 # IntervalBoundConstraint
-
-import datetime # needed for timedelta evaluation
 
 def actual_value(value, entity):
     if hasattr(value, 'value'):
@@ -540,9 +547,11 @@ def check_string(eschema, value):
     """check value is an unicode string"""
     return isinstance(value, text_type)
 
+
 def check_password(eschema, value):
     """check value is an encoded string"""
     return isinstance(value, binary_type)
+
 
 def check_int(eschema, value):
     """check value is an integer"""
@@ -552,6 +561,7 @@ def check_int(eschema, value):
         return False
     return True
 
+
 def check_float(eschema, value):
     """check value is a float"""
     try:
@@ -559,6 +569,7 @@ def check_float(eschema, value):
     except ValueError:
         return False
     return True
+
 
 def check_decimal(eschema, value):
     """check value is a Decimal"""
@@ -568,13 +579,16 @@ def check_decimal(eschema, value):
         return False
     return True
 
+
 def check_boolean(eschema, value):
     """check value is a boolean"""
     return isinstance(value, int)
 
+
 def check_file(eschema, value):
     """check value has a getvalue() method (e.g. StringIO or cStringIO)"""
     return hasattr(value, 'getvalue')
+
 
 def yes(*args, **kwargs):
     """dunno how to check"""
@@ -582,40 +596,43 @@ def yes(*args, **kwargs):
 
 
 BASE_CHECKERS = {
-    'Date' :     yes,
-    'Time' :     yes,
-    'Datetime' : yes,
-    'TZTime' :   yes,
-    'TZDatetime':yes,
-    'Interval' : yes,
-    'String' :   check_string,
-    'Int' :      check_int,
-    'BigInt' :   check_int,
-    'Float' :    check_float,
-    'Decimal' :  check_decimal,
-    'Boolean' :  check_boolean,
-    'Password' : check_password,
-    'Bytes' :    check_file,
-    }
+    'Date': yes,
+    'Time': yes,
+    'Datetime': yes,
+    'TZTime': yes,
+    'TZDatetime': yes,
+    'Interval': yes,
+    'String': check_string,
+    'Int': check_int,
+    'BigInt': check_int,
+    'Float': check_float,
+    'Decimal': check_decimal,
+    'Boolean': check_boolean,
+    'Password': check_password,
+    'Bytes': check_file,
+}
 
 BASE_CONVERTERS = {
-    'String' :   text_type,
-    'Password':  binary_type,
-    'Int' :      int,
-    'BigInt' :   int,
-    'Float' :    float,
-    'Boolean' :  bool,
-    'Decimal' :  decimal.Decimal,
-    }
+    'String': text_type,
+    'Password': binary_type,
+    'Int': int,
+    'BigInt': int,
+    'Float': float,
+    'Boolean': bool,
+    'Decimal': decimal.Decimal,
+}
+
 
 def patch_sqlite_decimal():
     """patch Decimal checker and converter to bypass SQLITE Bug
     (SUM of Decimal return float in SQLITE)"""
+
     def convert_decimal(value):
         # XXX issue a warning
         if isinstance(value, float):
             value = str(value)
         return decimal.Decimal(value)
+
     def check_decimal(eschema, value):
         """check value is a Decimal"""
         try:
