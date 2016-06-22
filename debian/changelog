@@ -1,4 +1,10 @@
-yams (0.43.0-1) UNRELEASED; urgency=medium
+yams (0.44.0-1) unstable; urgency=medium
+
+  * new upstream release.
+
+ -- Denis Laxalde <denis.laxalde@logilab.fr>  Wed, 22 Jun 2016 11:37:23 +0200
+
+yams (0.43.0-1) unstable; urgency=medium
 
   * new upstream release
 
