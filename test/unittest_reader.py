@@ -36,6 +36,10 @@ sys.path.insert(0, osp.dirname(__file__))
 
 class SchemaLoaderTC(TestCase):
 
+    @classmethod
+    def setUpClass(cls):
+        cls.schema = SchemaLoader().load([cls.datadir])
+
     # test helper functions ###################################################
 
     def test_get_schema_files(self):
@@ -47,15 +51,15 @@ class SchemaLoaderTC(TestCase):
     # test load_schema read entity and relation types #######################
 
     def test_load_schema(self):
-        self.assertIsInstance(SCHEMA, Schema)
-        self.assertEqual(SCHEMA.name, 'NoName')
-        self.assertListEqual(sorted(SCHEMA.entities()),
+        self.assertIsInstance(self.schema, Schema)
+        self.assertEqual(self.schema.name, 'NoName')
+        self.assertListEqual(sorted(self.schema.entities()),
                               ['Affaire', 'BigInt', 'Boolean', 'Bytes', 'Company',
                                'Date', 'Datetest', 'Datetime', 'Decimal',
                                'Division', 'EPermission', 'Eetype',  'Employee', 'Float', 'Int', 'Interval',
                                'Note', 'Password', 'Person', 'Salaried', 'Societe', 'State', 'String',
                                'Subcompany', 'Subdivision', 'TZDatetime', 'TZTime', 'Time', 'pkginfo'])
-        self.assertListEqual(sorted(SCHEMA.relations()),
+        self.assertListEqual(sorted(self.schema.relations()),
                               ['ad1', 'ad2', 'ad3', 'adel', 'ass', 'author', 'author_email',
                                'concerne', 'copyright', 'cp',
                                'd1', 'd2', 'date', 'datenaiss', 'debian_handler', 'description', 'division_of', 'dt1', 'dt2',
@@ -73,7 +77,7 @@ class SchemaLoaderTC(TestCase):
                                'ville', 'web', 'works_for'])
 
     def test_eschema(self):
-        eschema = SCHEMA.eschema('Societe')
+        eschema = self.schema.eschema('Societe')
         self.assertEqual(eschema.description, '')
         self.assertEqual(eschema.final, False)
         self.assertListEqual(sorted(eschema.subject_relations()),
@@ -83,7 +87,7 @@ class SchemaLoaderTC(TestCase):
         self.assertListEqual(sorted(eschema.object_relations()),
                           ['concerne', 'obj_wildcard', 'travaille'])
 
-        eschema = SCHEMA.eschema('Eetype')
+        eschema = self.schema.eschema('Eetype')
         self.assertEqual(eschema.description, 'define an entity type, used to build the application schema')
         self.assertEqual(eschema.final, False)
         self.assertListEqual(sorted(str(r) for r in eschema.subject_relations()),
@@ -92,7 +96,7 @@ class SchemaLoaderTC(TestCase):
         self.assertListEqual(sorted(str(r) for r in eschema.object_relations()),
                               ['obj_wildcard', 'state_of'])
 
-        eschema = SCHEMA.eschema('Boolean')
+        eschema = self.schema.eschema('Boolean')
         self.assertEqual(eschema.description, '')
         self.assertEqual(eschema.final, True)
         self.assertListEqual(sorted(eschema.subject_relations()),
@@ -103,35 +107,35 @@ class SchemaLoaderTC(TestCase):
     # test base entity type's subject relation properties #####################
 
     def test_indexed(self):
-        eschema = SCHEMA.eschema('Person')
+        eschema = self.schema.eschema('Person')
         self.assertFalse(eschema.rdef('nom').indexed)
-        eschema = SCHEMA.eschema('State')
+        eschema = self.schema.eschema('State')
         self.assertTrue(eschema.rdef('name').indexed)
 
     def test_uid(self):
-        eschema = SCHEMA.eschema('State')
+        eschema = self.schema.eschema('State')
         self.assertTrue(eschema.rdef('eid').uid)
         self.assertFalse(eschema.rdef('name').uid)
 
     def test_fulltextindexed(self):
-        eschema = SCHEMA.eschema('Person')
+        eschema = self.schema.eschema('Person')
         self.assertRaises(AttributeError, getattr, eschema.rdef('tel'), 'fulltextindexed') # tel is an INT
         self.assertTrue(eschema.rdef('nom').fulltextindexed)
         self.assertTrue(eschema.rdef('prenom').fulltextindexed)
         self.assertFalse(eschema.rdef('sexe').fulltextindexed)
         indexable = sorted(eschema.indexable_attributes())
         self.assertEqual(['nom', 'prenom', 'titre'], indexable)
-        self.assertEqual(SCHEMA.rschema('works_for').fulltext_container, None)
-        self.assertEqual(SCHEMA.rschema('require_permission').fulltext_container,
+        self.assertEqual(self.schema.rschema('works_for').fulltext_container, None)
+        self.assertEqual(self.schema.rschema('require_permission').fulltext_container,
                           'subject')
-        eschema = SCHEMA.eschema('Company')
+        eschema = self.schema.eschema('Company')
         indexable = sorted(eschema.indexable_attributes())
         self.assertEqual([], indexable)
         indexable = sorted(eschema.fulltext_relations())
         self.assertEqual([('require_permission', 'subject')], indexable)
         containers = sorted(eschema.fulltext_containers())
         self.assertEqual([], containers)
-        eschema = SCHEMA.eschema('EPermission')
+        eschema = self.schema.eschema('EPermission')
         indexable = sorted(eschema.indexable_attributes())
         self.assertEqual(['name'], indexable)
         indexable = sorted(eschema.fulltext_relations())
@@ -140,50 +144,50 @@ class SchemaLoaderTC(TestCase):
         self.assertEqual([('require_permission', 'subject')], containers)
 
     def test_internationalizable(self):
-        eschema = SCHEMA.eschema('Eetype')
+        eschema = self.schema.eschema('Eetype')
         self.assertTrue(eschema.rdef('name').internationalizable)
-        eschema = SCHEMA.eschema('State')
+        eschema = self.schema.eschema('State')
         self.assertTrue(eschema.rdef('name').internationalizable)
-        eschema = SCHEMA.eschema('Societe')
+        eschema = self.schema.eschema('Societe')
         self.assertFalse(eschema.rdef('ad1').internationalizable)
 
     # test advanced entity type's subject relation properties #################
 
     def test_vocabulary(self):
-        eschema = SCHEMA.eschema('pkginfo')
+        eschema = self.schema.eschema('pkginfo')
         self.assertEqual(eschema.vocabulary('license'), ('GPL', 'ZPL'))
         self.assertEqual(eschema.vocabulary('debian_handler'), ('machin', 'bidule'))
 
     def test_default(self):
-        eschema = SCHEMA.eschema('pkginfo')
+        eschema = self.schema.eschema('pkginfo')
         self.assertEqual(eschema.default('version'), '0.1')
         self.assertEqual(eschema.default('license'), None)
 
     # test relation type properties ###########################################
 
     def test_rschema(self):
-        rschema = SCHEMA.rschema('evaluee')
+        rschema = self.schema.rschema('evaluee')
         self.assertEqual(rschema.symmetric, False)
         self.assertEqual(rschema.description, '')
         self.assertEqual(rschema.final, False)
         self.assertListEqual(sorted(rschema.subjects()), ['Person', 'Salaried', 'Societe'])
         self.assertListEqual(sorted(rschema.objects()), ['Note'])
 
-        rschema = SCHEMA.rschema('sym_rel')
+        rschema = self.schema.rschema('sym_rel')
         self.assertEqual(rschema.symmetric, True)
         self.assertEqual(rschema.description, '')
         self.assertEqual(rschema.final, False)
         self.assertListEqual(sorted(rschema.subjects()), ['Affaire', 'Person', 'Salaried'])
         self.assertListEqual(sorted(rschema.objects()), ['Affaire', 'Person', 'Salaried'])
 
-        rschema = SCHEMA.rschema('initial_state')
+        rschema = self.schema.rschema('initial_state')
         self.assertEqual(rschema.symmetric, False)
         self.assertEqual(rschema.description, 'indicate which state should be used by default when an entity using states is created')
         self.assertEqual(rschema.final, False)
         self.assertListEqual(sorted(rschema.subjects()), ['Eetype'])
         self.assertListEqual(sorted(rschema.objects()), ['State'])
 
-        rschema = SCHEMA.rschema('name')
+        rschema = self.schema.rschema('name')
         self.assertEqual(rschema.symmetric, False)
         self.assertEqual(rschema.description, '')
         self.assertEqual(rschema.final, True)
@@ -191,42 +195,42 @@ class SchemaLoaderTC(TestCase):
         self.assertListEqual(sorted(rschema.objects()), ['String'])
 
     def test_cardinality(self):
-        rschema = SCHEMA.rschema('evaluee')
+        rschema = self.schema.rschema('evaluee')
         self.assertEqual(rschema.rdef('Person', 'Note').cardinality, '**')
-        rschema = SCHEMA.rschema('inline_rel')
+        rschema = self.schema.rschema('inline_rel')
         self.assertEqual(rschema.rdef('Affaire', 'Person').cardinality, '?*')
-        rschema = SCHEMA.rschema('initial_state')
+        rschema = self.schema.rschema('initial_state')
         self.assertEqual(rschema.rdef('Eetype', 'State').cardinality, '?*')
-        rschema = SCHEMA.rschema('state_of')
+        rschema = self.schema.rschema('state_of')
         self.assertEqual(rschema.rdef('State', 'Eetype').cardinality, '+*')
-        rschema = SCHEMA.rschema('name')
+        rschema = self.schema.rschema('name')
         self.assertEqual(rschema.rdef('State', 'String').cardinality, '11')
-        rschema = SCHEMA.rschema('description')
+        rschema = self.schema.rschema('description')
         self.assertEqual(rschema.rdef('State', 'String').cardinality, '?1')
 
     def test_constraints(self):
-        eschema = SCHEMA.eschema('Person')
+        eschema = self.schema.eschema('Person')
         self.assertEqual(len(eschema.rdef('nom').constraints), 1)
         self.assertEqual(len(eschema.rdef('promo').constraints), 2)
         self.assertEqual(len(eschema.rdef('tel').constraints), 0)
-        eschema = SCHEMA.eschema('State')
+        eschema = self.schema.eschema('State')
         self.assertEqual(len(eschema.rdef('name').constraints), 1)
         self.assertEqual(len(eschema.rdef('description').constraints), 0)
-        eschema = SCHEMA.eschema('Eetype')
+        eschema = self.schema.eschema('Eetype')
         self.assertEqual(len(eschema.rdef('name').constraints), 2)
 
     def test_inlined(self):
-        rschema = SCHEMA.rschema('evaluee')
+        rschema = self.schema.rschema('evaluee')
         self.assertEqual(rschema.inlined, False)
-        rschema = SCHEMA.rschema('state_of')
+        rschema = self.schema.rschema('state_of')
         self.assertEqual(rschema.inlined, False)
-        rschema = SCHEMA.rschema('inline_rel')
+        rschema = self.schema.rschema('inline_rel')
         self.assertEqual(rschema.inlined, True)
-        rschema = SCHEMA.rschema('initial_state')
+        rschema = self.schema.rschema('initial_state')
         self.assertEqual(rschema.inlined, True)
 
     def test_relation_permissions(self):
-        rschema = SCHEMA.rschema('evaluee')
+        rschema = self.schema.rschema('evaluee')
         self.assertEqual(rschema.rdef('Person', 'Note').permissions,
                           {'read': ('managers',),
                            'delete': ('managers',),
@@ -235,22 +239,22 @@ class SchemaLoaderTC(TestCase):
                           {'read': ('managers',),
                            'delete': ('managers',),
                            'add': ('managers',)})
-        rschema = SCHEMA.rschema('concerne')
+        rschema = self.schema.rschema('concerne')
         self.assertEqual(rschema.rdef('Person', 'Affaire').permissions,
                           {'read': ('managers',),
                            'delete': ('managers',),
                            'add': ('managers',)})
         self.assertEqual(rschema.rdef('Affaire', 'Societe').permissions,
                           DEFAULT_RELPERMS)
-        rschema = SCHEMA.rschema('travaille')
+        rschema = self.schema.rschema('travaille')
         self.assertEqual(rschema.rdef('Person', 'Societe').permissions,
                           {'read': (), 'add': (), 'delete': ('managers',)})
 
     def test_attributes_permissions(self):
-        rschema = SCHEMA.rschema('name')
+        rschema = self.schema.rschema('name')
         self.assertEqual(rschema.rdef('Company', 'String').permissions,
                           DEFAULT_ATTRPERMS)
-        rschema = SCHEMA.rschema('tel')
+        rschema = self.schema.rschema('tel')
         self.assertEqual(rschema.rdef('Person', 'Int').permissions,
                           {'read': (),
                            'add': ('managers',),
@@ -258,21 +262,21 @@ class SchemaLoaderTC(TestCase):
 
 
     def test_entity_permissions(self):
-        eschema = SCHEMA.eschema('State')
+        eschema = self.schema.eschema('State')
         self.assertEqual(eschema.permissions,
                           {'read':   ('managers', 'users', 'guests',),
                            'add':    ('managers', 'users',),
                            'delete': ('managers', 'owners',),
                            'update': ('managers', 'owners',)})
 
-        eschema = SCHEMA.eschema('Eetype')
+        eschema = self.schema.eschema('Eetype')
         self.assertEqual(eschema.permissions,
                           {'read':   ('managers', 'users', 'guests',),
                            'add':    ('managers',),
                            'delete': ('managers',),
                            'update': ('managers', 'owners',)})
 
-        eschema = SCHEMA.eschema('Person')
+        eschema = self.schema.eschema('Person')
         self.assertEqual(eschema.permissions,
                           {'read':   ('managers', 'users', 'guests',),
                            'add':    ('managers', 'users',),
@@ -287,8 +291,6 @@ class SchemaLoaderTC(TestCase):
 ##         self.assertListEqual(sorted(rschema.subjects()), ['Employee'])
 ##         self.assertListEqual(sorted(rschema.objects()), ['Company', 'Division'])
 ##
-
-SCHEMA = SchemaLoader().load([SchemaLoaderTC.datadir])
 
 
 class BasePerson(EntityType):
@@ -359,7 +361,8 @@ class PySchemaTC(TestCase):
     def test_date_defaults(self):
         _today = date.today()
         _now = datetime.now()
-        datetest = SCHEMA.eschema('Datetest')
+        schema = SchemaLoader().load([self.datadir])
+        datetest = schema.eschema('Datetest')
         dt1 = datetest.default('dt1')
         dt2 = datetest.default('dt2')
         d1 = datetest.default('d1')
