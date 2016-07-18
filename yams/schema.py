@@ -18,12 +18,13 @@
 """Classes to define generic Entities/Relations schemas."""
 
 __docformat__ = "restructuredtext en"
-_ = unicode
 
 import warnings
 from copy import deepcopy
 from decimal import Decimal
 from itertools import chain
+
+from six import text_type, binary_type
 
 from logilab.common import attrdict
 from logilab.common.decorators import cached, clear_cache
@@ -31,31 +32,19 @@ from logilab.common.interface import implements
 
 import yams
 from yams import (BASE_TYPES, MARKER, ValidationError, BadSchemaDefinition,
-                  KNOWN_METAATTRIBUTES, convert_default_value)
+                  KNOWN_METAATTRIBUTES, convert_default_value, DEFAULT_ATTRPERMS,
+                  DEFAULT_COMPUTED_RELPERMS)
 from yams.interfaces import (ISchema, IRelationSchema, IEntitySchema,
                              IVocabularyConstraint)
 from yams.constraints import BASE_CHECKERS, BASE_CONVERTERS, UniqueConstraint
+
+_ = text_type
 
 def role_name(rtype, role):
     """function to use for qualifying attribute / relation in ValidationError
     errors'dictionnary
     """
     return '%s-%s' % (rtype, role)
-
-def check_permission_definitions(schema):
-    """check permissions are correctly defined"""
-    # already initialized, check everything is fine
-    for action, groups in schema.permissions.items():
-        assert action in schema.ACTIONS, \
-            'unknown action %s for %s' % (action, schema)
-        assert isinstance(groups, tuple), \
-               ('permission for action %s of %s isn\'t a tuple as '
-                'expected' % (action, schema))
-    if schema.final:
-        schema.advertise_new_add_permission()
-    for action in schema.ACTIONS:
-        assert action in schema.permissions, \
-               'missing expected permissions for action %s for %s' % (action, schema)
 
 def rehash(dictionary):
     """this function manually builds a copy of `dictionary` but forces
@@ -112,8 +101,14 @@ class ERSchema(object):
         self.description = erdef.description or ''
         self.package = erdef.package
 
-    def __cmp__(self, other):
-        return cmp(self.type, getattr(other, 'type', other))
+    def __eq__(self, other):
+        return self.type == getattr(other, 'type', other)
+
+    def __ne__(self, other):
+        return not (self == other)
+
+    def __lt__(self, other):
+        return self.type < getattr(other, 'type', other)
 
     def __hash__(self):
         try:
@@ -147,7 +142,18 @@ class PermissionMixIn(object):
 
     def check_permission_definitions(self):
         """check permissions are correctly defined"""
-        check_permission_definitions(self)
+        # already initialized, check everything is fine
+        for action, groups in self.permissions.items():
+            assert action in self.ACTIONS, \
+                'unknown action %s for %s' % (action, self)
+            assert isinstance(groups, tuple), \
+                   ('permission for action %s of %s isn\'t a tuple as '
+                    'expected' % (action, self))
+        if self.final:
+            self.advertise_new_add_permission()
+        for action in self.ACTIONS:
+            assert action in self.permissions, \
+                   'missing expected permissions for action %s for %s' % (action, self)
 
 
 # Schema objects definition ###################################################
@@ -273,13 +279,13 @@ class EntitySchema(PermissionMixIn, ERSchema):
         """return a list of relations that may have this type of entity as
         subject
         """
-        return self.subjrels.values()
+        return list(self.subjrels.values())
 
     def object_relations(self):
         """return a list of relations that may have this type of entity as
         object
         """
-        return self.objrels.values()
+        return list(self.objrels.values())
 
     def rdef(self, rtype, role='subject', targettype=None, takefirst=False):
         """return a relation definition schema for a relation of this entity type
@@ -497,7 +503,7 @@ class EntitySchema(PermissionMixIn, ERSchema):
         if _ is not None:
             warnings.warn('[yams 0.36] _ argument is deprecated, remove it',
                           DeprecationWarning, stacklevel=2)
-        _ = unicode
+        _ = text_type
         errors = {}
         msgargs = {}
         i18nvalues = []
@@ -533,7 +539,7 @@ class EntitySchema(PermissionMixIn, ERSchema):
                 msgargs[qname+'-value'] = value
                 msgargs[qname+'-type'] = aschema.type
                 i18nvalues.append(qname+'-type')
-                if isinstance(value, str) and aschema == 'String':
+                if isinstance(value, binary_type) and aschema == 'String':
                     errors[qname] += '; you might want to try unicode'
                 continue
             # ensure value has the correct python type
@@ -545,7 +551,7 @@ class EntitySchema(PermissionMixIn, ERSchema):
             # check arbitrary constraints
             for constraint in rdef.constraints:
                 if not constraint.check(entity, rschema, value):
-                    msg, args = constraint.failed_message(qname, value)
+                    msg, args = constraint.failed_message(qname, value, entity)
                     errors[qname] = msg
                     msgargs.update(args)
                     break
@@ -573,6 +579,149 @@ class EntitySchema(PermissionMixIn, ERSchema):
         return cstr.vocabulary()
 
 
+class RelationDefinitionSchema(PermissionMixIn):
+    """a relation definition is fully caracterized relation, eg
+
+         <subject type> <relation type> <object type>
+    """
+
+    _RPROPERTIES = {'cardinality': None,
+                    'constraints': (),
+                    'order': 9999,
+                    'description': '',
+                    'infered': False,
+                    'permissions': None}
+    _NONFINAL_RPROPERTIES = {'composite': None}
+    _FINAL_RPROPERTIES = {'default': None,
+                          'uid': False,
+                          'indexed': False,
+                          'formula': None,
+                          }
+    # Use a TYPE_PROPERTIES dictionnary to store type-dependant parameters.
+    BASE_TYPE_PROPERTIES = {'String': {'fulltextindexed': False,
+                                       'internationalizable': False},
+                            'Bytes': {'fulltextindexed': False}}
+
+    @classmethod
+    def ALL_PROPERTIES(cls):
+        return set(chain(cls._RPROPERTIES,
+                         cls._NONFINAL_RPROPERTIES,
+                         cls._FINAL_RPROPERTIES,
+                         *cls.BASE_TYPE_PROPERTIES.values()))
+
+    def __init__(self, subject, rtype, object, package, values=None):
+        if values is not None:
+            self.update(values)
+        self.subject = subject
+        self.rtype = rtype
+        self.object = object
+        self.package = package
+
+    @property
+    def ACTIONS(self):
+        if self.rtype.final:
+            return ('read', 'add', 'update')
+        else:
+            return ('read', 'add', 'delete')
+
+    def update(self, values):
+        # XXX check we're copying existent properties
+        self.__dict__.update(values)
+
+    def __str__(self):
+        if self.object.final:
+            return 'attribute %s.%s[%s]' % (
+            self.subject, self.rtype, self.object)
+        return 'relation %s %s %s' % (
+            self.subject, self.rtype, self.object)
+
+    def __repr__(self):
+        return '<%s at @%#x>' % (self, id(self))
+
+    def as_triple(self):
+        return (self.subject, self.rtype, self.object)
+
+    def advertise_new_add_permission(self):
+        """handle backward compatibility with pre-add permissions
+
+        * if the update permission was () [empty tuple], use the
+          default attribute permissions for `add`
+
+        * else copy the `update` rule for `add`
+        """
+        if 'add' not in self.permissions:
+            if self.permissions['update'] == ():
+                defaultaddperms = DEFAULT_ATTRPERMS['add']
+            else:
+                defaultaddperms = self.permissions['update']
+            self.permissions['add'] = defaultaddperms
+            warnings.warn('[yams 0.39] %s: new "add" permissions on attribute '
+                          'set to %s by default, but you must make it explicit' %
+                          (self, defaultaddperms), DeprecationWarning)
+
+
+    @classmethod
+    def rproperty_defs(cls, desttype):
+        """return a dictionary mapping property name to its definition for each
+        allowable properties when the relation has `desttype` as target entity's
+        type
+        """
+        propdefs = cls._RPROPERTIES.copy()
+        if desttype not in BASE_TYPES:
+            propdefs.update(cls._NONFINAL_RPROPERTIES)
+        else:
+            propdefs.update(cls._FINAL_RPROPERTIES)
+            propdefs.update(cls.BASE_TYPE_PROPERTIES.get(desttype, {}))
+        return propdefs
+
+    def rproperties(self):
+        """same as .rproperty_defs class method, but for instances (hence
+        destination is known to be self.object).
+        """
+        return self.rproperty_defs(self.object)
+
+    def get(self, key, default=None):
+        return getattr(self, key, default)
+
+    @property
+    def final(self):
+        return self.rtype.final
+
+    def dump(self, subject, object):
+        return self.__class__(subject, self.rtype, object,
+                                        self.package,
+                                        self.__dict__)
+
+    def role_cardinality(self, role):
+        return self.cardinality[role == 'object']
+
+    def constraint_by_type(self, cstrtype):
+        for cstr in self.constraints:
+            if cstr.type() == cstrtype:
+                return cstr
+        return None
+
+    def constraint_by_class(self, cls):
+        for cstr in self.constraints:
+            if isinstance(cstr, cls):
+                return cstr
+        return None
+
+    def constraint_by_interface(self, iface):
+        for cstr in self.constraints:
+            if implements(cstr, iface):
+                return cstr
+        return None
+
+    def check_permission_definitions(self):
+        """check permissions are correctly defined"""
+        super(RelationDefinitionSchema, self).check_permission_definitions()
+        if (self.final and self.formula and
+                (self.permissions['add'] or self.permissions['update'])):
+            raise BadSchemaDefinition(
+                'Cannot set add/update permissions on computed %s' % self)
+
+
 
 class RelationSchema(ERSchema):
     """A relation is a named and oriented link between two entities.
@@ -587,23 +736,54 @@ class RelationSchema(ERSchema):
     """
 
     __implements__ = IRelationSchema
+    symmetric = False
+    inlined = False
+    fulltext_container = None
+    rule = None
+    # if this relation is an attribute relation
+    final = False
+    permissions = None # only when rule is not None, for later propagation to
+                       # computed relation definitions
+    rdef_class = RelationDefinitionSchema
 
     def __init__(self, schema=None, rdef=None, **kwargs):
         if rdef is not None:
-            # if this relation is symmetric/inlined
-            self.symmetric = rdef.symmetric or False
-            self.inlined = rdef.inlined or False
-            # if full text content of subject/object entity should be added
-            # to other side entity (the container)
-            self.fulltext_container = rdef.fulltext_container or None
-            # if this relation is an attribute relation
-            self.final = False
+            if rdef.rule:
+                self.init_computed_relation(rdef)
+            else:
+                self.init_relation(rdef)
             # mapping to subject/object with schema as key
             self._subj_schemas = {}
             self._obj_schemas = {}
             # relation properties
             self.rdefs = {}
         super(RelationSchema, self).__init__(schema, rdef, **kwargs)
+
+    def init_relation(self, rdef):
+        if rdef.rule is not MARKER:
+            raise BadSchemaDefinition("Relation has no rule attribute")
+        # if this relation is symmetric/inlined
+        self.symmetric = bool(rdef.symmetric)
+        self.inlined = bool(rdef.inlined)
+        # if full text content of subject/object entity should be added
+        # to other side entity (the container)
+        self.fulltext_container = rdef.fulltext_container or None
+
+    def init_computed_relation(self, rdef):
+        """computed relation are specific relation with only a rule attribute.
+
+        Reponsibility to infer associated relation definitions is left to client
+        code defining what's in rule (eg rql snippet in cubicweb).
+        """
+        for attr in ('inlined', 'symmetric', 'fulltext_container'):
+            if getattr(rdef, attr, MARKER) is not MARKER:
+                raise BadSchemaDefinition("Computed relation has no %s attribute" % attr)
+        if rdef.__permissions__ is MARKER:
+            permissions = DEFAULT_COMPUTED_RELPERMS
+        else:
+            permissions = rdef.__permissions__
+        self.rule = rdef.rule
+        self.permissions = permissions
 
     def __repr__(self):
         return '<%s [%s]>' % (self.type,
@@ -631,11 +811,16 @@ class RelationSchema(ERSchema):
                 continue
             if final != eschema.final:
                 if final:
+                    feschema, nfeschema = subjschema, self.subjects()[0]
                     frschema, nfrschema = objschema, eschema
                 else:
+                    feschema, nfeschema = self.subjects()[0], subjschema
                     frschema, nfrschema = eschema, objschema
-                msg = "ambiguous relation %s: %s is final but not %s" % (
-                    self.type, frschema, nfrschema)
+                msg = ("ambiguous relation: '%(feschema)s.%(rtype)s' is final (%(frschema)s) "
+                       "but not '%(nfeschema)s.%(rtype)s' (%(nfrschema)s)")
+                msg %= {'rtype': self.type,
+                        'feschema': feschema, 'frschema': frschema,
+                        'nfeschema': subjschema, 'nfrschema': nfrschema}
                 raise BadSchemaDefinition(msg)
         constraints = getattr(rdef, 'constraints', None)
         if constraints:
@@ -720,9 +905,9 @@ class RelationSchema(ERSchema):
         if key in self.rdefs and not self.rdefs[key].infered:
             msg = '(%s, %s) already defined for %s' % (subject, object, self)
             raise BadSchemaDefinition(msg)
-        self.rdefs[key] = rdef = RelationDefinitionSchema(subject, self, object,
-                                                          buildrdef.package)
-        for prop, default in rdef.rproperties().iteritems():
+        self.rdefs[key] = rdef = self.rdef_class(subject, self, object,
+                                                 buildrdef.package)
+        for prop, default in rdef.rproperties().items():
             rdefval = getattr(buildrdef, prop, MARKER)
             if rdefval is MARKER:
                 if prop == 'permissions':
@@ -741,7 +926,7 @@ class RelationSchema(ERSchema):
         this relation may exists
         """
         # XXX deprecates in favor of iter_rdefs() ?
-        return self._subj_schemas.items()
+        return list(self._subj_schemas.items())
 
     def subjects(self, etype=None):
         """Return a list of entity schemas which can be subject of this relation.
@@ -793,143 +978,13 @@ class RelationSchema(ERSchema):
 
     def check_permission_definitions(self):
         """check permissions are correctly defined"""
-        for rdef in self.rdefs.itervalues():
+        for rdef in self.rdefs.values():
             rdef.check_permission_definitions()
-
-
-
-class RelationDefinitionSchema(PermissionMixIn):
-    """a relation definition is fully caracterized relation, eg
-
-         <subject type> <relation type> <object type>
-    """
-
-    _RPROPERTIES = {'cardinality': None,
-                    'constraints': (),
-                    'order': 9999,
-                    'description': '',
-                    'infered': False,
-                    'permissions': None}
-    _NONFINAL_RPROPERTIES = {'composite': None}
-    _FINAL_RPROPERTIES = {'default': None,
-                          'uid': False,
-                          'indexed': False}
-    # Use a TYPE_PROPERTIES dictionnary to store type-dependant parameters.
-    BASE_TYPE_PROPERTIES = {'String': {'fulltextindexed': False,
-                                       'internationalizable': False},
-                            'Bytes': {'fulltextindexed': False}}
-
-    @classmethod
-    def ALL_PROPERTIES(cls):
-        return set(chain(cls._RPROPERTIES,
-                         cls._NONFINAL_RPROPERTIES,
-                         cls._FINAL_RPROPERTIES,
-                         *cls.BASE_TYPE_PROPERTIES.itervalues()))
-
-    def __init__(self, subject, rtype, object, package, values=None):
-        if values is not None:
-            self.update(values)
-        self.subject = subject
-        self.rtype = rtype
-        self.object = object
-        self.package = package
-
-    @property
-    def ACTIONS(self):
-        if self.rtype.final:
-            return ('read', 'add', 'update')
-        else:
-            return ('read', 'add', 'delete')
-
-    def update(self, values):
-        # XXX check we're copying existent properties
-        self.__dict__.update(values)
-
-    def __str__(self):
-        if self.object.final:
-            return 'attribute %s.%s[%s]' % (
-            self.subject, self.rtype, self.object)
-        return 'relation %s %s %s' % (
-            self.subject, self.rtype, self.object)
-
-    def __repr__(self):
-        return '<%s at @%#x>' % (self, id(self))
-
-    def as_triple(self):
-        return (self.subject, self.rtype, self.object)
-
-    def advertise_new_add_permission(self):
-        """handle backward compatibility with pre-add permissions
-
-        * if the update permission was () [empty tuple], use the
-          default attribute permissions for `add`
-
-        * else copy the `update` rule for `add`
-        """
-        if not 'add' in self.permissions:
-            from yams.buildobjs import DEFAULT_ATTRPERMS
-            if self.permissions['update'] == ():
-                defaultaddperms = DEFAULT_ATTRPERMS['add']
-            else:
-                defaultaddperms = self.permissions['update']
-            self.permissions['add'] = defaultaddperms
-            warnings.warn('[yams 0.39] %s: new "add" permissions on attribute '
-                          'set to %s by default, but you must make it explicit' %
-                          (self, defaultaddperms), DeprecationWarning)
-
-
-    @classmethod
-    def rproperty_defs(cls, desttype):
-        """return a dictionary mapping property name to its definition for each
-        allowable properties when the relation has `desttype` as target entity's
-        type
-        """
-        propdefs = cls._RPROPERTIES.copy()
-        if desttype not in BASE_TYPES:
-            propdefs.update(cls._NONFINAL_RPROPERTIES)
-        else:
-            propdefs.update(cls._FINAL_RPROPERTIES)
-            propdefs.update(cls.BASE_TYPE_PROPERTIES.get(desttype, {}))
-        return propdefs
-
-    def rproperties(self):
-        """same as .rproperty_defs class method, but for instances (hence
-        destination is known to be self.object).
-        """
-        return self.rproperty_defs(self.object)
-
-    def get(self, key, default=None):
-        return getattr(self, key, default)
-
-    @property
-    def final(self):
-        return self.rtype.final
-
-    def dump(self, subject, object):
-        return RelationDefinitionSchema(subject, self.rtype, object,
-                                        self.package,
-                                        self.__dict__)
-
-    def role_cardinality(self, role):
-        return self.cardinality[role == 'object']
-
-    def constraint_by_type(self, cstrtype):
-        for cstr in self.constraints:
-            if cstr.type() == cstrtype:
-                return cstr
-        return None
-
-    def constraint_by_class(self, cls):
-        for cstr in self.constraints:
-            if isinstance(cstr, cls):
-                return cstr
-        return None
-
-    def constraint_by_interface(self, iface):
-        for cstr in self.constraints:
-            if implements(cstr, iface):
-                return cstr
-        return None
+        if self.rule and (self.permissions.get('add')
+                          or self.permissions.get('delete')):
+            raise BadSchemaDefinition(
+                'Cannot set add/delete permissions on computed relation %s'
+                % self.type)
 
 
 class Schema(object):
@@ -1017,7 +1072,6 @@ class Schema(object):
         # rebuild internal structures since eschema's hash value has changed
         self._rehash()
 
-
     def add_relation_type(self, rtypedef):
         rtype = rtypedef.name
         if rtype in self._relations:
@@ -1067,17 +1121,17 @@ class Schema(object):
     def del_relation_type(self, rtype):
         # XXX don't iter directly on the dictionary since it may be changed
         # by del_relation_def
-        for subjtype, objtype in self.rschema(rtype).rdefs.keys():
+        for subjtype, objtype in list(self.rschema(rtype).rdefs):
             self.del_relation_def(subjtype, rtype, objtype)
         if not self.rschema(rtype).rdefs:
             del self._relations[rtype]
 
     def del_entity_type(self, etype):
         eschema = self._entities[etype]
-        for rschema in eschema.subjrels.values():
+        for rschema in list(eschema.subjrels.values()):
             for objtype in rschema.objects(etype):
                 self.del_relation_def(eschema, rschema, objtype)
-        for rschema in eschema.objrels.values():
+        for rschema in list(eschema.objrels.values()):
             for subjtype in rschema.subjects(etype):
                 self.del_relation_def(subjtype, rschema, eschema)
         if eschema.specializes():
@@ -1086,12 +1140,14 @@ class Schema(object):
             raise Exception("can't remove entity type %s used as parent class by %s" %
                             (eschema, ','.join(str(et) for et in eschema.specialized_by())))
         del self._entities[etype]
+        if eschema.final:
+            yams.unregister_base_type(etype)
 
     def infer_specialization_rules(self):
         for rschema in self.relations():
             if rschema in self.no_specialization_inference:
                 continue
-            for (subject, object), rdef in rschema.rdefs.items():
+            for (subject, object), rdef in list(rschema.rdefs.items()):
                 subjeschemas = [subject] + subject.specialized_by(recursive=True)
                 objeschemas = [object] + object.specialized_by(recursive=True)
                 for subjschema in subjeschemas:
@@ -1110,9 +1166,9 @@ class Schema(object):
         for rschema in self.relations():
             if rschema.final:
                 continue
-            for (subject, object), rdef in rschema.rdefs.items():
+            for (subject, object), rdef in list(rschema.rdefs.items()):
                 if rdef.infered:
-                    self.del_relation_def(subject, rschema, object)
+                    rschema.del_relation_def(subject, object)
 
     def rebuild_infered_relations(self):
         """remove any infered definitions and rebuild them"""
@@ -1127,7 +1183,7 @@ class Schema(object):
         :rtype: list
         :return: defined entity's types (str) or schemas (`EntitySchema`)
         """
-        return self._entities.values()
+        return list(self._entities.values())
 
     def has_entity(self, etype):
         """return true the type is defined in the schema
@@ -1160,7 +1216,7 @@ class Schema(object):
         :rtype: list
         :return: defined relation's types (str) or schemas (`RelationSchema`)
         """
-        return self._relations.values()
+        return list(self._relations.values())
 
     def has_relation(self, rtype):
         """return true the relation is defined in the schema
@@ -1183,6 +1239,14 @@ class Schema(object):
             return self._relations[rtype]
         except KeyError:
             raise KeyError('No relation named %s in schema'%rtype)
+
+    def finalize(self):
+        """Finalize schema
+
+        Can be used to, e.g., infer relations from inheritance, computed
+        relations, etc.
+        """
+        self.infer_specialization_rules()
 
 
 import logging

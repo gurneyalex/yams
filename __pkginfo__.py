@@ -24,41 +24,37 @@ __docformat__ = "restructuredtext en"
 modname = 'yams'
 
 # release version
-numversion = (0, 39, 4)
+numversion = (0, 44, 0)
 version = '.'.join(str(num) for num in numversion)
 
 # license and copyright
 license = 'LGPL'
 
 # short and long description
-short_desc = "entity / relation schema"
-long_desc = """Yet Another Magic Schema !
-A simple/generic but powerful entities / relations schema, suitable
-to represent RDF like data. The schema is readable/writable from/to
-various formats.
-"""
+description = "entity / relation schema"
 
 # author name and email
 author = "Logilab"
 author_email = "devel@logilab.fr"
 
 # home page
-web = "http://www.logilab.org/project/%s" % modname
+web = "https://www.logilab.org/project/%s" % modname
 
 # mailing list
 mailinglist = 'mailto://python-projects@lists.logilab.org'
 
-# download place
-ftp = "ftp://ftp.logilab.org/pub/%s" % modname
-
-# is there some directories to include with the source installation
-include_dirs = []
-
 # executable
-
 scripts = ['bin/yams-check', 'bin/yams-view']
 
 install_requires = [
+    'setuptools',
     'logilab-common >= 0.55.2',
     'logilab-database >= 1.11',
+    'six >= 1.4.0',
+    ]
+
+classifiers = [
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 2",
+    "Programming Language :: Python :: 3",
     ]

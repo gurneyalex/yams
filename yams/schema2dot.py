@@ -18,6 +18,7 @@
 """Write a schema as a dot file.
 
 """
+from __future__ import print_function
 __docformat__ = "restructuredtext en"
 
 import sys, os
@@ -35,8 +36,9 @@ class SchemaDotPropsHandler(object):
     def __init__(self, visitor):
         self.visitor = visitor
         # FIXME: colors are arbitrary
-        self.nextcolor = cycle( ('#aa0000', '#00aa00', '#0000aa',
-                                 '#000000', '#888888') ).next
+        self._colors = cycle( ('#aa0000', '#00aa00', '#0000aa',
+                                 '#000000', '#888888') )
+        self.nextcolor = lambda: next(self._colors)
 
     def node_properties(self, eschema):
         """return default DOT drawing options for an entity schema"""
@@ -138,7 +140,7 @@ class FullSchemaVisitor(SchemaVisitor):
         for rschema in sorted(self.schema.relations(), key=lambda x: x.type):
             if not self.should_display_schema(rschema):
                 continue
-            for setype, tetype in sorted(rschema.rdefs, key=lambda (s, o): (s.type, o.type)):
+            for setype, tetype in sorted(rschema.rdefs, key=lambda x: (x[0].type, x[1].type)):
                 if not (setype in self._eindex and tetype in self._eindex):
                     continue
                 if not self.display_rel(rschema, setype, tetype):
@@ -225,7 +227,7 @@ def run():
     try:
         schema_dir = sys.argv[1]
     except IndexError:
-        print "USAGE: schema2dot SCHEMA_DIR [OUTPUT FILE]"
+        print("USAGE: schema2dot SCHEMA_DIR [OUTPUT FILE]")
         sys.exit(1)
     if len(sys.argv) > 2:
         outputfile = sys.argv[2]

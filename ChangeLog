@@ -1,6 +1,53 @@
 ChangeLog for yams
 ------------------
 
+2016-??-??  --  0.43.0
+    * #296748: use json for constraint serialization
+
+2015-12-22  --  0.42.0
+    * #2098714: Stop injecting '_' into python's builtins
+    * #287000: [reader] Finally remove long deprecated bits
+    * #2322745: [pkg] Use setuptools and standard package layout
+    * #3217241: [buildobjs] Fix undefined variable name
+
+
+2015-10-12  --  0.41.1
+    * #286709: support for calling unicode/str on a validation error before its
+      actual translation
+    * #1234481: Ensure ValidationError gets translated even without msgargs
+    * #2085734: misc py3k-related fixes
+
+2015-07-08  --  0.41.0
+    * #284995: [reader] display schema file name when exec fails
+    * [schema] Improve error message when building a schema with mixed up
+      final/non-final relations
+    * #287000: [reader] stop providing base types without import
+    * #286912: [schema2sql] properly consider skip_relations parameters
+    * #288556: handle none or unset attribute in BoundaryConstraint
+    * #294378: provide proper comparison and hashability between constraints
+
+
+2014-12-22  --  0.40.2
+
+    * Fix default permissions of attributes defined by a RelationDefinition
+      subclass, broken in 0.40.1 (#284993)
+
+
+2014-12-02  --  0.40.1
+
+    * Fix issue with comparison of schema entities caused by python3 port in
+      0.40.0 (#282681)
+
+    * Fix crash when defining an attribute using a RelationDefinition
+      subclass, introduced with computed attribute support in 0.40.0 (#282697)
+
+
+2014-11-05  --  0.40.0
+
+    * Support for computed attributes and relations (CWEP002, #232756)
+
+    * Source compatibility with python 2.6+ and 3.3+ (#267910)
+
 2015-07-17  --  0.39.3
     * allow calling unicode/str on a validation error before its translation
      (#286709)
@@ -14,7 +61,6 @@ ChangeLog for yams
 
     * [schema] stop checking constraints on the first failing constraint, in an
      attempt to get the most appropriate error message (#202779)
-
 
 
 2014-01-09  --  0.39.0
