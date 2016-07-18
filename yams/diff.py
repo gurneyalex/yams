@@ -20,10 +20,13 @@
 Textual representation of schema are created and standard diff algorithm are
 applied.
 """
+from __future__ import print_function
 
 import subprocess
 import tempfile
 import os
+
+from six import string_types, text_type
 
 from yams.constraints import (SizeConstraint,
                               UniqueConstraint,
@@ -32,7 +35,7 @@ from yams.reader import SchemaLoader
 
 
 def quoted(obj):
-    if isinstance(obj, basestring):
+    if isinstance(obj, string_types):
         # NOT repr, because .....
         # strings here turn out as unicode strings (from the repo side)
         # but are (mostly) really str in the schema.py source
@@ -56,7 +59,7 @@ def identity(x):
 
 def format_props(props, scope, ignore=()):
     out = []
-    for prop, val in sorted(props.iteritems()):
+    for prop, val in sorted(props.items()):
         if prop in ignore:
             continue
         out.append('\t' * scope.indentation +
@@ -84,7 +87,7 @@ def format_perms(perms, scope, isdefault):
                        ('\t' + '\t' * scope.indentation,
                         quoted(p),
                         format_tuple(format_expression(r)
-                                     if not isinstance(r, basestring) else quoted(r)
+                                     if not isinstance(r, string_types) else quoted(r)
                               for r in rule)))
     return ' {%s\n%s\n%s}' % (' # default perms' if isdefault else '',
                               ',\n'.join(out),
@@ -101,7 +104,7 @@ def format_constraint(cstr):
     elif 'Boundary' in cclass:
         return '%s(%s %s)' % (cclass, quoted(cstr.operator), str(cstr.boundary))
     else:
-        print 'formatter: unhandled constraint type', cstr.__class__
+        print('formatter: unhandled constraint type', cstr.__class__)
         return str(cstr)
     return ''.join(out)
 
@@ -141,7 +144,7 @@ def properties_from(relation, permissionshandler=nullhandler):
                     ret['unique'] = True
                 elif isinstance(constraint, StaticVocabularyConstraint):
                     if relation.object.type == 'String':
-                        transform = unicode
+                        transform = text_type
                     else:
                         transform = identity
                     ret['vocabulary'] = [transform(x)
@@ -227,7 +230,7 @@ def schema2descr(schema, permissionshandler, ignore=()):
 def schema2file(schema, output, permissionshandler, ignore=()):
     """Save schema description of schema find
     in directory schema_dir into output file"""
-    with open(output, 'wb') as description_file:
+    with open(output, 'w') as description_file:
         description_file.write(schema2descr(schema, permissionshandler, ignore))
 
 def schema_diff(schema1, schema2, permissionshandler=nullhandler, diff_tool=None, ignore=()):
@@ -244,8 +247,8 @@ def schema_diff(schema1, schema2, permissionshandler=nullhandler, diff_tool=None
                            output1, output2)
         process = subprocess.Popen(cmd, shell=True)
     else:
-        print "description files save in %s and %s" % (output1, output2)
-    print output1, output2
+        print("description files save in %s and %s" % (output1, output2))
+    print(output1, output2)
     return output1, output2
 
 if __name__ == "__main__":
@@ -268,6 +271,6 @@ if __name__ == "__main__":
                                output1, output2)
             process = subprocess.Popen(cmd, shell=True)
         else:
-            print "description files save in %s and %s" % (output1, output2)
+            print("description files save in %s and %s" % (output1, output2))
     else:
         parser.error("An input file name must be specified")

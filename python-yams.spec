@@ -6,10 +6,12 @@
 %define python python
 %define __python /usr/bin/python
 %endif
+%{!?_python_sitelib: %define _python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
+
 
 Summary:        entity / relation schema
 Name:           %{python}-yams
-Version:        0.39.4
+Version:        0.44.0
 Release:        logilab.1%{?dist}
 Source0:        http://download.logilab.org/pub/yams/yams-%{version}.tar.gz
 License:        LGPLv2+
@@ -20,7 +22,11 @@ Vendor:         Logilab <contact@logilab.fr>
 Url:            http://www.logilab.org/project/yams
 
 Requires:       %{python}, %{python}-logilab-common >= 0.55.2, %{python}-logilab-database >= 1.11
+Requires:       %{python}-six >= 1.4.0
+Requires:       %{python}-setuptools
 BuildRequires:  %{python}
+BuildRequires:  %{python}-setuptools
+Conflicts:      cubicweb < 3.21.0
 
 
 %description
@@ -47,5 +53,6 @@ rm -rf $RPM_BUILD_ROOT
 
 %files 
 %defattr(-, root, root)
-/*
+%{_bindir}/*
+%{_python_sitelib}/*
 

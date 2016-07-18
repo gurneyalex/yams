@@ -1,3 +1,52 @@
+yams (0.44.0-1) unstable; urgency=medium
+
+  * new upstream release.
+
+ -- Denis Laxalde <denis.laxalde@logilab.fr>  Wed, 22 Jun 2016 11:37:23 +0200
+
+yams (0.43.0-1) unstable; urgency=medium
+
+  * new upstream release
+
+ -- Julien Cristau <julien.cristau@logilab.fr>  Thu, 17 Mar 2016 18:15:40 +0100
+
+yams (0.42.0-1) unstable; urgency=medium
+
+  [ Rémi Cardona ]
+  * New upstream release.
+
+ -- Julien Cristau <julien.cristau@logilab.fr>  Tue, 22 Dec 2015 12:33:04 +0100
+
+yams (0.41.1-1) unstable; urgency=medium
+
+  * New upstream release.
+
+ -- Rémi Cardona <remi.cardona@logilab.fr>  Mon, 12 Oct 2015 16:11:33 +0200
+
+yams (0.41.0-1) unstable; urgency=medium
+
+  * new upstream release
+
+ -- Julien Cristau <julien.cristau@logilab.fr>  Wed, 08 Jul 2015 16:46:12 +0200
+
+yams (0.40.2-1) unstable; urgency=medium
+
+  * new upstream release
+
+ -- Julien Cristau <julien.cristau@logilab.fr>  Mon, 22 Dec 2014 14:13:10 +0100
+
+yams (0.40.1-1) unstable; urgency=low
+
+  * new upstream release
+
+ -- Julien Cristau <julien.cristau@logilab.fr>  Tue, 02 Dec 2014 15:59:47 +0100
+
+yams (0.40.0-1) unstable; urgency=low
+
+  * new upstream release.
+
+ -- Julien Cristau <julien.cristau@logilab.fr>  Wed, 05 Nov 2014 11:52:21 +0100
+
 yams (0.39.4-1) unstable; urgency=medium
 
   * new upstream release

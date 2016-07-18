@@ -127,7 +127,7 @@ class SpecializationTC(TestCase):
         for subjobj in krschema.rdefs:
             subject, object = subjobj
             done.add(subjobj)
-            self.assertTrue(subjobj in expected)
+            self.assertIn(subjobj, expected)
             self.assertEqual(krschema.rdef(subject, object).infered,
                               expected[subjobj])
         self.assertEqual(len(set(expected) - done), 0, 'missing %s' % (set(expected) - done))
@@ -144,7 +144,7 @@ class SpecializationTC(TestCase):
         for subjobj in wrschema.rdefs:
             subject, object = subjobj
             done.add(subjobj)
-            self.assertTrue(subjobj in expected)
+            self.assertIn(subjobj, expected)
             self.assertEqual(wrschema.rdef(subject, object).infered,
                               expected[subjobj])
         self.assertEqual(len(set(expected) - done), 0, 'missing %s' % (set(expected) - done))
@@ -169,7 +169,7 @@ class SpecializationTC(TestCase):
         for subjobj in krschema.rdefs:
             subject, object = subjobj
             done.add(subjobj)
-            self.assertTrue(subjobj in expected)
+            self.assertIn(subjobj, expected)
             self.assertEqual(krschema.rdef(subject, object).infered,
                               expected[subjobj])
         self.assertEqual(len(set(expected) - done), 0, 'missing %s' % (set(expected) - done))
@@ -198,6 +198,18 @@ class SpecializationTC(TestCase):
         self.assertEqual('1*', rdef.cardinality)
         rdef = self.schema['SubCompany'].rdef('division_of', 'object', 'SubSubDivision')
         self.assertEqual('1*', rdef.cardinality)
+
+    def test_remove_infered_relations_dont_remove_rtype(self):
+        # for the sake of this test, mark all rdef as infered even if that makes
+        # no sense in the inheritance case (at least one won't be infered in
+        # real life). However this will be the case with computed relations,
+        # though we've only partial implementation in yams that can't be easily
+        # tested, and they will rely on the tested behaviour of
+        # remove_infered_definitions
+        for rdef in self.schema['works_for'].rdefs.values():
+            rdef.infered = True
+        self.schema.remove_infered_definitions()
+        self.assertIn('works_for', self.schema)
 
 if __name__ == '__main__':
     unittest_main()

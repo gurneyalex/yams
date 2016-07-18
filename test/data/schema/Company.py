@@ -15,8 +15,14 @@
 #
 # You should have received a copy of the GNU Lesser General Public License along
 # with yams. If not, see <http://www.gnu.org/licenses/>.
+from six import text_type
+
 from yams.buildobjs import EntityType, RelationType, RelationDefinition, \
      SubjectRelation, String
+
+
+_ = text_type
+
 
 class Company(EntityType):
     name = String()

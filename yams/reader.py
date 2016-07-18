@@ -20,6 +20,7 @@
 Use either a sql derivated language for entities and relation definitions
 files or a direct python definition file.
 """
+from __future__ import print_function
 
 __docformat__ = "restructuredtext en"
 
@@ -51,20 +52,12 @@ for objname in dir(constraints):
         continue
 
 
-def obsolete(cls):
-    def wrapped(*args, **kwargs):
-        reason = '%s should be explictly imported from %s' % (
-            cls.__name__, cls.__module__)
-        warn(reason, DeprecationWarning, stacklevel=2)
-        return cls(*args, **kwargs)
-    return wrapped
-
 def fill_schema(schema, erdefs, register_base_types=True,
                 remove_unused_rtypes=False, post_build_callbacks=[]):
     if register_base_types:
         buildobjs.register_base_types(schema)
     # relation definitions may appear multiple times
-    erdefs_vals = set(erdefs.itervalues())
+    erdefs_vals = set(erdefs.values())
     # register relation types and non final entity types
     for definition in erdefs_vals:
         if isinstance(definition, type):
@@ -81,17 +74,19 @@ def fill_schema(schema, erdefs, register_base_types=True,
     # call 'post_build_callback' functions found in schema modules
     for cb in post_build_callbacks:
         cb(schema)
+    # finalize schema
+    schema.finalize()
+    # check permissions are valid on entities and relations
+    for erschema in schema.entities() + schema.relations():
+        erschema.check_permission_definitions()
+    # check unique together consistency
+    for eschema in schema.entities():
+        eschema.check_unique_together()
     # optionaly remove relation types without definitions
     if remove_unused_rtypes:
         for rschema in schema.relations():
             if not rschema.rdefs:
                 schema.del_relation_type(rschema)
-    # set permissions on entities and relations
-    for erschema in schema.entities() + schema.relations():
-        erschema.check_permission_definitions()
-    schema.infer_specialization_rules()
-    for eschema in schema.entities():
-        eschema.check_unique_together()
     return schema
 
 
@@ -123,10 +118,10 @@ class SchemaLoader(object):
                 fill_schema(schema, self.defined, register_base_types,
                             remove_unused_rtypes=remove_unused_rtypes,
                             post_build_callbacks=self.post_build_callbacks)
-            except Exception, ex:
+            except Exception as ex:
                 if not hasattr(ex, 'schema_files'):
                     ex.schema_files = self.loaded_files
-                raise ex, None, sys.exc_info()[-1]
+                raise
         finally:
             # cleanup sys.modules from schema modules
             # ensure we're only cleaning schema [sub]modules
@@ -204,20 +199,6 @@ class SchemaLoader(object):
             raise BadSchemaDefinition(filepath, 'invalid definition object')
         defobject.expand_type_definitions(self.defined)
 
-    def import_erschema(self, ertype, schemamod=None, instantiate=True):
-        warn('import_erschema is deprecated, use explicit import once schema '
-             'is turned into a proper python module (eg not expecting '
-             'predefined context in globals)', DeprecationWarning, stacklevel=3)
-        try:
-            erdef = self.defined[ertype]
-            name = getattr(erdef, 'name', erdef.__name__)
-            if name == ertype:
-                assert instantiate, 'can\'t get class of an already registered type'
-                return erdef
-        except KeyError:
-            pass
-        assert False, 'ooups'
-
     def exec_file(self, filepath):
         try:
             modname = '.'.join(modpath_from_file(filepath, self.extrapath))
@@ -239,38 +220,19 @@ class SchemaLoader(object):
             assert abspath(module.__file__).startswith(abspath(filepath)), (
                 modname, filepath, module.__file__)
         else:
-            # XXX until bw compat is gone, put context into builtins to allow proper
-            # control of deprecation warning
-            import __builtin__
             fglobals = {} # self.context.copy()
-            # wrap callable that should be imported
-            for key, val in self.context.items():
-                if key in BASE_TYPES or key == 'RichString' or key in CONSTRAINTS or \
-                       key in ('SubjectRelation', 'ObjectRelation'):
-                    val = obsolete(val)
-                setattr(__builtin__, key, val)
-            __builtin__.import_erschema = self.import_erschema
             fglobals['__file__'] = filepath
             fglobals['__name__'] = modname
             package = '.'.join(modname.split('.')[:-1])
             if package and not package in sys.modules:
                 __import__(package)
-            execfile(filepath, fglobals)
-            # check for use of classes that should be imported, without
-            # importing them
-            for name, obj in fglobals.items():
-                if isinstance(obj, type) and \
-                       issubclass(obj, buildobjs.Definition) and \
-                       obj.__module__ == modname:
-                    for parent in obj.__bases__:
-                        pname = parent.__name__
-                        if pname in fglobals or not pname in self.context:
-                            # imported
-                            continue
-                        warn('%s: please explicitly import %s (%s)'
-                             % (filepath, pname, name), DeprecationWarning)
-            #for key in self.context:
-            #    fglobals.pop(key, None)
+            with open(filepath) as f:
+                try:
+                    code = compile(f.read(), filepath, 'exec')
+                    exec(code, fglobals)
+                except:
+                    print('exception while reading %s' % filepath, file=sys.stderr)
+                    raise
             fglobals['__file__'] = filepath
             module = types.ModuleType(str(modname))
             module.__dict__.update(fglobals)
@@ -285,14 +247,17 @@ class SchemaLoader(object):
 PyFileReader = SchemaLoader
 PyFileReader.__init__ = lambda *x: None
 
-def build_schema_from_namespace(items):
+def fill_schema_from_namespace(schema, items, **kwargs):
     erdefs = {}
     for name, obj in items:
         if (isinstance(obj, type) and issubclass(obj, buildobjs.Definition)
             and obj not in (buildobjs.Definition, buildobjs.RelationDefinition, buildobjs.EntityType)):
             obj.expand_type_definitions(erdefs)
+    fill_schema(schema, erdefs, **kwargs)
+
+def build_schema_from_namespace(items):
     schema = schemamod.Schema('noname')
-    fill_schema(schema, erdefs)
+    fill_schema_from_namespace(schema, items)
     return schema
 
 class _Context(object):

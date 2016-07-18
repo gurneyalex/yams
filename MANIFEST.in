@@ -1,6 +1,8 @@
 include ChangeLog
 include COPYING
 include COPYING.LESSER
-recursive-include test/data *.sql *.rel *.esql *.py toignore
+include __pkginfo__.py
+include test/*.py
+include test/data2/*.py
+recursive-include test/data *.sql *.rel *.esql *.py *.txt toignore
 recursive-include bin yams-*
-
