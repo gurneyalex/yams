@@ -18,8 +18,6 @@
 # with yams. If not, see <http://www.gnu.org/licenses/>.
 """unit tests for module yams.schema classes"""
 
-from __future__ import with_statement
-
 from logilab.common.testlib import TestCase, unittest_main
 
 from copy import copy, deepcopy
