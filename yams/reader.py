@@ -27,7 +27,8 @@ __docformat__ = "restructuredtext en"
 import sys
 import types
 from os import listdir
-from os.path import exists, join, splitext, basename, abspath
+from os.path import (dirname, exists, join, splitext, basename, abspath,
+                     realpath)
 from warnings import warn
 
 from logilab.common import tempattr
@@ -217,7 +218,9 @@ class SchemaLoader(object):
         if modname in sys.modules:
             module = sys.modules[modname]
             # NOTE: don't test raw equality to avoid .pyc / .py comparisons
-            assert abspath(module.__file__).startswith(abspath(filepath)), (
+            mpath = realpath(abspath(module.__file__))
+            fpath = realpath(abspath(filepath))
+            assert mpath.startswith(fpath), (
                 modname, filepath, module.__file__)
         else:
             fglobals = {} # self.context.copy()
