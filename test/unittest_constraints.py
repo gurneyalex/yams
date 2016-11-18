@@ -15,14 +15,19 @@
 #
 # You should have received a copy of the GNU Lesser General Public License along
 # with yams. If not, see <http://www.gnu.org/licenses/>.
-from logilab.common.testlib import TestCase, unittest_main, mock_object
+try:
+    import unittest2 as unittest
+except ImportError:
+    import unittest
+
+from logilab.common.testlib import mock_object
 
 from yams.constraints import *
 # after import *
 from datetime import datetime, date, timedelta
 
 
-class ConstraintTC(TestCase):
+class ConstraintTC(unittest.TestCase):
 
     def test_membership(self):
         s = set()
@@ -174,13 +179,13 @@ class ConstraintTC(TestCase):
                  StaticVocabularyConstraint((1, 2, 3), msg='constraint failed, you monkey!'),
                  FormatConstraint(msg='constraint failed, you monkey!')]
         for cstr in cstrs:
-            self.set_description('%s custom message' % cstr.__class__.__name__)
-            yield self.assertEqual, cstr.failed_message('key', 'value', object()), \
-                ('constraint failed, you monkey!', {})
-            self.set_description('%s custom message post serialization' % cstr.__class__.__name__)
+            with self.subTest(cstr=cstr):
+                self.assertEqual(cstr.failed_message('key', 'value', object()),
+                                 ('constraint failed, you monkey!', {}))
             cstr = type(cstr).deserialize(cstr.serialize())
-            yield self.assertEqual, cstr.failed_message('key', 'value', object()), \
-                ('constraint failed, you monkey!', {})
+            with self.subTest(cstr=cstr):
+                self.assertEqual(cstr.failed_message('key', 'value', object()),
+                                 ('constraint failed, you monkey!', {}))
 
 if __name__ == '__main__':
-    unittest_main()
+    unittest.main()
