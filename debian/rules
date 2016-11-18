@@ -38,7 +38,7 @@ override_dh_auto_install: $(patsubst %,install-%,$(shell py3versions -r))
 
 test-python%:
 	python$* setup.py egg_info
-	PYTHONPATH=$(CURDIR) python$* /usr/bin/pytest
+	PYTHONPATH=$(CURDIR) python$* -m pytest test
 
 ifeq (,$(filter nocheck,$(DEB_BUILD_OPTIONS)))
 override_dh_auto_test: $(patsubst %,test-%,$(shell pyversions -r))
