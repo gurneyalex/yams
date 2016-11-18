@@ -15,9 +15,12 @@
 #
 # You should have received a copy of the GNU Lesser General Public License along
 # with yams. If not, see <http://www.gnu.org/licenses/>.
-try:
+
+from six import PY2
+
+if PY2:
     import unittest2 as unittest
-except ImportError:
+else:
     import unittest
 
 from logilab.common.testlib import mock_object
