@@ -32,6 +32,13 @@ from datetime import datetime, date, timedelta
 
 class ConstraintTC(unittest.TestCase):
 
+    if not hasattr(unittest.TestCase, 'subTest'):
+        from contextlib import contextmanager
+
+        @contextmanager
+        def subTest(self, **kwargs):
+            yield
+
     def test_membership(self):
         s = set()
         cstrs = [UniqueConstraint(),
