@@ -2,7 +2,13 @@ include ChangeLog
 include COPYING
 include COPYING.LESSER
 include __pkginfo__.py
+include tox.ini
 include test/*.py
 include test/data2/*.py
 recursive-include test/data *.sql *.rel *.esql *.py *.txt toignore
-recursive-include bin yams-*
+recursive-include bin *
+recursive-include doc *
+
+exclude python-yams.spec
+exclude debian
+recursive-exclude debian *
