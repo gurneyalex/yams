@@ -181,6 +181,8 @@ class SchemaLoader(object):
                     objects_to_add.add(obj)
             for obj in objects_to_add:
                 self.add_definition(obj, filepath)
+            if hasattr(module, 'post_build_callback'):
+                self.post_build_callbacks.append(module.post_build_callback)
             self.loaded_files.append(filepath)
 
     def unhandled_file(self, filepath):
@@ -242,8 +244,6 @@ class SchemaLoader(object):
             sys.modules[modname] = module
             if package:
                 setattr(sys.modules[package], modname.split('.')[-1], module)
-        if hasattr(module, 'post_build_callback'):
-            self.post_build_callbacks.append(module.post_build_callback)
         return (modname, module)
 
 # XXX backward compatibility to prevent changing cw.schema and cw.test.unittest_schema (3.12.+)
