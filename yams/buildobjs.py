@@ -725,7 +725,9 @@ class RelationDefinition(Definition):
         rschema = schema.rschema(name)
         if rschema.rule:
             raise BadSchemaDefinition(
-                'Cannot add relation definition on a computed relation')
+                'Cannot add relation definition "{0}" because an '
+                'homonymous computed relation already exists '
+                'with rule "{1}"'.format(rschema.type, rschema.rule))
         if self.__permissions__ is MARKER:
             final = next(iter(_actual_types(schema, self.object))) in BASE_TYPES
             if final:

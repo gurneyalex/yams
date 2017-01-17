@@ -629,7 +629,9 @@ class ComputedSchemaTC(TestCase):
 
         with self.assertRaises(BadSchemaDefinition) as cm:
             schema = build_schema_from_namespace(vars().items())
-        self.assertEqual("Cannot add relation definition on a computed relation",
+        self.assertEqual('Cannot add relation definition "est_paye_par" '
+                         'because an homonymous computed relation already '
+                         'exists with rule "S travaille O"',
                          str(cm.exception))
 
     def test_invalid_attributes_in_computedrelation(self):
