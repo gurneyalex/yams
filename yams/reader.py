@@ -26,13 +26,14 @@ __docformat__ = "restructuredtext en"
 
 import sys
 import types
+import pkgutil
 from os import listdir
 from os.path import (dirname, exists, join, splitext, basename, abspath,
                      realpath)
 from warnings import warn
 
 from logilab.common import tempattr
-from logilab.common.modutils import modpath_from_file, cleanup_sys_modules
+from logilab.common.modutils import modpath_from_file, cleanup_sys_modules, clean_sys_modules
 
 from yams import UnknownType, BadSchemaDefinition, BASE_TYPES
 from yams import constraints, schema as schemamod
@@ -101,19 +102,28 @@ class SchemaLoader(object):
                     for attr in buildobjs.__all__])
     context.update(CONSTRAINTS)
 
-    def load(self, directories, name=None,
+    def load(self, modnames, name=None,
              register_base_types=True, construction_mode='strict',
              remove_unused_rtypes=True):
-        """return a schema from the schema definition read from <directory>
+        """return a schema from the schema definition read from <modnames> (a
+        list of (PACKAGE, modname))
         """
         self.defined = {}
         self.loaded_files = []
         self.post_build_callbacks = []
         sys.modules[__name__].context = self
         # ensure we don't have an iterator
-        directories = tuple(directories)
+        modnames = tuple(modnames)
+        # legacy usage using a directory list
+        is_directories = modnames and not isinstance(modnames[0],
+                                                     (list, tuple))
         try:
-            self._load_definition_files(directories)
+            if is_directories:
+                warn('provide a list of modules names instead of directories',
+                     DeprecationWarning)
+                self._load_definition_files(modnames)
+            else:
+                self._load_modnames(modnames)
             schema = self.schemacls(name or 'NoName', construction_mode=construction_mode)
             try:
                 fill_schema(schema, self.defined, register_base_types,
@@ -126,11 +136,14 @@ class SchemaLoader(object):
         finally:
             # cleanup sys.modules from schema modules
             # ensure we're only cleaning schema [sub]modules
-            directories = [(not directory.endswith(self.main_schema_directory)
-                            and join(directory, self.main_schema_directory)
-                            or directory)
-                           for directory in directories]
-            cleanup_sys_modules(directories)
+            if is_directories:
+                directories = [(not directory.endswith(self.main_schema_directory)
+                                and join(directory, self.main_schema_directory)
+                                or directory)
+                               for directory in modnames]
+                cleanup_sys_modules(directories)
+            else:
+                clean_sys_modules([mname for _, mname in modnames])
         schema.loaded_files = self.loaded_files
         return schema
 
@@ -139,7 +152,20 @@ class SchemaLoader(object):
             package = basename(directory)
             for filepath in self.get_schema_files(directory):
                 with tempattr(buildobjs, 'PACKAGE', package):
-                    self.handle_file(filepath)
+                    self.handle_file(filepath, None)
+
+    def _load_modnames(self, modnames):
+        for package, modname in modnames:
+            loader = pkgutil.find_loader(modname)
+            filepath = loader.get_filename()
+            if filepath.endswith('.pyc'):
+                # check that related source file exists and ensure passing a
+                # .py file to exec_file()
+                filepath = filepath[:-1]
+                if not exists(filepath):
+                    continue
+            with tempattr(buildobjs, 'PACKAGE', package):
+                self.handle_file(filepath, modname=modname)
 
     # has to be overridable sometimes (usually for test purpose)
     main_schema_directory = 'schema'
@@ -166,12 +192,12 @@ class SchemaLoader(object):
                     self.unhandled_file(join(directory, filename))
         return result
 
-    def handle_file(self, filepath):
+    def handle_file(self, filepath, modname):
         """handle a partial schema definition file according to its extension
         """
         assert filepath.endswith('.py'), 'not a python file'
         if filepath not in self.loaded_files:
-            modname, module = self.exec_file(filepath)
+            modname, module = self.exec_file(filepath, modname)
             objects_to_add = set()
             for name, obj in vars(module).items():
                 if (isinstance(obj, type)
@@ -202,15 +228,16 @@ class SchemaLoader(object):
             raise BadSchemaDefinition(filepath, 'invalid definition object')
         defobject.expand_type_definitions(self.defined)
 
-    def exec_file(self, filepath):
-        try:
-            modname = '.'.join(modpath_from_file(filepath, self.extrapath))
-            doimport = True
-        except ImportError:
-            warn('module for %s can\'t be found, add necessary __init__.py '
-                 'files to make it importable' % filepath, DeprecationWarning)
-            modname = splitext(basename(filepath))[0]
-            doimport = False
+    def exec_file(self, filepath, modname):
+        if modname is None:
+            try:
+                modname = '.'.join(modpath_from_file(filepath, self.extrapath))
+                doimport = True
+            except ImportError:
+                warn('module for %s can\'t be found, add necessary __init__.py '
+                     'files to make it importable' % filepath, DeprecationWarning)
+                modname = splitext(basename(filepath))[0]
+                doimport = False
         # XXX can't rely on __import__ until bw compat (eg implicit import) needed
         #if doimport:
         #    module = __import__(modname, fglobals)
@@ -244,6 +271,10 @@ class SchemaLoader(object):
             sys.modules[modname] = module
             if package:
                 setattr(sys.modules[package], modname.split('.')[-1], module)
+            if basename(filepath) == '__init__.py':
+                # add __path__ to make dynamic loading work as defined in PEP 302
+                # https://www.python.org/dev/peps/pep-0302/#packages-and-the-role-of-path
+                module.__path__ = [dirname(filepath)]
         return (modname, module)
 
 # XXX backward compatibility to prevent changing cw.schema and cw.test.unittest_schema (3.12.+)

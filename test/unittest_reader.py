@@ -293,6 +293,17 @@ class SchemaLoaderTC(TestCase):
 ##
 
 
+class SchemaLoaderModnamesTC(SchemaLoaderTC):
+
+    @classmethod
+    def setUpClass(cls):
+        def modnames():
+            yield ('data', 'data.schema')
+            for name in ['State', 'Dates', 'Company', 'schema']:
+                yield ('data', '.'.join(['data', 'schema', name]))
+        cls.schema = SchemaLoader().load(modnames())
+
+
 class BasePerson(EntityType):
     firstname = String(vocabulary=('logilab', 'caesium'), maxsize=10)
     lastname = String(constraints=[StaticVocabularyConstraint(['logilab', 'caesium'])])
