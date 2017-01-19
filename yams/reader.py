@@ -232,18 +232,10 @@ class SchemaLoader(object):
         if modname is None:
             try:
                 modname = '.'.join(modpath_from_file(filepath, self.extrapath))
-                doimport = True
             except ImportError:
                 warn('module for %s can\'t be found, add necessary __init__.py '
                      'files to make it importable' % filepath, DeprecationWarning)
                 modname = splitext(basename(filepath))[0]
-                doimport = False
-        # XXX can't rely on __import__ until bw compat (eg implicit import) needed
-        #if doimport:
-        #    module = __import__(modname, fglobals)
-        #    for part in modname.split('.')[1:]:
-        #        module = getattr(module, part)
-        #else:
         if modname in sys.modules:
             module = sys.modules[modname]
             # NOTE: don't test raw equality to avoid .pyc / .py comparisons
