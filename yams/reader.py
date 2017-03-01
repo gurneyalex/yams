@@ -25,6 +25,7 @@ from __future__ import print_function
 __docformat__ = "restructuredtext en"
 
 import sys
+import os
 import types
 import pkgutil
 from os import listdir
@@ -137,7 +138,7 @@ class SchemaLoader(object):
             # cleanup sys.modules from schema modules
             # ensure we're only cleaning schema [sub]modules
             if is_directories:
-                directories = [(not directory.endswith(self.main_schema_directory)
+                directories = [(not directory.endswith(os.sep + self.main_schema_directory)
                                 and join(directory, self.main_schema_directory)
                                 or directory)
                                for directory in modnames]
