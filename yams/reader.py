@@ -193,7 +193,7 @@ class SchemaLoader(object):
                     self.unhandled_file(join(directory, filename))
         return result
 
-    def handle_file(self, filepath, modname):
+    def handle_file(self, filepath, modname=None):
         """handle a partial schema definition file according to its extension
         """
         assert filepath.endswith('.py'), 'not a python file'
