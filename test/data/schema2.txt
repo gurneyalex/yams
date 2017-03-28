@@ -1,6 +1,6 @@
 class Affaire(EntityType):
 	__permissions__ =  {
-		'read': ('managers','users','guests'),
+		'read': ('guests','managers','users'),
 		'add': ('managers','users'),
 		'update': ('managers','owners'),
 		'delete': ('managers','owners')
@@ -8,7 +8,7 @@ class Affaire(EntityType):
 
 	nom = String(
 		__permissions__= {
-			'read': ('managers','users','guests'),
+			'read': ('guests','managers','users'),
 			'add': ('managers','users'),
 			'update': ('managers','owners')
 		},
@@ -17,7 +17,7 @@ class Affaire(EntityType):
 
 	numero = Int(
 		__permissions__= {
-			'read': ('managers','users','guests'),
+			'read': ('guests','managers','users'),
 			'add': ('managers','users'),
 			'update': ('managers','owners')
 		},
@@ -25,7 +25,7 @@ class Affaire(EntityType):
 
 	associate_affaire = SubjectRelation('Affaire'
 		__permissions__= {
-			'read': ('managers','users','guests'),
+			'read': ('guests','managers','users'),
 			'add': ('managers','users'),
 			'delete': ('managers','users')
 		},
@@ -34,7 +34,7 @@ class Affaire(EntityType):
 
 	associate_person = SubjectRelation('PersonBase'
 		__permissions__= {
-			'read': ('managers','users','guests'),
+			'read': ('guests','managers','users'),
 			'add': ('managers','users'),
 			'delete': ('managers','users')
 		},
@@ -45,7 +45,7 @@ class Affaire(EntityType):
 
 class PersonBase(EntityType):
 	__permissions__ =  {
-		'read': ('managers','users','guests'),
+		'read': ('guests','managers','users'),
 		'add': ('managers','users'),
 		'update': ('managers','owners'),
 		'delete': ('managers','owners')
@@ -53,7 +53,7 @@ class PersonBase(EntityType):
 
 	nom = String(
 		__permissions__= {
-			'read': ('managers','users','guests'),
+			'read': ('guests','managers','users'),
 			'add': ('managers','users'),
 			'update': ('managers','owners')
 		},
@@ -61,7 +61,7 @@ class PersonBase(EntityType):
 
 	prenom = String(
 		__permissions__= {
-			'read': ('managers','users','guests'),
+			'read': ('guests','managers','users'),
 			'add': ('managers','users'),
 			'update': ('managers','owners')
 		},
