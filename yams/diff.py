@@ -88,7 +88,7 @@ def format_perms(perms, scope, isdefault):
                         quoted(p),
                         format_tuple(format_expression(r)
                                      if not isinstance(r, string_types) else quoted(r)
-                              for r in rule)))
+                              for r in sorted(rule))))
     return ' {%s\n%s\n%s}' % (' # default perms' if isdefault else '',
                               ',\n'.join(out),
                               '\t' * scope.indentation)

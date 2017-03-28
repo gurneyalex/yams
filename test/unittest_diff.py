@@ -79,7 +79,7 @@ def create_schema_2():
 class PropertiesFromTC(TestCase):
 
     expected_default_attr_perms = (
-        " {\n\t\t\t'read': ('managers','users','guests'),"
+        " {\n\t\t\t'read': ('guests','managers','users'),"
         "\n\t\t\t'add': ('managers','users'),"
         "\n\t\t\t'update': ('managers','owners')\n\t\t}")
 
@@ -148,6 +148,18 @@ class PropertiesFromTC(TestCase):
                           'order': 1,
                           'vocabulary': [u'aaa', u'bbbb', u'ccccc']},
                          properties_from(rdef))
+
+    def test_permissions(self):
+        props_ref = {'__permissions__': {
+            'add': ('managers', 'users'),
+            'update': ('owners', 'managers'),
+            'read': ('users', 'managers', 'guests'),
+            },
+        }
+        rdef = self.build_rdef(props_ref)
+        self.assertEqual({'__permissions__': self.expected_default_attr_perms,
+                          'order': 1,
+                          }, properties_from(rdef))
 
 
 class SchemaDiff(TestCase):
