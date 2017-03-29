@@ -15,8 +15,8 @@
 #
 # You should have received a copy of the GNU Lesser General Public License along
 # with yams. If not, see <http://www.gnu.org/licenses/>.
+
 """unit tests for module yams.diff"""
-import os.path as osp
 
 from logilab.common.testlib import TestCase, unittest_main
 
@@ -26,31 +26,36 @@ from yams.diff import properties_from, schema_diff
 
 
 class PersonBase(EntityType):
-    nom    = String()
+    nom = String()
     prenom = String()
 
+
 class PersonAttrMod(EntityType):
-    nom    = String()
+    nom = String()
     prenom = Float()
 
+
 class PersonAttrAdd(EntityType):
-    nom    = String()
+    nom = String()
     prenom = String()
     age = Int()
     is_friend_of = SubjectRelation('PersonAttrMod')
 
+
 class PersonAttrAdd2(EntityType):
-    nom    = String()
+    nom = String()
     prenom = String()
     salaire = Float()
     is_friend_of = SubjectRelation('PersonAttrAdd')
 
+
 class PersonAttrAdd3(EntityType):
-    nom     = String()
-    prenom  = String()
-    age     = Int()
+    nom = String()
+    prenom = String()
+    age = Int()
     salaire = Float()
     is_spouse_of = SubjectRelation('PersonAttrAdd')
+
 
 def create_schema_1():
     class Affaire(EntityType):
@@ -70,7 +75,13 @@ def create_schema_2():
     return build_schema_from_namespace([('PersonBase', PersonBase),
                                         ('Affaire',    Affaire)])
 
+
 class PropertiesFromTC(TestCase):
+
+    expected_default_attr_perms = (
+        " {\n\t\t\t'read': ('managers','users','guests'),"
+        "\n\t\t\t'add': ('managers','users'),"
+        "\n\t\t\t'update': ('managers','owners')\n\t\t}")
 
     def build_rdef(self, props_ref):
         class AType(EntityType):
@@ -95,7 +106,7 @@ class PropertiesFromTC(TestCase):
                      'description': 'something'}
         self.assertEqual({'default': 'toto',
                           'required': True,
-                          '__permissions__': " {\n\t\t\t'read': ('managers','users','guests'),\n\t\t\t'add': ('managers','users'),\n\t\t\t'update': ('managers','owners')\n\t\t}",
+                          '__permissions__': self.expected_default_attr_perms,
                           'description': "'something'",
                           'order': 1},
                          properties_from(self.build_rdef(props_ref)),
@@ -103,36 +114,37 @@ class PropertiesFromTC(TestCase):
 
     def test_properties_from_final_attributes_2(self):
         props_ref = {}
-        self.assertEqual({'__permissions__': " {\n\t\t\t'read': ('managers','users','guests'),\n\t\t\t'add': ('managers','users'),\n\t\t\t'update': ('managers','owners')\n\t\t}",
+        self.assertEqual({'__permissions__': self.expected_default_attr_perms,
                           'order': 1},
                          properties_from(self.build_rdef(props_ref)))
 
     def test_properties_from_final_attributes_3(self):
         props_ref = {'default': None, 'required': False}
-        self.assertEqual({'__permissions__': " {\n\t\t\t'read': ('managers','users','guests'),\n\t\t\t'add': ('managers','users'),\n\t\t\t'update': ('managers','owners')\n\t\t}",
+        self.assertEqual({'__permissions__': self.expected_default_attr_perms,
                           'order': 1},
                          properties_from(self.build_rdef(props_ref)))
 
     def test_constraint_properties_1(self):
         props_ref = {'maxsize': 150, 'required': False}
         self.assertEqual({'maxsize': 150,
-                          '__permissions__': " {\n\t\t\t'read': ('managers','users','guests'),\n\t\t\t'add': ('managers','users'),\n\t\t\t'update': ('managers','owners')\n\t\t}",
+                          '__permissions__': self.expected_default_attr_perms,
                           'order': 1},
                          properties_from(self.build_rdef(props_ref)))
 
     def test_constraint_properties_2(self):
         props_ref = {'unique': True, 'required': False}
-        self.assertEqual({'__permissions__': " {\n\t\t\t'read': ('managers','users','guests'),\n\t\t\t'add': ('managers','users'),\n\t\t\t'update': ('managers','owners')\n\t\t}",
+        self.assertEqual({'__permissions__': self.expected_default_attr_perms,
                           'unique': True,
                           'order': 1},
                          properties_from(self.build_rdef(props_ref)))
 
     def test_constraint_properties_3(self):
-        props_ref = {'vocabulary': ('aaa', 'bbbb', 'ccccc'), 'required': False, 'maxsize': 20}
+        props_ref = {'vocabulary': ('aaa', 'bbbb', 'ccccc'), 'required': False,
+                     'maxsize': 20}
         rdef = self.build_rdef(props_ref)
         props_ref['maxsize'] = 5
         self.assertEqual({'maxsize': 5,
-                          '__permissions__': " {\n\t\t\t'read': ('managers','users','guests'),\n\t\t\t'add': ('managers','users'),\n\t\t\t'update': ('managers','owners')\n\t\t}",
+                          '__permissions__': self.expected_default_attr_perms,
                           'order': 1,
                           'vocabulary': [u'aaa', u'bbbb', u'ccccc']},
                          properties_from(rdef))
