@@ -1,3 +1,9 @@
+yams (0.45.2-1) unstable; urgency=medium
+
+  * New upstream release.
+
+ -- Denis Laxalde <denis.laxalde@logilab.fr>  Tue, 28 May 2019 15:10:16 +0200
+
 yams (0.45.1-1) unstable; urgency=medium
 
   * New upstream release.
