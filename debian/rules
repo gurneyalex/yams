@@ -1,50 +1,16 @@
 #!/usr/bin/make -f
-# Sample debian/rules that uses debhelper.
-# GNU copyright 1997 to 1999 by Joey Hess.
-#
-# adapted by Logilab for automatic generation by debianize
-# (part of the devtools project, http://www.logilab.org/projects/devtools)
-#
-# Copyright (c) 2003-2005 LOGILAB S.A. (Paris, FRANCE).
-# http://www.logilab.fr/ -- mailto:contact@logilab.fr
 
-include /usr/share/python/python.mk
+export PYBUILD_NAME = yams
 
-# don't build the python3 package if python3 is < 3.3
-py3k = $(subst python3.,,$(shell py3versions -d))
-build_py3k = $(shell test "$(py3k)" -gt 2 && echo 1)
-
-ifeq (,$(build_py3k))
-    DH_OPTIONS += -Npython3-yams
-    export DH_OPTIONS
-    addons = python2
-else
-    addons = python2,python3
-endif
-
-export NO_SETUPTOOLS=1
-
-override_dh_auto_clean:
-	dh_auto_clean
-	rm -rf yams.egg-info
-	rm -rf build
-
-install-python%:
-	python$* setup.py -q install --no-compile --root=$(CURDIR)/debian/tmp \
-	    $(py_setup_install_args)
-
-override_dh_auto_install: $(patsubst %,install-%,$(shell py3versions -r))
-	dh_auto_install
-
-test-python%:
-	python$* setup.py egg_info
-	PYTHONPATH=$(CURDIR) python$* -m pytest test
-
-ifeq (,$(filter nocheck,$(DEB_BUILD_OPTIONS)))
-override_dh_auto_test: $(patsubst %,test-%,$(shell pyversions -r))
-override_dh_auto_test: $(patsubst %,test-%,$(shell py3versions -r))
-endif
+# Tests on Python 3 currently have issues
+export PYBUILD_DISABLE_python3.7 = test
 
 %:
-	dh $@ --with $(addons)
+	dh $@ --with python2,python3 --buildsystem=pybuild
 
+override_dh_auto_install:
+	dh_auto_install
+	# Remove binaries from Python 2 package
+	rm -rf debian/python-yams/usr/bin
+	# Remove binaries from Python 3 package
+	rm -rf debian/python3-yams/usr/bin
