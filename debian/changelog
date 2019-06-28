@@ -1,5 +1,6 @@
-yams (0.45.2-2) UNRELEASED; urgency=medium
+yams (0.45.2-2) unstable; urgency=medium
 
+  [ Jérémy Bobbio ]
   * Update Debian packaging according to latest standards:
     - Use dh-python and trim debian/rules accordingly.
     - Update X-Python-Version to officially supported versions.
@@ -18,7 +19,7 @@ yams (0.45.2-2) UNRELEASED; urgency=medium
   * Stop shipping yams-check which is currently broken:
     https://www.logilab.org/ticket/81261
 
- -- Jérémy Bobbio <jeremy.bobbio@irq7.fr>  Mon, 03 Jun 2019 18:46:44 +0200
+ -- Denis Laxalde <denis.laxalde@logilab.fr>  Fri, 28 Jun 2019 16:23:24 +0200
 
 yams (0.45.2-1) unstable; urgency=medium
 
