@@ -101,14 +101,14 @@ class ConstraintTC(unittest.TestCase):
                           {'key-boundary': 'hop', 'key-value': 43}))
 
     def test_regexp_serialization(self):
-        cstr = RegexpConstraint('[a-z]+,[A-Z]+', 12)
-        self.assertEqual(cstr.serialize(), '{"flags": 12, "msg": null, "regexp": "[a-z]+,[A-Z]+"}')
+        cstr = RegexpConstraint('[a-z]+,[A-Z]+', 40)
+        self.assertEqual(cstr.serialize(), '{"flags": 40, "msg": null, "regexp": "[a-z]+,[A-Z]+"}')
         self.assertEqual(cstr.__class__.deserialize(cstr.serialize()), cstr)
 
     def test_regexp_deserialization(self):
-        cstr = RegexpConstraint.deserialize('[a-z]+,[A-Z]+,12')
+        cstr = RegexpConstraint.deserialize('[a-z]+,[A-Z]+,40')
         self.assertEqual(cstr.regexp, '[a-z]+,[A-Z]+')
-        self.assertEqual(cstr.flags, 12)
+        self.assertEqual(cstr.flags, 40)
 
     def test_interval_with_attribute(self):
         cstr = IntervalBoundConstraint(NOW(), Attribute('hop'))
